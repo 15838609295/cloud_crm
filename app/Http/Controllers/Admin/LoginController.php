@@ -3,208 +3,118 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
+use App\Library\Tools;
+use App\Models\Admin\Configs;
+use App\Models\User\UserLogin;
+use App\Models\User\UserSession;
+use App\Models\Validate\ValidBase;
+use Illuminate\Http\Request;
+use Validator;
 
 class LoginController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
-    |
-    */
-
-    use AuthenticatesUsers;
-
-    /**
-     * Where to redirect users after login.
-     *
-     * @var string
-     */
-    protected $redirectTo = '/admin';
-    protected $username;
-
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->middleware('guest:admin', ['except' => 'logout']);
-    }
-    /**
-     * 重写登录视图页面
-     * @author 晚黎
-     * @date   2016-09-05T23:06:16+0800
-     * @return [type]                   [description]
-     */
-    public function showLoginForm()
-    {
-        return view('admin.auth.login');
-    }
-    /**
-     * 自定义认证驱动
-     * @author 晚黎
-     * @date   2016-09-05T23:53:07+0800
-     * @return [type]                   [description]
-     */
-    protected function guard()
-    {
-        return auth()->guard('admin');
+    public function __construct(){
+        /*--- start 跨域测试用 (待删除) ---*/
+        header('Access-Control-Allow-Origin: *');                                                                 // 允许任意域名发起的跨域请求
+        header('Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE');
+        header('Access-Control-Allow-Headers: X-Requested-With,X_Requested_With');
+        header('Access-Control-Allow-Headers:x-requested-with,content-type');
+        /*--- end 跨域测试用---*/
     }
 
-    /**
-     * Log the user out of the application.
-     *
-     * @param  Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function logout()
-    {
-        $this->guard('admin')->logout();
+    private $returnData = array(
+        'code' => 0,
+        'msg' => '请求成功',
+        'data' => '',
+    );
 
-        request()->session()->flush();
-
-        request()->session()->regenerate();
-
-        return redirect('/admin/login');
+    public function rule(){
+        return [
+            'user_name' => 'required',
+//            'user_name' => 'required|email',
+            'user_pass' => 'required|regex:/^.{6,16}$/',
+        ];
     }
 
-    public function picture(){
-        $res = DB::table('godown')->whereNotNull('godown_pic')->where('status',0)->skip(0)->take(5)->get();
-        $res = json_decode(json_encode($res),true);
-        $data1['status'] = 1;
-        foreach ($res as $v){
-            if (!$v['godown_pic']){
-                $update_res = DB::table('godown')->where('id',$v['id'])->update($data1);
-                continue;
-            }
-            $update_res = DB::table('godown')->where('id',$v['id'])->update($data1);
-            $godown_pic = explode(',',$v['godown_pic']);
-            $data['godown_pic'] = '';
-            $img_size = 0;
-            foreach ($godown_pic as $url){
-                $img_size = ceil(filesize('.'.$url) / 1000); //获取文件大小
-                if($img_size > 500){
-                    $new_url = $this->imageThumbnail('.'.$url,$v['id']);
-                    $data['godown_pic'] .= $new_url.',';
-                }else{
-                    $data['godown_pic'] .= $url.',';
-                }
-            }
-            if ($data['godown_pic'] != ''){
-                $data['godown_pic'] = substr($data['godown_pic'],0,strlen($data['godown_pic'])-1);
-            }
-            if ($data['godown_pic'] != $v['godown_pic']){   //有修改就去修改数据库
-                $update_res = DB::table('godown')->where('id',$v['id'])->update($data);
-                if (!$update_res){
-                    Log::info('update imgs this id '.$v['id'].' error:erroe');
-                }
-            }
+    public function message(){
+        return [
+            'user_name.required' => '账号不能为空',
+//            'user_name.email' => '账号格式错误',
+            'user_pass.required' => '密码不能为空',
+            'user_pass.regex' => '密码格式不正确,请输入6~16位的密码'
+        ];
+    }
 
+    public function login(Request $request){
+        //登陆之前去检测站点状态
+        $con = Configs::first();
+        $site_status = $con->site_status;
+        $verify_arr = array(
+            'user_name' => $request->username,
+            'user_pass' => $request->password
+        );
+        if ($site_status == 0 && $verify_arr['user_name'] != 'root@admin.com'){
+            $data['code'] = 1;
+            $data['msg'] = '站点正在维护中，请等待片刻再尝试登陆';
+            return response()->json($data);
         }
-        echo 'ok1122';die;
-    }
-
-    //图片制作缩略图
-    public function imageThumbnail($old_src,$id){
-        //成功返回1，格式不符合返回2，生成图片失败返回3
-        try{
-            //成功返回1，格式不符合返回2，生成图片失败返回3
-            ini_set('memory_limit','2048M');
-            ini_set("gd.jpeg_ignore_warning", 1);
-            $info = pathinfo($old_src);
-            $data = getimagesize($old_src);
-            if (!$info || !$data){
-                $old_src = substr($old_src,1);
-                return $old_src;
-            }
-            $file_name = $info['basename'];
-            $width = $data[0]/2;
-            $height = $data[1]/2;
-            $new_path = './uploads/thumbnail/'.date('Ymd',time());
-            if (!is_dir($new_path)){
-                mkdir($new_path,0777,true);
-            }
-            $new_src = $new_path.'/'.$file_name;
-            $new_width = $width;
-            $new_height= $height;
-            $rate=100;
-
-            $old_info = getimagesize($old_src);
-            switch($old_info[2]){
-                case 1:$im = @imagecreatefromgif($old_src);break;
-                case 2:$im = @imagecreatefromjpeg($old_src);break;
-                case 3:$im = @imagecreatefrompng($old_src);break;
-                case 4:$im = @imagecreatefromjpeg("/img/swf.jpg");break;
-                case 6:return false;
-            }
-            if(!$im) return 2;
-            $old_width = imagesx($im);
-            $old_height = imagesy($im);
-            if($old_width<$new_width && $old_height<$new_height){
-                imagejpeg($im,$new_src,$rate);
-                imagedestroy($im);
-                return 1;
-            }
-            $x_rate = $old_width/$new_width;
-            $y_rate = $old_height/$new_height;
-            if($x_rate<$y_rate){
-                $dst_x = ceil($old_width/$y_rate);
-                $dst_y = $new_height-1;
-                $new_start_x = 0;
-                $new_start_y = 0;
-            }else {
-                $dst_x = $new_width;
-                $y_rate = $old_height / $new_height;
-                if ($x_rate < $y_rate) {
-                    $dst_x = ceil($old_width / $y_rate);
-                    $dst_y = $new_height - 1;
-                    $new_start_x = 0;
-                    $new_start_y = 0;
-                } else {
-                    $dst_x = $new_width;
-                    $dst_y = ceil($old_height / $x_rate);
-                    $new_start_x = 0;
-                    $new_start_y = 0;
-                }
-                $newim = imagecreatetruecolor($dst_x, $dst_y);//先压缩
-                $bg = imagecolorallocate($newim, 255, 255, 255);
-                imagefilledrectangle($newim, 0, 0, $dst_x, $dst_y, $bg); //画个大小一致矩形充当背景
-
-                imagecopyresampled($newim, $im, 0, 0, 0, 0, $dst_x, $dst_y, $old_width, $old_height);
-
-                $cutim = imagecreatetruecolor($dst_x, $dst_y);//对图像进行截图
-                imagecopyresampled($cutim, $newim, 0, 0, $new_start_x, $new_start_y, $new_width, $new_height, $new_width, $new_height);
-                imagejpeg($cutim, $new_src, $rate);//对图像进行截图
-
-                imagedestroy($im);
-                imagedestroy($newim);
-                $a = imagedestroy($cutim);
-
-                if ($a) {
-                    $img_size = ceil(filesize($new_src) / 1000); //获取文件大小
-                    if ($img_size > 500){
-                        $this->imageThumbnail($new_src,$id);
-                    }
-                    $new_src = substr($new_src,1);
-                    return $new_src;
-                } else {
-                    return false;
-                }
-            }
-        }catch (\Exception $e){
-            Log::info('update imgs this id '.$id.' error:',array('errorinfo'=>json_encode($e)));
+        $validator = Validator::make($verify_arr,$this->rule(),$this->message());//验证参数
+        if ($validator->fails()) {
+            $this->returnData['code'] = 103;
+            $this->returnData['msg'] = $validator->errors()->all()[0];
+            return response()->json($this->returnData);
         }
+        $login_res = UserLogin::LoginAction($verify_arr);
+        return response()->json($login_res);
     }
 
+    public function qyWexin(Request $request){
+        $verify_arr = array(
+            'code' => $request->code,
+        );
+        $validator = Validator::make($verify_arr,['code' => 'required'],["code.required" => "code不能为空"]);//验证参数
+        if ($validator->fails()) {
+            $this->returnData['code'] = 103;
+            $this->returnData['msg'] = $validator->errors()->all()[0];
+            return response()->json($this->returnData);
+        }
+        $login_res = UserLogin::QyWexinAction($verify_arr);
+        return response()->json($login_res);
+    }
 
+    public function logout(Request $request){
+        $verify_arr = array(
+            'token' => $request->token
+        );
+        $validModel = ValidBase::factory('ValidRule');
+        $verify_res = $validModel->c_token($verify_arr);
+        if($verify_res['code']>0){
+            return response()->json($verify_res);
+        }
+        $login_res = UserLogin::LogoutAction($request->token);
+        return response()->json($login_res);
+    }
+
+    //平台免登陆
+    public function Nolandfall(Request $request){
+        $wsToken = $request->post('wsToken','');
+        $url = $request->post('wsDomain','');
+        if ($wsToken == '' || $url == ''){
+            $this->returnData['code'] = 1;
+            $this->returnData['msg'] = '错误登陆';
+        }
+        $url = urldecode($url);
+        $res = Tools::curl($url."/web/home/getCheckToken", json_encode(["wsToken" => $wsToken]));
+        $res = json_decode($res, 1);
+        if($res["code"] == "0"){
+            $userSessionModel = new UserSession();
+            $session_id = $userSessionModel->setSession(['admin_id'=>1]);
+            $this->returnData['data'] = ['token' => $session_id];
+        }else{
+            $this->returnData['code'] = 1;
+            $this->returnData["msg"] = "自动登录失败";
+        }
+        return response()->json($this->returnData);
+    }
 }

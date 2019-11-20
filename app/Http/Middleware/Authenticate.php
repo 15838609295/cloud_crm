@@ -17,6 +17,13 @@ class Authenticate
      */
     public function handle($request, Closure $next, $guard = null)
     {
+        if (Auth::guard('web')->user()){
+            if (Auth::guard('web')->user()->status === 1 && Auth::guard('web')->check()) {
+                Auth::guard('web')->logout();
+                return redirect()->guest("/login")->withErrors('账号被冻结，请联系管理员！');
+            }
+        }
+        
         if (Auth::guard($guard)->guest()) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response('Unauthorized.', 401);

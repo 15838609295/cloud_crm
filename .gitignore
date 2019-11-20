@@ -1,6 +1,13 @@
 /node_modules
-/public/uploads
-/vendor
+/public/storage
+/.idea
 Homestead.json
 Homestead.yaml
 .env
+storage/app/public/.gitignore
+storage/app/.gitignore
+storage/debugbar/.gitignore
+storage/framework/sessions/.gitignore
+storage/framework/views/.gitignore
+storage/framework/.gitignore
+storage/logs/.gitignore

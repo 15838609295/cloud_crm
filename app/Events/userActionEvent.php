@@ -18,7 +18,7 @@ class userActionEvent extends Event
      * @param int $type 类型 1:添加,2:删除,3:修改更新
      * @param string $content   操作详情
      */
-    public function __construct(string $model, int $aid, int $type, string $content)
+    public function __construct($model, $aid, $type, $content)
     {
         $this->uid = auth('admin')->user()->id;
         $this->adminName = auth('admin')->user()->name;

@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Events\permChangeEvent;
+
+use App\Http\Config\ErrorCode;
+use App\Models\Auth\AuthPermission;
 use Illuminate\Http\Request;
 
-use App\Http\Requests;
-use App\Http\Requests\PermissionCreateRequest;
-use App\Http\Requests\PermissionUpdateRequest;
-use App\Http\Controllers\Controller;
-use App\Models\Admin\Permission;
-use Cache, Event;
-
-class PermissionController extends Controller
+class PermissionController extends BaseController
 {
+    public function __construct(Request $request){
+        parent::__construct($request);
+    }
+
     protected $fields = [
         'name'        => '',
         'label'       => '',
@@ -22,128 +21,98 @@ class PermissionController extends Controller
         'icon'        => '',
     ];
 
-	//权限列表
-    public function index(Request $request, $cid = 0)
-    {
-        $cid = (int)$cid;
-        
-        if($request->ajax()){
-	        $sortName = $request->post("sortName");    //排序列名
-			$sortOrder = $request->post("sortOrder");   //排序（desc，asc）
-			$pageNumber = $request->post("pageNumber");  //当前页码
-			$pageSize = $request->post("pageSize");   //一页显示的条数
-			$start = ($pageNumber-1)*$pageSize;   //开始位置
-			$search = $request->post("search",'');  //搜索条件
-			$cid = $request->post('cid',0);
-			
-			$total = Permission::where('cid',$cid);
-			$rows = Permission::where('cid',$cid);
-			
-	        if(trim($search)){
-	        	$total->where(function ($query) use ($search) {
-                    $query->where('name', 'LIKE', '%' . $search . '%')
-                        ->orWhere('description', 'like', '%' . $search . '%')
-                        ->orWhere('label', 'like', '%' . $search . '%');
-                });
-	        	$rows->where(function ($query) use ($search) {
-                    $query->where('name', 'LIKE', '%' . $search . '%')
-                        ->orWhere('description', 'like', '%' . $search . '%')
-                        ->orWhere('label', 'like', '%' . $search . '%');
-                });
-	        }
-	        
-	        $data['total'] = $total->count();
-	        $data['rows'] = $rows->skip($start)->take($pageSize)
-					        ->orderBy($sortName, $sortOrder)
-					        ->get();
-	        
-	        return response()->json($data);
-	    }
-        
-        $datas['cid'] = $cid;
-        if ($cid > 0) {
-            $datas['data'] = Permission::find($cid);
+    /* 权限列表 */
+    public function dataList(Request $request){
+        if ($this->returnData['code'] > 0){
+            return $this->returnData;
         }
-
-        return view('admin.permission.index', $datas);
-    }
-
-    //新增权限
-    public function create(int $cid)
-    {
-        $data = [];
-        foreach ($this->fields as $field => $default) {
-            $data[$field] = old($field, $default);
-        }
-        $data['cid'] = $cid;
-
-        return view('admin.permission.create', $data);
+        $page_no = $request->post('page_no', 1);
+        $page_size = $request->post('page_size', 10);
+        $searchFilter = array(
+            'sortName' => $request->post('sortName','id'),                                                  //排序列名
+            'sortOrder' => $request->post('sortOrder','asc'),                                               //排序（desc，asc）
+            'pageNumber' => $page_no,                                                                                   //当前页码
+            'pageSize' => $page_size,                                                                                   //一页显示的条数
+            'start' => ($page_no-1) * $page_size,                                                                       //开始位置
+            'searchKey' => trim($request->post('search','')),                                               //搜索条件
+            'cid' => $request->post('cid',0)
+        );
+        $data = AuthPermission::getPermissionListByFilter($searchFilter);
+        $this->returnData['data'] = $data;
+        return response()->json($this->returnData);
     }
 
     //添加权限
-    public function store(PermissionCreateRequest $request)
-    {
-        $permission = new Permission();
-        foreach (array_keys($this->fields) as $field) {
-            $permission->$field = $request->get($field, $this->fields[$field]);
+    public function create(Request $request){
+        if ($this->returnData['code'] > 0){
+            return $this->returnData;
         }
-        $permission->save();
-        Event::fire(new permChangeEvent());
-        event(new \App\Events\userActionEvent('\App\Models\Admin\Permission', $permission->id, 1, '添加了权限:' . $permission->name . '(' . $permission->label . ')'));
-
-        return redirect('/admin/permission/' . $permission->cid)->withSuccess('添加成功！');
+        $data = [];
+        foreach (array_keys($this->fields) as $field) {
+            $data[$field] = $request->post($field, $this->fields[$field]);
+        }
+        $permissionModel = new AuthPermission();
+        $res = $permissionModel->permissionInsert($data);
+        if(!$res){
+            $this->returnData = ErrorCode::$admin_enum['fail'];
+            return response()->json($this->returnData);
+        }
+        return response()->json($this->returnData);
     }
     
     //修改权限
-    public function edit($id)
-    {
-        $permission = Permission::find((int)$id);
-        if (!$permission) return redirect('/admin/permission')->withErrors("找不到该权限!");
-        $data = ['id' => (int)$id];
-        foreach (array_keys($this->fields) as $field) {
-            $data[$field] = old($field, $permission->$field);
+    public function edit(Request $request){
+        if ($this->returnData['code'] > 0){
+            return $this->returnData;
         }
-
-        return view('admin.permission.edit', $data);
-    }
-
-    //更新权限
-    public function update(PermissionUpdateRequest $request, $id)
-    {
-        $permission = Permission::find((int)$id);
-        foreach (array_keys($this->fields) as $field) {
-            $permission->$field = $request->get($field, $this->fields[$field]);
+        $id = trim($request->id);
+        if($id==null || !is_numeric($id)){
+            $this->returnData = ErrorCode::$admin_enum['params_error'];
+            return response()->json($this->returnData);
         }
-        $permission->save();
-        Event::fire(new permChangeEvent());
-        event(new \App\Events\userActionEvent('\App\Models\Admin\Permission', $permission->id, 3, '修改了权限:' . $permission->name . '(' . $permission->label . ')'));
-
-        return redirect('admin/permission/' . $permission->cid)->withSuccess('修改成功！');
+        $permissionModel = new AuthPermission();
+        $data = $permissionModel->getPermissionListById((int)$id);
+        if(count($data)<1){
+            $this->returnData = ErrorCode::$admin_enum['error'];
+            $this->returnData['msg'] = '权限记录不存在';
+            return response()->json($this->returnData);
+        }
+        foreach (array_keys($this->fields) as $field) {
+            $data[$field] = $request->post($field, $this->fields[$field]);
+        }
+        $res = $permissionModel->permissionUpdate($id,$data);
+        if(!$res){
+            $this->returnData = ErrorCode::$admin_enum['fail'];
+            $this->returnData['msg'] = '修改失败';
+            return response()->json($this->returnData);
+        }
+        $this->returnData['msg'] = '修改成功';
+        return response()->json($this->returnData);
     }
 
 	//删除权限
-    public function destroy($id)
-    {
-        $child = Permission::where('cid', $id)->first();
-
-        if ($child) {
-            return redirect()->back()
-                ->withErrors("请先将该权限的子权限删除后再做删除操作!");
+    public function delete($id){
+        if ($this->returnData['code'] > 0){
+            return $this->returnData;
         }
-        $tag = Permission::find((int)$id);
-        foreach ($tag->roles as $v) {
-            $tag->roles()->detach($v->id);
+        if($id==null || !is_numeric($id)){
+            $this->returnData = ErrorCode::$admin_enum['params_error'];
+            return response()->json($this->returnData);
         }
-        if ($tag) {
-            $tag->delete();
-        } else {
-            return redirect()->back()
-                ->withErrors("删除失败");
+        $permission = new AuthPermission();
+        $child = $permission->getPermissionListByCid((int)$id);
+        if (is_array($child) && count($child)>1) {
+            $this->returnData = ErrorCode::$admin_enum['error'];
+            $this->returnData['msg'] = '请先将该权限的子权限删除后再做删除操作';
+            return response()->json($this->returnData);
         }
-        Event::fire(new permChangeEvent());
-        event(new \App\Events\userActionEvent('\App\Models\Admin\Permission', $tag->id, 2, '删除了权限:' . $tag->name . '(' . $tag->label . ')'));
-
-        return redirect()->back()
-            ->withSuccess("删除成功");
+        $res = $permission->permisionDelete((int)$id);
+        if(!$res){
+            $this->returnData = ErrorCode::$admin_enum['fail'];
+            $this->returnData['msg'] = '删除失败';
+            return response()->json($this->returnData);
+        }
+        $this->returnData['msg'] = '删除成功';
+        return response()->json($this->returnData);
     }
 }

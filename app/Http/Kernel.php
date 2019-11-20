@@ -28,19 +28,22 @@ class Kernel extends HttpKernel
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            //\App\Http\Middleware\VerifyCsrfToken::class,
+            // \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
         'admin' => [
-            \App\Http\Middleware\EncryptCookies::class,
-            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \Illuminate\Session\Middleware\StartSession::class,
-            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            //\App\Http\Middleware\VerifyCsrfToken::class,
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+
         ],
         'api' => [
-            'throttle:6000,1',
+            'throttle:60,1',
+            'bindings',
+        ],
+        'tencent' => [
+            'throttle:60,1',
+            'bindings',
+        ],
+        'wxapi' => [
+            'throttle:60,1',
             'bindings',
         ],
     ];
@@ -53,8 +56,7 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $routeMiddleware = [
-        'auth' => \App\Http\Middleware\Authenticate::class,
-       // 'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+        //'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
@@ -63,6 +65,5 @@ class Kernel extends HttpKernel
 
         'authAdmin' => \App\Http\Middleware\AuthenticateAdmin::class,
         'menu'=>\App\Http\Middleware\GetMenu::class,
-        'checkApi' => \App\Http\Middleware\CheckApi::class,
     ];
 }

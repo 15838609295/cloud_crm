@@ -2,144 +2,167 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Admin\Permission;
+use App\Http\Config\ErrorCode;
+use App\Models\Auth\AuthPermission;
+use App\Models\Auth\AuthRole;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use App\Models\Admin\Role;
-use Auth;
 
-class RoleController extends Controller
+class RoleController extends BaseController
 {
+    public function __construct(Request $request)
+    {
+        parent::__construct($request);
+    }
+
     protected $fields = [
         'name' => '',
         'description' => '',
         'permissions' => [],
     ];
 
-
-    //角色列表
-    public function index(Request $request)
-    {
-        if ($request->ajax()) {
-            $sortName = $request->post("sortName");    //排序列名
-			$sortOrder = $request->post("sortOrder");   //排序（desc，asc）
-			$pageNumber = $request->post("pageNumber");  //当前页码
-			$pageSize = $request->post("pageSize");   //一页显示的条数
-			$start = ($pageNumber-1)*$pageSize;   //开始位置
-			$search = $request->post("search",'');  //搜索条件
-			
-			$total = Role::from('admin_roles');
-			$rows = Role::from('admin_roles');
-			
-	        if(trim($search)){
-	        	$total->where(function ($query) use ($search) {
-                    $query->where('name', 'LIKE', '%' . $search . '%')
-                        ->orWhere('description', 'like', '%' . $search . '%');
-                });
-	        	$rows->where(function ($query) use ($search) {
-                    $query->where('name', 'LIKE', '%' . $search . '%')
-                        ->orWhere('description', 'like', '%' . $search . '%');
-                });
-	        }
-	        
-	        $data['total'] = $total->count();
-	        $data['rows'] = $rows->skip($start)->take($pageSize)
-					        ->orderBy($sortName, $sortOrder)
-					        ->get();
-	        
-	        return response()->json($data);
+    public function dataList(Request $request){
+        if ($this->returnData['code'] > 0){
+            return $this->returnData;
         }
-        return view('admin.role.index');
+        $page_no = $request->post('page_no', 1);
+        $page_size = $request->post('page_size', 10);
+        $searchFilter = array(
+            'sortName' => $request->post('sortName','id'),                                                  //排序列名
+            'sortOrder' => $request->post('sortOrder','asc'),                                               //排序（desc，asc）
+            'pageNumber' => $page_no,                                                                                   //当前页码
+            'pageSize' => $page_size,                                                                                   //一页显示的条数
+            'start' => ($page_no-1) * $page_size,                                                                       //开始位置
+            'searchKey' => trim($request->post('search',''))                                                //关键词
+        );
+        $roleModel = new AuthRole();
+        $data = $roleModel->getRoleListWithFilter($searchFilter);
+        $this->returnData['data'] = $data;
+        return response()->json($this->returnData);
     }
 
-    //添加角色
-    public function create()
-    {
-        $data = [];
-        foreach ($this->fields as $field => $default) {
-            $data[$field] = old($field, $default);
+    public function roleList(){
+        if ($this->returnData['code'] > 0){
+            return $this->returnData;
         }
-        $arr = Permission::all()->toArray();
-        foreach ($arr as $v) {
-            $data['permissionAll'][$v['cid']][] = $v;
+        $columns = ['id','name'];
+        $branchModel = new AuthRole();
+        $res = $branchModel->getRoleList($columns);
+        if(count($res)<1){
+            $this->returnData = ErrorCode::$admin_enum['fail'];
+            $this->returnData['msg'] = '暂无数据';
+            return response()->json($this->returnData);
         }
-        return view('admin.role.create', $data);
+        $this->returnData['data'] = $res;
+        return response()->json($this->returnData);
     }
 
-    //增加角色
-    public function store(Request $request)
-    {
-        $role = new Role();
-        foreach (array_keys($this->fields) as $field) {
-            $role->$field = $request->input($field);
+    /* 角色权限列表 */
+    public function rolePermission(Request $request){
+        if ($this->returnData['code'] > 0){
+            return $this->returnData;
         }
-        unset($role->permissions);
-        $role->save();
-        if (is_array($request->input('permissions'))) {
-            $role->permissions()->sync($request->input('permissions',[]));
-        }
-        event(new \App\Events\userActionEvent('\App\Models\Admin\Role',$role->id,1,"用户".auth('admin')->user()->username."{".auth('admin')->user()->id."}添加角色".$role->name."{".$role->id."}"));
-        return redirect('/admin/role')->withSuccess('添加成功！');
+        $role_id = $request->id ? $request->id : null;
+        $permissionModel = new AuthPermission();
+        $data = $permissionModel->getRolePermission($role_id);
+        $this->returnData['data'] = $data;
+        return response()->json($this->returnData);
     }
 
-	//修改角色
-    public function edit($id)
-    {
-        $role = Role::find((int)$id);
-        if (!$role) return redirect('/admin/role')->withErrors("找不到该角色!");
-        $permissions = [];
-        if ($role->permissions) {
-            foreach ($role->permissions as $v) {
-                $permissions[] = $v->id;
-            }
+    /* 添加角色 */
+    public function create(Request $request){
+        if ($this->returnData['code'] > 0){
+            return $this->returnData;
         }
-        $role->permissions = $permissions;
-        foreach (array_keys($this->fields) as $field) {
-            $data[$field] = old($field, $role->$field);
+        $tmp_str = trim($request->post('permissions',''));
+        $permission_arr = explode(',',$tmp_str);
+        $authPermissionModel = new AuthPermission();
+        $permission_list = $authPermissionModel->getPermissionList($permission_arr);
+        if(count($permission_arr)!=count($permission_list)){
+            $this->returnData = ErrorCode::$admin_enum['error'];
+            $this->returnData['msg'] = '角色权限错误';
+            return response()->json($this->returnData);
         }
-        $arr = Permission::all()->toArray();
-        foreach ($arr as $v) {
-            $data['permissionAll'][$v['cid']][] = $v;
+        $data = array(
+            'name' => trim($request->post('name','')),
+            'description' => trim($request->post('description','')),
+            'admin_power' => 2
+        );
+
+        if (!preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $data['name'])) {
+            $this->returnData = ErrorCode::$admin_enum['error'];
+            $this->returnData['msg'] = '角色名称不能包含特殊字符';
+            return response()->json($this->returnData);
         }
-        $data['id'] = (int)$id;
-        return view('admin.role.edit', $data);
+
+        $authRoleModel = new AuthRole();
+        $res = $authRoleModel->roleInsert($data,$permission_arr);
+        if(!$res){
+            $this->returnData = ErrorCode::$admin_enum['fail'];
+            $this->returnData['msg'] = '角色添加失败';
+            return response()->json($this->returnData);
+        }
+        $this->returnData['msg'] = '角色添加成功';
+        return response()->json($this->returnData);
     }
 
-    //更新角色
-    public function update(Request $request, $id)
-    {
-        $role = Role::find((int)$id);
-        foreach (array_keys($this->fields) as $field) {
-            $role->$field = $request->input($field);
+	/* 修改角色 */
+    public function edit(Request $request){
+        if ($this->returnData['code'] > 0){
+            return $this->returnData;
         }
-        unset($role->permissions);
-        $role->save();
-
-        $role->permissions()->sync($request->input('permissions',[]));
-        event(new \App\Events\userActionEvent('\App\Models\Admin\Role',$role->id,3,"用户".auth('admin')->user()->username."{".auth('admin')->user()->id."}编辑角色".$role->name."{".$role->id."}"));
-        return redirect('/admin/role')->withSuccess('修改成功！');
+        if ($this->AU['id'] != 1){
+            $data['code'] = 1;
+            $data['msg'] = '无权限';
+            $data['data'] = '';
+            return response()->json($data);
+        }
+        $id = trim($request->id);
+        if($id==null || !is_numeric($id)){
+            $this->returnData = ErrorCode::$admin_enum['params_error'];
+            return response()->json($this->returnData);
+        }
+        $tmp_str = trim($request->post('permissions',''));
+        $permission_arr = explode(',',$tmp_str);
+        $authPermissionModel = new AuthPermission();
+        $permission_list = $authPermissionModel->getPermissionList($permission_arr);
+        if(count($permission_arr)!=count($permission_list)){
+            $this->returnData = ErrorCode::$admin_enum['error'];
+            $this->returnData['msg'] = '角色权限错误';
+            return response()->json($this->returnData);
+        }
+        $data = array(
+            'name' => trim($request->post('name','')),
+            'description' => trim($request->post('description','')),
+            'admin_power' => 2
+        );
+        $authRoleModel = new AuthRole();
+        $res = $authRoleModel->roleUpdate($id,$data,$permission_arr);
+        if(!$res){
+            $this->returnData = ErrorCode::$admin_enum['fail'];
+            $this->returnData['msg'] = '角色修改失败';
+            return response()->json($this->returnData);
+        }
+        $this->returnData['msg'] = '角色修改成功';
+        return response()->json($this->returnData);
     }
 
-    //删除角色
-    public function destroy($id)
-    {
-        $role = Role::find((int)$id);
-        foreach ($role->users as $v){
-            $role->users()->detach($v);
+    /* 删除角色 */
+    public function delete($id){
+        if ($this->returnData['code'] > 0){
+            return $this->returnData;
         }
-
-        foreach ($role->permissions as $v){
-            $role->permissions()->detach($v);
+        if($id==null || !is_numeric($id)){
+            $this->returnData = ErrorCode::$admin_enum['params_error'];
+            return response()->json($this->returnData);
         }
-
-        if ($role) {
-            $role->delete();
-        } else {
-            return redirect()->back()
-                ->withErrors("删除失败");
+        $authRoleModel = new AuthRole();
+        $res = $authRoleModel->roleDelete($id);
+        if(!$res){
+            $this->returnData = ErrorCode::$admin_enum['fail'];
+            $this->returnData['msg'] = '角色删除失败';
+            return response()->json($this->returnData);
         }
-        event(new \App\Events\userActionEvent('\App\Models\Admin\Role',$role->id,2,"用户".auth('admin')->user()->username."{".auth('admin')->user()->id."}删除角色".$role->name."{".$role->id."}"));
-        return redirect()->back()
-            ->withSuccess("删除成功");
+        $this->returnData['msg'] = '角色删除成功';
+        return response()->json($this->returnData);
     }
 }
