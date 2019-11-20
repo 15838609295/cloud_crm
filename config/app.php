@@ -1,5 +1,22 @@
 <?php
-
+global $scf_data;
+if ($scf_data['IS_SCF'] === TRUE){
+    $tengxunyun = [
+        'region' => $scf_data['system']['bucketConfig']['region'], #地域，如ap-guangzhou,ap-beijing-1
+        'credentials' => [
+            'secretId' => $scf_data['system']['bucketConfig']['secretId'],
+            'secretKey' => $scf_data['system']['bucketConfig']['secretKey'],
+        ],
+    ];
+}else{
+    $tengxunyun = [
+        'region' => '', #地域，如ap-guangzhou,ap-beijing-1
+        'credentials' => [
+            'secretId' => '',
+            'secretKey' => '',
+        ],
+    ];
+}
 return [
 
     /*
@@ -51,7 +68,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'url' => env('APP_URL', 'http://crm.op3n.me/'),
 
     /*
     |--------------------------------------------------------------------------
@@ -234,5 +251,10 @@ return [
         'Debugbar' => Barryvdh\Debugbar\Facade::class,
 
     ],
+
+    /*
+     * 腾讯云COS上传文件配置
+     * */
+    'tengxunyun' => $tengxunyun
 
 ];

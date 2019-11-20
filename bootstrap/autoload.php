@@ -1,6 +1,9 @@
 <?php
 
-define('LARAVEL_START', microtime(true));
+if (!defined('LARAVEL_START')){
+    define('LARAVEL_START', microtime(true));
+}
+
 
 /*
 |--------------------------------------------------------------------------
@@ -9,7 +12,7 @@ define('LARAVEL_START', microtime(true));
 |
 | Composer provides a convenient, automatically generated class loader
 | for our application. We just need to utilize it! We'll require it
-| into the script here so that we do not have to worry about the
+| into the script here so that we do not have to worry abouts the
 | loading of any our classes "manually". Feels great to relax.
 |
 */

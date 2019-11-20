@@ -10,10 +10,22 @@
 | the IoC container for the system binding all of the various parts.
 |
 */
+global $scf_data;
+if ($scf_data["IS_SCF"] == true){
+    $app = new App\Application(
+        realpath(__DIR__.'/../')
+    );
+    # new storage path
+    # base_path() -> returns root path
+    $path_storage = "/tmp";
 
-$app = new Illuminate\Foundation\Application(
-    realpath(__DIR__.'/../')
-);
+    # override already $app->storagePath using the function
+    $app->useStoragePath($path_storage);
+}else{
+    $app = new Illuminate\Foundation\Application(
+        realpath(__DIR__.'/../')
+    );
+}
 
 /*
 |--------------------------------------------------------------------------

@@ -1,5 +1,34 @@
 <?php
-
+global $scf_data;
+if ($scf_data["IS_SCF"] == true){
+    $mysql = [
+        'driver' => $scf_data['system']['database']['type'],
+        'host' => $scf_data['system']['database']['hostname'],
+        'port' => $scf_data['system']['database']['hostPort'],
+        'database' => $scf_data['system']['database']['database'],
+        'username' => $scf_data['system']['database']['username'],
+        'password' => $scf_data['system']['database']['password'],
+        'charset' => 'utf8',
+        'collation' => 'utf8_unicode_ci',
+        'prefix' => '',
+        'strict' => false,
+        'engine' => null,
+    ];
+}else{
+    $mysql = [
+        'driver' => env('DB_CONNECTION'),
+        'host' => env('DB_HOST'),
+        'port' => env('DB_PORT'),
+        'database' => env('DB_DATABASE'),
+        'username' => env('DB_USERNAME'),
+        'password' => env('DB_PASSWORD'),
+        'charset' => 'utf8',
+        'collation' => 'utf8_unicode_ci',
+        'prefix' => '',
+        'strict' => false,
+        'engine' => null,
+    ];
+}
 return [
 
     /*
@@ -52,19 +81,7 @@ return [
             'prefix' => '',
         ],
 
-        'mysql' => [
-            'driver' => 'mysql',
-            'host' => env('DB_HOST', 'localhost'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'forge'),
-            'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
-            'charset' => 'utf8',
-            'collation' => 'utf8_unicode_ci',
-            'prefix' => '',
-            'strict' => false,
-            'engine' => null,
-        ],
+        'mysql' => $mysql,
 
         'pgsql' => [
             'driver' => 'pgsql',
