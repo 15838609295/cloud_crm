@@ -28,7 +28,7 @@ class MemberLevelController extends BaseController
         $memberLevelModel = new MemberLevel();
         $data = $memberLevelModel->getMemberLevelWithFilter($searchFilter);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 详情 */
@@ -39,7 +39,7 @@ class MemberLevelController extends BaseController
         $memberModel = new MemberLevel();
         $data = $memberModel->getMemberLevelByID($id);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //等级增加
@@ -52,13 +52,13 @@ class MemberLevelController extends BaseController
         if(empty($data["name"])){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = "等级名称不能为空";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
 
         if (!preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $data["name"])) {
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '等级名称不能包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
 
         $memberLevelModel = new MemberLevel();
@@ -66,16 +66,16 @@ class MemberLevelController extends BaseController
         if($res){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = "名称已存在";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $res = $memberLevelModel->memberLevelInsert($data);
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = "添加失败";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "添加成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //等级更新
@@ -88,23 +88,23 @@ class MemberLevelController extends BaseController
         if(empty($data["name"])){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = "等级名称不能为空";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $memberLevelModel = new MemberLevel();
         $res = $memberLevelModel->checkNameRepeat($id,$data['name']);
         if($res){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = "名称已存在";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $res = $memberLevelModel->memberLevelUpdate($id,$data);
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = "更新失败";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "更新成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //等级删除
@@ -117,9 +117,9 @@ class MemberLevelController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = "删除失败";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "删除成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

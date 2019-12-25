@@ -73,27 +73,27 @@ class Activity extends Model
     }
 
     //添加活动
-    public function addActivity($data){
+    public function toAdd($data,$getId = false){
         $data['created_at'] = Carbon::now()->toDateTimeString();
         $data['activity_status'] = 1;
-        $res = DB::table($this->table)->insert($data);
+        $db = DB::table($this->table);
+        if ($getId){
+            return $db->insertGetId($data);
+        }else{
+            return $db->insert($data);
+        }
+    }
+
+    //修改活动
+    public function toUpdatead($data, $filter){
+        $data['updated_at'] = Carbon::now()->toDateTimeString();
+        $res = DB::table($this->table)->where($filter)->update($data);
         if ($res){
             return true;
         }else{
             return false;
         }
     }
-
-//    //复制活动
-//    public function copyActivity($data){
-//        $data['updated_at'] = Carbon::now()->toDateTimeString();
-//        $res = DB::table($this->table)->where('id',$id)->update($data);
-//        if ($res){
-//            return true;
-//        }else{
-//            return false;
-//        }
-//    }
 
     //取消活动
     public function cancelActivity($id,$data){
@@ -197,7 +197,11 @@ class Activity extends Model
             $res->where('activity_type_id',$data['activity_type']);
         }
         if ($data['status'] != ''){
-            $res->where('activity_status',$data['status']);
+            if (is_array($data['status'])){
+                $res->whereIn('activity_status',$data['status']);
+            }else{
+                $res->where('activity_status',$data['status']);
+            }
         }
         if ($data['start_time'] !='' && $data['end_time'] != ''){
             $res->whereBetween('start_time',[$data['start_time'],$data['end_time']]);
@@ -219,6 +223,9 @@ class Activity extends Model
         if(!is_array($result) || count($result)<1){
             return $list;
         }
+        foreach ($result as &$v){
+            $v['statusText'] = $this->getStatusTxt($v['activity_status']);
+        }
         $list['rows'] = $result;
         return $list;
     }
@@ -230,8 +237,9 @@ class Activity extends Model
             ->select('a.*','at.name as activity_type_name')
             ->where('a.id',$id)
             ->first();
+        $res = json_decode(json_encode($res),true);
         if ($res){
-            $res = json_decode(json_encode($res),true);
+            $res['statusText'] = $this->getStatusTxt($res['activity_status']);
             return $res;
         }
         return false;
@@ -286,34 +294,74 @@ class Activity extends Model
         return false;
     }
 
-    //客户与活动的关系  报名 点赞 收藏
-    public function relation($id,$activity_id){
+    //客户与所有活动的关系  报名 点赞 收藏
+    public function relation($id,$activity_ids){
         $data = [];
         //报名状态
-        $attend_1 = DB::table('attend')->where('member_id',$id)->where('status',1)->where('activity_id',$activity_id)->first();
-        if ($attend_1){
-            $data['sign_status'] = 1;  //待审核
+        $where[] = ['member_id','=',$id];
+        $attendUserData = DB::table('attend')->select('status','activity_id')->whereIn('activity_id',$activity_ids)->where($where)->get();
+        $attendUserData = json_decode(json_encode($attendUserData),true);
+        if (!$attendUserData){
+            foreach ($activity_ids as $k=>$v){
+                $data[$k]['id'] = $v;
+                $data[$k]['sign_status'] = 0;  //没有报名
+            }
         }else{
-            $attend_2 = DB::table('attend')->where('member_id',$id)->where('status',2)->where('activity_id',$activity_id)->first();
-            if ($attend_2){
-                $data['sign_status'] = 2;  //报名成功
-            }else{
-                $data['sign_status'] = 0;  //没有报名
+            foreach ($activity_ids as $k=>$v){
+                $data[$k]['id'] = $v;
+                foreach ($attendUserData as $u_v){
+                    if ($v == $u_v['activity_id']){
+                        if ($u_v['status'] == 1){
+                            $data[$k]['sign_status'] = 1;  //待审核
+                        }elseif ($u_v['status'] == 2){
+                            $data[$k]['sign_status'] = 2;  //报名成功
+                        }else{
+                            $data[$k]['sign_status'] = 3;   //报名已拒绝
+                        }
+                    }
+                }
+                if (!isset($data[$k]['sign_status'])){
+                    $data[$k]['sign_status'] = 0;
+                }
             }
         }
         //点赞状态
-        $fabulous = DB::table('fabulous')->where('member_id',$id)->where('activity_id',$activity_id)->first();
-        if ($fabulous){
-            $data['fabulous_status'] = 2; //已点赞
+        $fabulouData = DB::table('fabulous')->where('member_id',$id)->whereIn('activity_id',$activity_ids)->select('activity_id')->get();
+        $fabulouData = json_decode(json_encode($fabulouData),true);
+        if (!$fabulouData){
+            foreach ($data as &$v){
+                $v['fabulous_status'] = 1;  //没点赞
+            }
         }else{
-            $data['fabulous_status'] = 1; //未点赞
+            foreach ($data as &$v){
+                foreach ($fabulouData as $f_v){
+                    if ($v['id'] == $f_v['activity_id']){
+                        $v['fabulous_status'] = 2;   //已点赞
+                    }
+                }
+                if (!isset($v['fabulous_status'])){
+                    $v['fabulous_status'] = 1;
+                }
+            }
         }
         //收藏状态
-        $collect = DB::table('collect')->where('member_id',$id)->where('activity_id',$activity_id)->first();
-        if ($collect){
-            $data['collect_status'] = 2;  //已收藏
+        $collectData = DB::table('collect')->where('member_id',$id)->whereIn('activity_id',$activity_ids)->select('activity_id')->get();
+        $collectData = json_decode(json_encode($collectData),true);
+        if (!$collectData){
+            foreach ($data as &$v){
+                $v['collect_status'] = 1;  //已收藏
+            }
         }else{
-            $data['collect_status'] = 1; //未收藏
+            foreach ($data as &$v){
+                foreach ($collectData as $c_v){
+                    if ($v['id'] == $c_v['activity_id']){
+                        $v['collect_status'] = 2;   //已点赞
+                    }
+                }
+                if (!isset($v['collect_status'])){
+                    $v['collect_status'] = 1;
+                }
+            }
         }
         return $data;
     }
@@ -408,12 +456,7 @@ class Activity extends Model
 
     //点赞数量
     public function fabulousNumber($id){
-        $number = 0;
-        $res = DB::table('fabulous')->where('activity_id',$id)->get();
-        if ($res){
-            $res = json_decode(json_encode($res),true);
-            $number = count($res);
-        }
+        $number = DB::table('fabulous')->where('activity_id',$id)->count();
         return $number;
     }
 
@@ -442,12 +485,7 @@ class Activity extends Model
 
     //收藏数量
     public function collectNumber($id){
-        $number = 0;
-        $res = DB::table('collect')->where('activity_id',$id)->get();
-        if ($res){
-            $res = json_decode(json_encode($res),true);
-            $number = count($res);
-        }
+        $number = DB::table('collect')->where('activity_id',$id)->count();
         return $number;
     }
 
@@ -598,6 +636,30 @@ class Activity extends Model
 
     }
 
+    //获取活动状态
+    public function getStatusTxt($status){
+        switch ($status){
+            case 0;
+                $txt = '已取消';
+                break;
+            case 1;
+                $txt = '报名中';
+                break;
+            case 2;
+                $txt = '报名截止';
+                break;
+            case 3;
+                $txt = '活动进行中';
+                break;
+            case 4;
+                $txt = '活动已结束';
+                break;
+            default;
+                $txt = '未知状态';
+                break;
+        }
+        return $txt;
+    }
 
 
 

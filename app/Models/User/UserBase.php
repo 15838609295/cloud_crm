@@ -83,7 +83,7 @@ class UserBase extends Model
     {//  ->select('au.id','au.name','au.work_time','au.hiredate','au.work_status','au.wechat_pic','c.name as company_name')
         $res = DB::table($this->table_name.' as au')
             ->select(['au.id','au.name','au.wechat_pic','au.sex','au.work_time','au.mobile','au.bonus','au.position','au.work_status','au.last_login_time','au.email','au.created_at','au.wechat_id','au.openid','c.name as company_name'])
-            ->leftJoin('company as c','c.id','=','au.company_id')
+            ->leftJoin('company as c','au.company_id','=','c.id')
             ->where('au.id',$id)
             ->first();
         if(!$res){
@@ -799,6 +799,24 @@ class UserBase extends Model
         return $ids;
     }
 
+    //根据条件获取信息
+    public function getFields($field, $filter, $one = true){
+        if (!$filter){
+            return false;
+        }
+        $db = DB::table($this->table_name)->where($filter)->select($field);
+        if ($one){
+            $data = $db->first();
+        }else{
+            $data = $db->get();
+        }
+        if (!$data){
+            return [];
+        }else{
+            $data = json_decode(json_encode($data),true);
+        }
+        return $data;
+    }
 
 
 

@@ -3,12 +3,12 @@
     "system": {
         "database": {
             "type": "mysql",
-            "hostname": "gz-cdb-dk9albfx.sql.tencentcdb.com",
-            "database": "crm_test",
-            "username": "root",
-            "password": "diaoni123",
-            "hostPort": "61232",
-            "charset": "utf8",
+            "hostname": "",               
+            "database": "",              
+            "username": "",               
+            "password": "",               
+            "hostPort": "",               
+            "charset": "",                
             "debug": true
         },
         "cache": {
@@ -18,10 +18,10 @@
             "expire": 0
         },
         "bucketConfig": {
-            "secretId": "AKIDaGjxvdyHGzSeZFKoZ5LMmxyjDUVGQvw7",
-            "secretKey": "A4dGkBtN0PeeP3TxJPVQ6XjiR1LUR9tY",
-            "bucket": "",
-            "region": ""
+            "secretId": "",       
+            "secretKey": "",      
+            "bucket": "",         
+            "region": ""          
         }
     },
     "cloud": {
@@ -29,12 +29,12 @@
         "indexPath": "\/",
         "list": [
             {
-                "name": "crm-api",
-                "description": "客户管理",
-                "handler": "apigw.main_handler",
-                "memorySize": 1024,
-                "timeout": 60,
-                "runtime": "Php7",
+                "name": "crm-api",                 
+                "description": "客户管理",       
+                "handler": "apigw.main_handler",  
+                "memorySize": 1024,            
+                "timeout": 60,                
+                "runtime": "Php7",              
                 "environment": [],
                 "trigger": [],
                 "installPath": {
@@ -43,13 +43,13 @@
                 },
                 "upgradePath": {
                     "url": "\/web\/getUpgradeData",
-                    "params": {}
+                    "params": []
                 },
                 "dirName": "\/"
             }
         ],
-        "secretId": "AKIDaGjxvdyHGzSeZFKoZ5LMmxyjDUVGQvw7",
-        "secretKey": "A4dGkBtN0PeeP3TxJPVQ6XjiR1LUR9tY",
+        "secretId": "AKIDSzGIsDH8lAON6fuzvgRyGJ8i2vQPmn8E",
+        "secretKey": "FYc5JVzDpCUChW7SZS7cstiJwJTP5Sec",
         "alias": "",
         "env": ""
     }

@@ -46,12 +46,13 @@ class ExanController extends BaseController{
         $examModel = new Exam();
         $exam_res = $examModel->getConductExam();
         if (!$exam_res){  //没有在进行中的考试
-            $this->returnData['data'] = ['rows' => [],'total'=>0];
+            $this->returnData['data'] = ['rows' => [], 'total'=>0];
             return response()->json($this->returnData);
         }
         $data['rows'] = [];
         foreach ($group_ids as $g_v){
             foreach ($exam_res as $e_v){
+                $e_v['cover'] = $this->processingPictures($e_v['cover']);
                 $exam_group_ids = json_decode($e_v['examinee_id'],1);
                 if (in_array($g_v,$exam_group_ids)){
                     $data['rows'][] = $e_v;

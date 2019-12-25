@@ -16,7 +16,7 @@ CREATE TABLE `achievement` (
   `after_sale_id` int(10) NOT NULL DEFAULT '0' COMMENT '售后ID',
   `remarks` varchar(150) DEFAULT NULL COMMENT '备注',
   `refuse_remarks` varchar(150) DEFAULT NULL COMMENT '拒绝备注',
-  `sale_proof` varchar(255) DEFAULT NULL COMMENT '销售凭证',
+  `sale_proof` varchar(500) DEFAULT NULL COMMENT '销售凭证',
   `status` tinyint(1) DEFAULT '0' COMMENT '0为初始 1为成功 2为拒绝 3为退款',
   `buy_time` timestamp NULL DEFAULT NULL COMMENT '购买时间',
   `buy_length` int(3) NOT NULL DEFAULT '12' COMMENT '购买时长 按月算',
@@ -49,7 +49,7 @@ CREATE TABLE `admin_bonus_log` (
   `submitter` varchar(255) DEFAULT NULL COMMENT '提交人',
   `auditor` varchar(255) DEFAULT NULL COMMENT '审核人',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7895 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT '销售提成记录表';
 
 DROP TABLE IF EXISTS `admin_permission_role`;
 CREATE TABLE `admin_permission_role` (
@@ -64,221 +64,224 @@ CREATE TABLE `admin_permissions` (
   `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT '权限名',
   `label` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT '权限解释名称',
   `description` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT '描述与备注',
-  `cid` int(10) NOT NULL COMMENT '级别',
+  `cid` int(10) NOT NULL DEFAULT '0' COMMENT '级别',
   `icon` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT '图标',
   `display` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否显示 0显示 1不显示',
   `sort` int(10) NOT NULL DEFAULT '0' COMMENT '排序',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `show_mode` tinyint(3) NOT NULL DEFAULT '0' COMMENT '是否在左导航栏显示 0：否 1：是',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT '权限表';
 
-INSERT INTO `admin_permissions` VALUES ('1', 'admin.permission', '权限管理', '', '0', 'fa-users',0, 0, '2016-05-21 02:06:50', '2018-06-07 18:02:53');
-INSERT INTO `admin_permissions` VALUES ('2', 'admin.permission.index', '权限列表', '', '1', '',0,0, '2016-05-21 02:08:04', '2016-05-21 02:08:04');
-INSERT INTO `admin_permissions` VALUES ('3', 'admin.permission.create', '权限添加', '', '1', '',0,0, '2016-05-21 02:08:18', '2016-05-21 02:08:18');
-INSERT INTO `admin_permissions` VALUES ('4', 'admin.permission.edit', '权限修改', '', '1', '',0,0, '2016-05-21 02:08:35', '2016-05-21 02:08:35');
-INSERT INTO `admin_permissions` VALUES ('5', 'admin.permission.destroy ', '权限删除', '', '1', '',0,0, '2016-05-21 02:09:57', '2016-05-21 02:09:57');
-INSERT INTO `admin_permissions` VALUES ('6', 'admin.role.index', '角色列表', '', '1', '',0,0, '2016-05-23 02:36:40', '2016-05-23 02:36:40');
-INSERT INTO `admin_permissions` VALUES ('7', 'admin.role.create', '角色添加', '', '1', '',0,0, '2016-05-23 02:37:07', '2016-05-23 02:37:07');
-INSERT INTO `admin_permissions` VALUES ('8', 'admin.role.edit', '角色修改', '', '1', '',0,0, '2016-05-23 02:37:22', '2016-05-23 02:37:22');
-INSERT INTO `admin_permissions` VALUES ('9', 'admin.role.destroy', '角色删除', '', '1', '',0,0, '2016-05-23 02:37:48', '2016-05-23 02:37:48');
-INSERT INTO `admin_permissions` VALUES ('10', 'admin.user.index', '系统用户', '', '1', '',0,0, '2016-05-23 02:38:52', '2018-06-12 17:18:08');
-INSERT INTO `admin_permissions` VALUES ('11', 'admin.user.create', '管理员添加', '', '1', '',0,0, '2016-05-23 02:39:21', '2016-06-22 05:49:29');
-INSERT INTO `admin_permissions` VALUES ('12', 'admin.user.edit', '管理员编辑', '', '1', '',0,0, '2016-05-23 02:39:52', '2016-05-23 02:39:52');
-INSERT INTO `admin_permissions` VALUES ('13', 'admin.user.destroy', '管理员删除', '', '1', '',0,0, '2016-05-23 02:40:36', '2016-05-23 02:40:36');
-INSERT INTO `admin_permissions` VALUES ('14', 'admin.goods', '商品管理', '', '0', 'fa-sliders',0,0, '2018-05-24 09:58:48', '2018-05-24 09:58:48');
-INSERT INTO `admin_permissions` VALUES ('15', 'admin.goods.index', '商品列表', '', '14', '',0,0, '2018-05-24 10:09:57', '2018-05-24 10:09:57');
-INSERT INTO `admin_permissions` VALUES ('16', 'admin.goods.create', '商品添加', '', '14', '',0,0, '2018-05-25 10:00:17', '2018-05-25 10:00:17');
-INSERT INTO `admin_permissions` VALUES ('17', 'admin.goods.edit', '商品修改', '', '14', '',0,0, '2018-05-25 10:00:34', '2018-05-25 10:00:34');
-INSERT INTO `admin_permissions` VALUES ('18', 'admin.goods.destroy', '商品删除', '', '14', '',0,0, '2018-05-25 10:01:06', '2018-05-25 10:01:06');
-INSERT INTO `admin_permissions` VALUES ('19', 'admin.index', '控制面板', '', '0', 'fa-tachometer',0,0, '2018-05-25 10:01:47', '2018-05-25 10:01:47');
-INSERT INTO `admin_permissions` VALUES ('20', 'admin.index.index', '首页', '', '19', '',0,0, '2018-05-25 10:02:03', '2018-06-12 17:10:50');
-INSERT INTO `admin_permissions` VALUES ('21', 'admin.branch.index', '分部列表', '', '1', '',0,0, '2018-05-28 05:43:31', '2018-05-28 05:43:31');
-INSERT INTO `admin_permissions` VALUES ('22', 'admin.workstatus.index', '打卡签到', '', '19', '',0,0, '2018-05-28 06:36:50', '2018-05-28 06:36:50');
-INSERT INTO `admin_permissions` VALUES ('23', 'admin.case.index', '案例列表', '', '14', '',0,0, '2018-05-28 09:55:22', '2018-05-28 09:55:22');
-INSERT INTO `admin_permissions` VALUES ('24', 'admin.case.create', '案例添加', '', '14', '',0,0, '2018-05-28 10:16:13', '2018-05-28 10:16:13');
-INSERT INTO `admin_permissions` VALUES ('25', 'admin.case.edit', '案例修改', '', '14', '',0,0, '2018-05-28 10:16:33', '2018-05-28 10:16:33');
-INSERT INTO `admin_permissions` VALUES ('26', 'admin.case.destroy', '案例删除', '', '14', '',0,0, '2018-05-28 10:16:52', '2018-05-28 10:16:52');
-INSERT INTO `admin_permissions` VALUES ('27', 'admin.recovery.index', '商品回收站', '', '14', '',0,0, '2018-05-28 10:18:07', '2018-05-28 10:18:07');
-INSERT INTO `admin_permissions` VALUES ('28', 'admin.member', '客户管理', '', '0', 'fa-users',0,0, '2018-05-29 02:50:41', '2018-05-29 02:50:41');
-INSERT INTO `admin_permissions` VALUES ('29', 'admin.member.index', '我的客户', '', '28', '',0,0, '2018-05-29 02:51:06', '2018-05-29 02:51:06');
-INSERT INTO `admin_permissions` VALUES ('30', 'admin.member.create', '客户添加', '', '28', '',0,0, '2018-05-29 07:34:31', '2018-05-29 07:34:31');
-INSERT INTO `admin_permissions` VALUES ('31', 'admin.member.edit', '客户修改', '', '28', '',0,0, '2018-05-29 07:34:50', '2018-05-29 07:34:50');
-INSERT INTO `admin_permissions` VALUES ('32', 'admin.member.destroy', '客户删除', '', '28', '',0,0, '2018-05-29 07:35:06', '2018-05-29 07:35:06');
-INSERT INTO `admin_permissions` VALUES ('33', 'admin.member.moneyedit', '修改余额', '', '28', '',0,0, '2018-05-29 07:50:09', '2018-05-29 07:50:32');
-INSERT INTO `admin_permissions` VALUES ('34', 'admin.memberlevel.index', '等级设置', '', '88', '',0,0, '2018-05-29 09:37:01', '2018-05-29 09:37:01');
-INSERT INTO `admin_permissions` VALUES ('35', 'admin.memberlevel.create', '等级添加', '', '88', '',0,0, '2018-05-29 09:49:01', '2018-05-29 09:49:01');
-INSERT INTO `admin_permissions` VALUES ('36', 'admin.memberlevel.edit', '等级修改', '', '88', '',0,0, '2018-05-29 09:49:22', '2018-05-29 09:49:22');
-INSERT INTO `admin_permissions` VALUES ('37', 'admin.memberlevel.destroy', '等级删除', '', '88', '',0,0, '2018-05-29 09:49:59', '2018-05-29 09:49:59');
-INSERT INTO `admin_permissions` VALUES ('38', 'admin.membersource.index', '来源设置', '', '88', '',0,0, '2018-05-29 10:06:45', '2018-05-29 10:06:45');
-INSERT INTO `admin_permissions` VALUES ('39', 'admin.order', '订单管理', '', '0', 'fa-reorder',0,0, '2018-05-29 11:12:38', '2018-05-29 11:12:38');
-INSERT INTO `admin_permissions` VALUES ('40', 'admin.order.index', '订单列表', '', '39', '',0,0, '2018-05-29 11:12:57', '2018-05-29 11:12:57');
-INSERT INTO `admin_permissions` VALUES ('41', 'admin.order.create', '订单添加', '', '39', '',0,0, '2018-06-01 02:41:10', '2018-06-01 02:41:10');
-INSERT INTO `admin_permissions` VALUES ('42', 'admin.order.edit', '订单修改', '', '39', '',0,0, '2018-06-01 02:42:25', '2018-06-01 02:42:25');
-INSERT INTO `admin_permissions` VALUES ('43', 'admin.order.destroy', '订单删除', '', '39', '',0,0, '2018-06-01 02:42:48', '2018-06-01 02:42:48');
-INSERT INTO `admin_permissions` VALUES ('44', 'admin.article', '文章管理', '', '0', 'fa-newspaper-o',0,0, '2018-06-01 03:14:31', '2018-06-01 03:14:31');
-INSERT INTO `admin_permissions` VALUES ('45', 'admin.articles.index', '新闻列表', '', '44', '',0,0, '2018-06-01 03:16:38', '2018-06-01 03:29:29');
-INSERT INTO `admin_permissions` VALUES ('46', 'admin.articles.create', '新闻添加', '', '44', '',0,0, '2018-06-01 03:30:02', '2018-06-01 03:30:41');
-INSERT INTO `admin_permissions` VALUES ('47', 'admin.articles.edit', '新闻修改', '', '44', '',0,0, '2018-06-01 03:30:33', '2018-06-01 07:26:33');
-INSERT INTO `admin_permissions` VALUES ('48', 'admin.articles.destroy', '新闻删除', '', '44', '',0,0, '2018-06-01 03:31:31', '2018-06-01 07:26:42');
-INSERT INTO `admin_permissions` VALUES ('49', 'admin.help.index', '使用帮助', '', '44', '',0,0, '2018-06-01 03:32:32', '2018-06-01 03:32:32');
-INSERT INTO `admin_permissions` VALUES ('50', 'admin.about.index', '关于我们', '', '44', '',0,0, '2018-06-01 03:32:54', '2018-06-01 03:32:54');
-INSERT INTO `admin_permissions` VALUES ('51', 'admin.log.index', '更新日志', '', '44', '',0,0, '2018-06-01 03:33:16', '2018-06-01 03:33:16');
-INSERT INTO `admin_permissions` VALUES ('52', 'admin.finance', '财务管理', '', '0', 'fa-diamond',0,0, '2018-06-01 08:36:34', '2018-06-01 08:36:34');
-INSERT INTO `admin_permissions` VALUES ('53', 'admin.wallet.index', '资金明细', '', '52', '',0,0, '2018-06-01 08:36:58', '2018-06-01 08:36:58');
-INSERT INTO `admin_permissions` VALUES ('54', 'admin.donation.index', '赠送金明细', '', '52', '',0,0, '2018-06-01 09:32:13', '2018-06-01 09:32:13');
-INSERT INTO `admin_permissions` VALUES ('55', 'admin.customer', '客户资源', '', '0', 'fa-user-md',0,0, '2018-06-01 09:36:25', '2018-06-01 09:36:25');
-INSERT INTO `admin_permissions` VALUES ('56', 'admin.customer.index', '我的客户资源', '', '55', '',0,0, '2018-06-01 09:36:55', '2018-06-01 09:36:55');
-INSERT INTO `admin_permissions` VALUES ('57', 'admin.problem', '问题反馈', '', '0', 'fa-mail-reply-all',0,0, '2018-06-05 09:54:51', '2018-06-05 09:54:51');
-INSERT INTO `admin_permissions` VALUES ('58', 'admin.problem.index', '日常问题', '', '57', '',0,0, '2018-06-05 09:55:16', '2018-06-05 09:55:16');
-INSERT INTO `admin_permissions` VALUES ('59', 'admin.problem.create', '问题添加', '', '57', '',0,0, '2018-06-05 10:01:37', '2018-06-05 10:01:37');
-INSERT INTO `admin_permissions` VALUES ('60', 'admin.problem.edit', '问题修改', '', '57', '',0,0, '2018-06-05 10:01:55', '2018-06-05 10:01:55');
-INSERT INTO `admin_permissions` VALUES ('61', 'admin.problem.destroy', '问题删除', '', '57', '',0,0, '2018-06-05 10:02:33', '2018-06-05 10:02:33');
-INSERT INTO `admin_permissions` VALUES ('80', 'admin.customer.create', '客户资源添加', '', '55', '',0,0, '2018-06-07 18:10:32', '2018-06-07 18:10:32');
-INSERT INTO `admin_permissions` VALUES ('81', 'admin.customer.edit', '客户资源修改', '', '55', '',0,0, '2018-06-07 18:10:51', '2018-06-07 18:10:51');
-INSERT INTO `admin_permissions` VALUES ('82', 'admin.customer.destroy', '客户资源删除', '', '55', '',0,0, '2018-06-07 18:11:08', '2018-06-07 18:11:08');
-INSERT INTO `admin_permissions` VALUES ('83', 'admin.achievement.index', '业绩订单', '', '39', '',0,0, '2018-06-08 11:39:25', '2018-06-08 11:39:25');
-INSERT INTO `admin_permissions` VALUES ('84', 'admin.globaldata.index', '业绩排行榜', '', '19', '',0,0, '2018-06-08 16:52:14', '2018-06-08 16:52:14');
-INSERT INTO `admin_permissions` VALUES ('85', 'admin.index.home', '登录初始化', '', '19', '',0,0, '2018-06-12 17:12:07', '2018-06-12 17:12:07');
-INSERT INTO `admin_permissions` VALUES ('86', 'admin.member.goods', '业绩商品', '', '28', '',0,0, '2018-06-12 21:14:35', '2018-06-12 21:14:35');
-INSERT INTO `admin_permissions` VALUES ('88', 'admin.configs', '系统设置', '', '0', 'fa-cog',0,0, '2018-06-23 11:00:50', '2018-06-23 11:00:50');
-INSERT INTO `admin_permissions` VALUES ('89', 'admin.configs.index', '站点信息', '', '88', '',0,0, '2018-06-23 11:01:21', '2018-06-23 11:01:21');
-INSERT INTO `admin_permissions` VALUES ('90', 'admin.salebonusrule.index', '提成设置', '', '88', '',0,0, '2018-06-23 11:09:45', '2018-06-23 11:09:45');
-INSERT INTO `admin_permissions` VALUES ('91', 'admin.aftersale.index', '售后订单', '', '39', '',0,0, '2018-06-24 20:37:59', '2018-06-24 20:37:59');
-INSERT INTO `admin_permissions` VALUES ('92', 'admin.achievement.create', '业绩增加', '', '39', '',0,0, '2018-06-26 11:52:21', '2018-06-26 11:52:21');
-INSERT INTO `admin_permissions` VALUES ('93', 'admin.achievement.edit', '业绩修改', '', '39', '',0,0, '2018-06-26 11:52:38', '2018-06-26 11:52:38');
-INSERT INTO `admin_permissions` VALUES ('94', 'admin.achievement.destroy', '业绩删除', '', '39', '',0,0, '2018-06-26 11:52:52', '2018-06-26 11:52:52');
-INSERT INTO `admin_permissions` VALUES ('95', 'admin.aftersale.create', '售后增加', '', '39', '',0,0, '2018-06-29 17:59:15', '2018-06-29 17:59:15');
-INSERT INTO `admin_permissions` VALUES ('96', 'admin.aftersale.edit', '售后修改', '', '39', '',0,0, '2018-06-29 18:00:03', '2018-06-29 18:00:03');
-INSERT INTO `admin_permissions` VALUES ('97', 'admin.aftersale.destroy', '售后删除', '', '39', '',0,0, '2018-06-29 18:01:01', '2018-06-29 18:01:01');
-INSERT INTO `admin_permissions` VALUES ('98', 'admin.achievement.export', '业绩导出', '', '39', '',0,0, '2018-07-12 17:55:32', '2018-07-12 17:55:32');
-INSERT INTO `admin_permissions` VALUES ('99', 'admin.siteconfig.index', '站点设置', '', '88', '',0,0, '2018-07-12 17:56:00', '2018-07-12 17:56:00');
-INSERT INTO `admin_permissions` VALUES ('100', 'admin.project.index', '项目设置', '', '88', '',0,0, '2018-07-12 18:02:41', '2018-07-12 18:02:41');
-INSERT INTO `admin_permissions` VALUES ('101', 'admin.achievement.examine', '业绩审核', '', '39', '',0,0, '2018-07-16 19:01:46', '2018-07-16 19:01:46');
-INSERT INTO `admin_permissions` VALUES ('102', 'admin.customer.assign', '客户资源指派', '', '55', '',0, 0, '2018-07-18 16:43:15', '2018-07-18 16:43:15');
-INSERT INTO `admin_permissions` VALUES ('103', 'admin.takemoney.index', '提现管理', '', '52', '',0,0, '2018-07-18 16:43:15', '2018-07-18 16:43:15');
-INSERT INTO `admin_permissions` VALUES ('104', 'admin.takemoney.create', '提现', '', '52', '',0,0, '2018-07-18 16:43:15', '2018-07-18 16:43:15');
-INSERT INTO `admin_permissions` VALUES ('105', 'admin.takemoney.edit', '提现审核', '', '52', '',0,0, '2018-07-18 16:43:15', '2018-07-18 16:43:15');
-INSERT INTO `admin_permissions` VALUES ('106', 'admin.bonuslog.index', '提成记录', '', '52', '',0,0, '2018-08-02 15:37:11', '2018-08-02 15:37:11');
-INSERT INTO `admin_permissions` VALUES ('107', 'admin.customer.excel', '客户资源导入导出', '', '55', '',0,0, '2018-08-17 16:28:58', '2018-08-17 16:28:58');
-INSERT INTO `admin_permissions` VALUES ('108', 'admin.company.index', '公司设置', '', '88', '',0,0, '2018-08-27 14:51:20', '2018-08-27 14:51:20');
-INSERT INTO `admin_permissions` VALUES ('109', 'admin.sysupdate.index', 'CRM版本', '', '88', '',0,0, '2018-10-26 19:15:11', '2018-10-26 19:15:11');
-INSERT INTO `admin_permissions` VALUES ('110', 'admin.achievement.updaterecord', '更新订单信息', '', '39', '',0, 0, '2018-10-26 19:15:47', '2018-10-26 19:15:47');
-INSERT INTO `admin_permissions` VALUES ('111', 'admin.achievement.updatedetail', '更新订单详情', '', '39', '',0, 0, '2018-10-26 19:15:47', '2018-10-26 19:15:47');
-INSERT INTO `admin_permissions` VALUES ('112', 'admin.hr', '人事管理', '人事管理列表', '0', 'fa-steam',0, 0, '2018-10-26 19:15:47', '2018-10-26 19:15:47');
-INSERT INTO `admin_permissions` VALUES ('113', 'admin.hr.index', '员工列表', '', '112', '',0, 0, '2018-10-26 19:15:47', '2018-10-26 19:15:47');
-INSERT INTO `admin_permissions` VALUES ('114', 'admin.hr.edit', '员工资料编辑', '', '112', '',0,0, '2018-10-26 19:15:47', '2018-10-26 19:15:47');
-INSERT INTO `admin_permissions` VALUES ('115', 'admin.achievement.exchangeorder', '业绩订单转移', '', '39', '',0, 0, '2018-10-26 19:15:47', '2018-10-26 19:15:47');
-INSERT INTO `admin_permissions` VALUES ('116', 'admin.aftersale.exchangeorder', '售后订单转移', '', '39', '',0, 0, '2018-10-26 19:15:47', '2018-10-26 19:15:47');
-INSERT INTO `admin_permissions` VALUES ('117', 'admin.workorder.index', '工单列表', '', '57', '',0, 0, '2018-10-23 14:56:04', '2018-10-23 14:56:04');
-INSERT INTO `admin_permissions` VALUES ('118', 'admin.workorder.edit', '工单处理', '', '57', '',0, 0, '2018-10-23 14:56:04', '2018-10-23 14:56:04');
-INSERT INTO `admin_permissions` VALUES ('119', 'personalInformation', '个人人事信息', '查看个人人事信息', '112', '',0, 0, '2019-01-15 18:50:06', '2019-01-15 18:50:06');
-INSERT INTO `admin_permissions` VALUES ('123', 'admin.tencent','腾讯云','腾讯云模块','0','',1,0,'2019-03-11 17:54:14','2019-03-25 17:08:33');
-INSERT INTO `admin_permissions` VALUES ('124', 'admin.tencent.customer','腾讯云客户','腾讯云客户','123','',1,0,'2019-03-11 17:55:36','2019-03-11 17:55:36');
-INSERT INTO `admin_permissions` VALUES ('125', 'admin.tencent.order','腾讯云订单','腾讯云订单','123','',1,0,'2019-03-11 17:56:07','2019-03-11 17:56:07');
-INSERT INTO `admin_permissions` VALUES ('126', 'admin.tencent.config','腾讯云配置','腾讯云配置','123','',1,0,'2019-03-11 17:56:37','2019-03-11 17:56:37');
-INSERT INTO `admin_permissions` VALUES ('127', 'admin.wallet','我的钱包','我的钱包','0','',0,0,'2019-05-18 17:56:37','2019-05-18 17:56:37');
-INSERT INTO `admin_permissions` VALUES ('128', 'admin.wallet.details','钱包明细','钱包明细','127','',0,0,'2019-05-18 17:56:37','2019-05-18 17:56:37');
-INSERT INTO `admin_permissions` VALUES ('129', 'admin.wallet.bonus','预期奖金列表','预期奖金列表','127','',0,0,'2019-05-18 17:56:37','2019-05-18 17:56:37');
-INSERT INTO `admin_permissions` VALUES ('130', 'admin.wallet.bonus.get','奖金提现','奖金提现','127','',0,0,'2019-05-18 17:56:37','2019-05-18 17:56:37');
-INSERT INTO `admin_permissions` VALUES ('131', 'admin.tencent.power','权限管理','权限管理','123','',1,0,'2019-05-18 17:56:37','2019-05-18 17:56:37');
-INSERT INTO `admin_permissions` VALUES ('132', 'admin.tencent.customerOrder','腾讯云订单','腾讯云订单','123','',1,0,'2019-05-18 17:56:37','2019-05-18 17:56:37');
-INSERT INTO `admin_permissions` VALUES ('133', 'admin.plugin.index','插件设置','插件设置','88','',0,0,'2019-05-18 17:56:37','2019-05-18 17:56:37');
-INSERT INTO `admin_permissions` VALUES ('134', 'admin.product.productType','产品类型','产品类型','14','',0,0,'2019-05-18 17:56:37','2019-05-18 17:56:37');
-INSERT INTO `admin_permissions` VALUES (135,'admin.activity','活动报名','活动报名',0,'',1,0,'2019-07-09 11:16:30','2019-07-12 12:04:52');
-INSERT INTO `admin_permissions` VALUES (136,'admin.activity.list','活动列表','活动列表',135,'',1,0,'2019-07-09 11:18:24','2019-07-12 12:04:52');
-INSERT INTO `admin_permissions` VALUES (137,'admin.activity.typeList','活动类型','活动类型列表',135,'',1,0,'2019-07-09 11:19:12','2019-07-12 12:04:52');
-INSERT INTO `admin_permissions` VALUES (138,'admin.activity.comment','活动留言','活动留言列表',135,'',1,0,'2019-07-09 11:21:11','2019-07-12 12:04:52');
-INSERT INTO `admin_permissions` VALUES (139,'admin.activity.create','创建活动','创建活动',135,'',1,0,'2019-07-09 11:23:15','2019-07-12 12:04:52');
-INSERT INTO `admin_permissions` VALUES (140,'admin.activity.modify','编辑活动','编辑活动',135,'',1,0,'2019-07-09 11:24:13','2019-07-12 12:04:52');
-INSERT INTO `admin_permissions` VALUES (141,'admin.activity.cancel','取消活动','取消活动',135,'',1,0,'2019-07-09 11:24:29','2019-07-12 12:04:52');
-INSERT INTO `admin_permissions` VALUES (142,'admin.activity.delete','删除活动','删除活动',135,'',1,0,'2019-07-09 11:24:47','2019-07-12 12:04:52');
-INSERT INTO `admin_permissions` VALUES (143,'admin.activity.reviewMember','审核用户','审核申请参加活动的用户',135,'',1,0,'2019-07-09 11:27:17','2019-07-12 12:04:52');
-INSERT INTO `admin_permissions` VALUES (144,'admin.activity.reviewComment','审核评论','审核参加活动的用户的评论',135,'',1,0,'2019-07-09 11:27:17','2019-07-12 12:04:52');
-INSERT INTO `admin_permissions` VALUES (145,'admin.activity.exportJoinMenber','导出参加者','导出参加者',135,'',1,0,'2019-07-09 11:27:17','2019-07-12 12:04:52');
-INSERT INTO `admin_permissions` VALUES (146,'admin.memberManage','会员管理','会员管理',0,'',1,0,'2019-07-09 11:34:44','2019-07-12 14:27:36');
-INSERT INTO `admin_permissions` VALUES (147,'admin.memberManage.list','会员列表','会员列表',146,'',1,0,'2019-07-09 11:36:07','2019-07-12 14:27:36');
-INSERT INTO `admin_permissions` VALUES (148,'admin.memberManage.type','会员类型','会员类型',146,'',1,0,'2019-07-09 11:36:37','2019-07-12 14:27:36');
-INSERT INTO `admin_permissions` VALUES (149,'amdin.memberManage.create','添加会员','添加会员',146,'',1,0,'2019-07-09 11:37:38','2019-07-12 14:27:36');
-INSERT INTO `admin_permissions` VALUES (150,'admin.memberManage.edit','编辑会员','编辑会员',146,'',1,0,'2019-07-09 11:38:03','2019-07-12 14:27:36');
-INSERT INTO `admin_permissions` VALUES (151,'admin.memberManage.delete','会员删除','会员删除',146,'',1,0,'2019-07-09 11:38:49','2019-07-12 14:27:36');
-INSERT INTO `admin_permissions` VALUES (152,'admin.memberManage.import','导入会员','导入会员',146,'',1,0,'2019-07-09 11:39:21','2019-07-12 14:27:36');
-INSERT INTO `admin_permissions` VALUES (153,'admin.exam','考试培训','考试培训',0,'',1,0,'2019-07-09 11:42:25','2019-07-12 14:27:39');
-INSERT INTO `admin_permissions` VALUES (154,'admin.memberManage.details','会员详情','会员详情',146,'',1,0,'2019-07-09 11:48:31','2019-07-12 14:27:36');
-INSERT INTO `admin_permissions` VALUES (155,'admin.exam.statistics','数据统计','考试数据统计',153,'',1,0,'2019-07-09 13:38:29','2019-07-12 14:27:39');
-INSERT INTO `admin_permissions` VALUES (156,'admin.exam.analysis','试题分析','考试试题分析',153,'',1,0,'2019-07-09 13:38:58','2019-07-12 14:27:39');
-INSERT INTO `admin_permissions` VALUES (157,'admin.exam.list','考试列表','考试列表',153,'',1,0,'2019-07-09 13:39:41','2019-07-12 14:27:39');
-INSERT INTO `admin_permissions` VALUES (158,'admin.exam.create','创建考试','创建考试',153,'',1,0,'2019-07-09 13:40:18','2019-07-12 14:27:39');
-INSERT INTO `admin_permissions` VALUES (159,'admin.exam.examinee','考生管理','考生管理',153,'',1,0,'2019-07-09 14:55:53','2019-07-12 14:27:39');
-INSERT INTO `admin_permissions` VALUES (160,'admin.lookarticles.index','类型列表','--',44,'',0,0,'2019-07-09 15:16:21','2019-07-12 12:04:40');
-INSERT INTO `admin_permissions` VALUES (161,'admin.lookarticles.create','添加类型','--',44,'',0,0,'2019-07-09 15:17:07','2019-07-12 12:04:40');
-INSERT INTO `admin_permissions` VALUES (162,'admin.lookarticles.edit','修改类型','--',44,'',0,0,'2019-07-09 15:17:31','2019-07-12 12:04:40');
-INSERT INTO `admin_permissions` VALUES (163,'admin.lookarticles.destroy','删除类型','--',44,'',0,0,'2019-07-09 15:17:57','2019-07-12 12:04:40');
-INSERT INTO `admin_permissions` VALUES (164,'admin.articles.wxappPlugin','新闻模块小程序插件','通过这个控制是否安装小程序新闻插件',174,'',1,0,'2019-07-09 17:26:49','2019-07-12 12:04:40');
-INSERT INTO `admin_permissions` VALUES (165,'admin.tencent.wxappPlugin','腾讯云小程序插件','通过这个控制是否安装小程序腾讯云插件',174,'',1,0,'2019-07-09 17:36:42','2019-07-12 12:04:49');
-INSERT INTO `admin_permissions` VALUES (166,'admin.activity.wxappPlugin','活动报名小程序插件','通过这个控制是否安装小程序活动插件',174,'',1,0,'2019-07-09 17:37:30','2019-07-12 12:04:52');
-INSERT INTO `admin_permissions` VALUES (167,'admin.memberManage.wxappPlugin','会员管理小程序插件','通过这个控制是否安装小程序会员管理(通讯录)插件',174,'',1,0,'2019-07-09 17:38:31','2019-07-12 14:27:36');
-INSERT INTO `admin_permissions` VALUES (168,'admin.exam.wxappPlugin','考试培训小程序插件','通过这个控制是否安装小程序考试培训插件',174,'',1,0,'2019-07-09 17:39:12','2019-07-12 14:27:39');
-INSERT INTO `admin_permissions` VALUES (169,'admin.member.authentication','客户认证','客户认证',28,'',0,0,'2019-07-10 09:16:33','2019-07-12 12:04:36');
-INSERT INTO `admin_permissions` VALUES (170,'admin.customer.overdue','逾期客户列表','逾期客户列表',55,'',0,0,'2019-07-10 18:21:55','2019-07-12 12:04:44');
-INSERT INTO `admin_permissions` VALUES (171,'admin.customer.lose','丢单客户列表','丢单客户列表',55,'',0,0,'2019-07-10 18:23:28','2019-07-12 12:04:44');
-INSERT INTO `admin_permissions` VALUES (172,'admin.exam.questions','题库管理','题库管理',153,'',1,0,'2019-07-11 16:53:19','2019-07-12 14:27:39');
-INSERT INTO `admin_permissions` VALUES (173,'admin.exam.paper','试卷管理','试卷管理',153,'',1,0,'2019-07-11 16:53:54','2019-07-12 14:27:39');
-INSERT INTO `admin_permissions` VALUES (174,'admin.wxappPlugin','小程序插件管理','小程序插件管理',0,'',1,0,'2019-07-25 09:50:59','2019-07-30 13:41:16');
-INSERT INTO `admin_permissions` VALUES (175,'admin.wxappPlugin.shop','商城业务','小程序商城',174,'',1,0,'2019-07-25 09:52:11','2019-07-25 10:12:06');
-INSERT INTO `admin_permissions` VALUES (176,'admin.wxappPlugin.recharge','快速充值','快速充值',174,'',1,0,'2019-07-25 09:53:03','2019-07-25 10:06:52');
-INSERT INTO `admin_permissions` VALUES (177,'admin.wxappPlugin.wallet','我的钱包','钱包',174,'',1,0,'2019-07-25 09:53:54','2019-07-25 10:12:14');
-INSERT INTO `admin_permissions` VALUES (178,'admin.wxappPlugin.order','订单管理','订单管理',174,'',1,0,'2019-07-25 09:54:29','2019-07-25 10:06:58');
-INSERT INTO `admin_permissions` VALUES (179,'admin.wxappPlugin.workOrder','提交工单','提交工单',174,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');
-INSERT INTO `admin_permissions` VALUES (180,'admin.wxapp','小程序管理','小程序管理',0,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');
-INSERT INTO `admin_permissions` VALUES (181,'admin.wxapp.staff','员工小程序设置','员工小程序设置',180,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');
-INSERT INTO `admin_permissions` VALUES (182,'admin.wxapp.agent','代理商小程序','代理商小程序',180,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');
-INSERT INTO `admin_permissions` VALUES (183,'admin.adminWxappPlugin','内部小程序插件管理','内部小程序插件管理',0,'',1,0,'2019-08-15 09:25:08','2019-09-12 09:59:29');
-INSERT INTO `admin_permissions` VALUES (184,'admin.adminWxappPlugin.customer','客户中心','客户中心',183,'',1,0,'2019-08-15 09:26:15','2019-09-12 09:59:29');
-INSERT INTO `admin_permissions` VALUES (185,'admin.adminWxappPlugin.exam','考试培训','考试培训',183,'',1,0,'2019-08-15 09:26:46','2019-09-12 09:59:29');
-INSERT INTO `admin_permissions` VALUES (186,'admin.user.wallet','系统用户钱包明细','员工钱包明细',1,'',1,0,'2019-08-16 10:35:05','2019-09-12 10:13:57');
-INSERT INTO `admin_permissions` VALUES (187,'admin.wallet.modify','余额修改( 慎用 )','慎用,仅管理员可提供该权限',127,'',1,0,'2019-08-16 10:38:50','2019-09-12 09:59:32');
-INSERT INTO `admin_permissions` VALUES (188,'admin.exam.stop','停止考试','停止考试',153,'',1,0,'2019-08-16 11:06:12','2019-08-19 09:52:43');
-INSERT INTO `admin_permissions` VALUES (189,'admin.exam.delete','删除考试','删除考试',153,'',1,0,'2019-08-16 11:06:43','2019-08-19 09:52:43');
-INSERT INTO `admin_permissions` VALUES (190,'admin.exam.analysis','考试答卷详情','考试考生答卷详情统计',153,'',1,0,'2019-08-16 11:07:58','2019-08-19 09:52:44');
-INSERT INTO `admin_permissions` VALUES (191,'admin.examinee.edit','考生编辑','考生信息编辑',153,'',1,0,'2019-08-16 11:10:08','2019-08-19 09:52:45');
-INSERT INTO `admin_permissions` VALUES (192,'admin.examinee.assign','考生分配','考生分配到分组',153,'',1,0,'2019-08-16 11:11:29','2019-08-19 09:52:46');
-INSERT INTO `admin_permissions` VALUES (193,'admin.examinee.team','考生分组管理','考生分组管理',153,'',1,0,'2019-08-16 11:11:52','2019-08-19 09:52:47');
-INSERT INTO `admin_permissions` VALUES (194,'admin.examPaper.create','试卷创建','试卷创建',153,'',1,0,'2019-08-16 11:13:37','2019-08-19 09:52:48');
-INSERT INTO `admin_permissions` VALUES (195,'admin.examPaper.export','试卷导出','试卷导出',153,'',1,0,'2019-08-16 11:14:02','2019-08-19 09:52:48');
-INSERT INTO `admin_permissions` VALUES (196,'admin.examPaper.modify','试卷修改','试卷修改',153,'',1,0,'2019-08-16 11:14:56','2019-08-19 09:52:49');
-INSERT INTO `admin_permissions` VALUES (197,'admin.examPaper.question','试卷题目管理','试卷题目管理',153,'',1,0,'2019-08-16 11:15:22','2019-08-19 09:52:50');
-INSERT INTO `admin_permissions` VALUES (198,'admin.examPaper.type','试卷分类管理','试卷分类管理',153,'',1,0,'2019-08-16 11:16:10','2019-08-19 09:52:50');
-INSERT INTO `admin_permissions` VALUES (199,'admin.member.afterSales','售后管理','售后管理',28,'',1,0,'2019-08-19 09:59:36','2019-09-04 11:59:00');
-INSERT INTO `admin_permissions` VALUES (200,'admin.member.toAgent','跳转代理商端','跳转代理商端',28,'',1,0,'2019-08-19 10:00:08','2019-09-12 10:18:23');
-INSERT INTO `admin_permissions` VALUES (201,'admin.operation.index','平台运营数据','平台运营数据',19,'',1,0,'2019-08-19 10:00:17','2019-09-12 10:28:30');
-INSERT INTO `admin_permissions` VALUES (202,'admin.user.toUser','跳转系统用户账号','跳转系统用户账号',1,'',1,0,'2019-08-26 16:58:41','2019-09-12 10:12:32');
-INSERT INTO `admin_permissions` VALUES (203,'admin.member.modifyLevel','客户等级修改','客户等级修改',28,'',1,0,'2019-09-06 15:22:11',NULL);
-INSERT INTO `admin_permissions` VALUES (204,'admin.update.stopWeb','更新时是否启用停站功能','更新时是否启用停站功能',1,'',1,0,'2019-09-06 15:25:11','2019-09-06 15:25:30');
-INSERT INTO `admin_permissions` VALUES (205,'admin.workOrder','工单管理','工单管理',0,'',1,0,'2019-09-11 14:52:05','2019-09-11 15:01:54');
-INSERT INTO `admin_permissions` VALUES (206,'admin.workOrder.list','工单列表','工单列表',205,'',1,0,'2019-09-11 14:55:54','2019-09-11 15:01:52');
-INSERT INTO `admin_permissions` VALUES (207,'admin.workOrder.staff','服务人员管理','服务人员管理',205,'',1,0,'2019-09-11 14:57:58','2019-09-11 15:01:52');
-INSERT INTO `admin_permissions` VALUES (208,'admin.workOrder.area','服务范围管理','服务范围管理',205,'',1,0,'2019-09-11 14:58:35','2019-09-11 15:01:53');
-INSERT INTO `admin_permissions` VALUES (209,'admin.workOrder.statistics','数据分析','数据分析',205,'',1,0,'2019-09-11 14:59:18','2019-09-11 15:01:54');
-INSERT INTO `admin_permissions` VALUES (210,'admin.workOrder.serviceType','问题类别管理','问题类别管理',205,'',1,0,'2019-09-11 15:01:16','2019-09-11 15:01:54');
-INSERT INTO `admin_permissions` VALUES (211,'admin.enterprise.display','企业展示','企业展示',44,'',1,0,'2019-09-11 15:03:41','2019-09-11 15:05:38');
-INSERT INTO `admin_permissions` VALUES (212,'admin.enterprise.edit','企业展示编辑','企业展示编辑',44,'',1,0,'2019-09-11 15:04:20','2019-09-11 15:05:39');
-INSERT INTO `admin_permissions` VALUES (213,'admin.wxappPlugin.enterpriseDisplay','企业展示','企业展示',174,'',1,0,'2019-09-11 16:07:17','2019-09-11 16:15:17');
-INSERT INTO `admin_permissions` VALUES (214,'admin.wxappPlugin.feedback','反馈工单','反馈工单',174,'',1,0,'2019-09-11 16:08:25','2019-09-11 16:15:18');
-INSERT INTO `admin_permissions` VALUES (215,'admin.wxappPlugin.hotline','服务热线','服务热线',174,'',1,0,'2019-09-11 16:09:32','2019-09-11 16:15:18');
-INSERT INTO `admin_permissions` VALUES (216,'admin.setting.qyWechat','站点设置-企业微信','站点设置-企业微信',88,'',1,0,'2019-09-12 10:06:04',NULL);
-INSERT INTO `admin_permissions` VALUES (217,'admin.setting.bonus','站点设置-奖金设置','站点设置-奖金设置',88,'',1,0,'2019-09-12 10:07:32',NULL);
-INSERT INTO `admin_permissions` VALUES (218,'admin.user.transferOrder','系统用户订单转移','离职人员订单转移',1,'',1,0,'2019-09-12 10:14:53',NULL);
-INSERT INTO `admin_permissions` VALUES (219,'admin.information.lsit','信息列表','信息列表',44,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');
-INSERT INTO `admin_permissions` VALUES (220,'admin.information.type','信息类型','信息类型',44,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');
-INSERT INTO `admin_permissions` VALUES (221,'admin.information.wxappPlugin','信息展示','另一个新闻列表',174,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');
-INSERT INTO `admin_permissions` VALUES (222,'admin.workOrder.export','导出工单','导出工单',205,'',1,0,'2019-07-25 11:28:21','2019-11-05 18:21:20');
-INSERT INTO `admin_permissions` VALUES (223,'admin.workOrder.delete','删除工单','删除工单',205,'',1,0,'2019-07-25 11:28:21','2019-11-05 18:21:22');
-INSERT INTO `admin_permissions` VALUES (224,'admin.ranking.sale','成单率排行榜','成单率排行榜',19,'',1,0,'2019-07-25 11:28:21','2019-10-15 09:19:08');
-INSERT INTO `admin_permissions` VALUES (225,'admin.wordOrder.transfer','转单管理','转单管理',205,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');
-INSERT INTO `admin_permissions` VALUES (226,'admin.staffWxapp.tabbar','底部导航栏配置-管理端','底部导航栏配置-管理端',180,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');
-INSERT INTO `admin_permissions` VALUES (227,'admin.agentWxapp.tabbar','底部导航栏配置-用户端','底部导航栏配置-用户端',180,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');
-INSERT INTO `admin_permissions` VALUES (228,'admin.helpline','服务热线','服务热线',44,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');
+INSERT INTO `admin_permissions` VALUES ('1', 'admin.permission', '权限管理', '', '0', 'fa-users',0, 0, '2016-05-21 02:06:50', '2018-06-07 18:02:53',0);
+INSERT INTO `admin_permissions` VALUES ('2', 'admin.permission.index', '权限列表', '', '1', '',0,0, '2016-05-21 02:08:04', '2016-05-21 02:08:04',0);
+INSERT INTO `admin_permissions` VALUES ('3', 'admin.permission.create', '权限添加', '', '1', '',0,0, '2016-05-21 02:08:18', '2016-05-21 02:08:18',0);
+INSERT INTO `admin_permissions` VALUES ('4', 'admin.permission.edit', '权限修改', '', '1', '',0,0, '2016-05-21 02:08:35', '2016-05-21 02:08:35',0);
+INSERT INTO `admin_permissions` VALUES ('5', 'admin.permission.destroy ', '权限删除', '', '1', '',0,0, '2016-05-21 02:09:57', '2016-05-21 02:09:57',0);
+INSERT INTO `admin_permissions` VALUES ('6', 'admin.role.index', '角色列表', '', '1', '',0,0, '2016-05-23 02:36:40', '2016-05-23 02:36:40',0);
+INSERT INTO `admin_permissions` VALUES ('7', 'admin.role.create', '角色添加', '', '1', '',0,0, '2016-05-23 02:37:07', '2016-05-23 02:37:07',0);
+INSERT INTO `admin_permissions` VALUES ('8', 'admin.role.edit', '角色修改', '', '1', '',0,0, '2016-05-23 02:37:22', '2016-05-23 02:37:22',0);
+INSERT INTO `admin_permissions` VALUES ('9', 'admin.role.destroy', '角色删除', '', '1', '',0,0, '2016-05-23 02:37:48', '2016-05-23 02:37:48',0);
+INSERT INTO `admin_permissions` VALUES ('10', 'admin.user.index', '系统用户', '', '1', '',0,0, '2016-05-23 02:38:52', '2018-06-12 17:18:08',0);
+INSERT INTO `admin_permissions` VALUES ('11', 'admin.user.create', '管理员添加', '', '1', '',0,0, '2016-05-23 02:39:21', '2016-06-22 05:49:29',0);
+INSERT INTO `admin_permissions` VALUES ('12', 'admin.user.edit', '管理员编辑', '', '1', '',0,0, '2016-05-23 02:39:52', '2016-05-23 02:39:52',0);
+INSERT INTO `admin_permissions` VALUES ('13', 'admin.user.destroy', '管理员删除', '', '1', '',0,0, '2016-05-23 02:40:36', '2016-05-23 02:40:36',0);
+INSERT INTO `admin_permissions` VALUES ('14', 'admin.goods', '商品管理', '', '0', 'fa-sliders',0,0, '2018-05-24 09:58:48', '2018-05-24 09:58:48',0);
+INSERT INTO `admin_permissions` VALUES ('15', 'admin.goods.index', '商品列表', '', '14', '',0,0, '2018-05-24 10:09:57', '2018-05-24 10:09:57',0);
+INSERT INTO `admin_permissions` VALUES ('16', 'admin.goods.create', '商品添加', '', '14', '',0,0, '2018-05-25 10:00:17', '2018-05-25 10:00:17',0);
+INSERT INTO `admin_permissions` VALUES ('17', 'admin.goods.edit', '商品修改', '', '14', '',0,0, '2018-05-25 10:00:34', '2018-05-25 10:00:34',0);
+INSERT INTO `admin_permissions` VALUES ('18', 'admin.goods.destroy', '商品删除', '', '14', '',0,0, '2018-05-25 10:01:06', '2018-05-25 10:01:06',0);
+INSERT INTO `admin_permissions` VALUES ('19', 'admin.index', '控制面板', '', '0', 'fa-tachometer',0,0, '2018-05-25 10:01:47', '2018-05-25 10:01:47',0);
+INSERT INTO `admin_permissions` VALUES ('20', 'admin.index.index', '首页', '', '19', '',0,0, '2018-05-25 10:02:03', '2018-06-12 17:10:50',0);
+INSERT INTO `admin_permissions` VALUES ('21', 'admin.branch.index', '分部列表', '', '1', '',0,0, '2018-05-28 05:43:31', '2018-05-28 05:43:31',0);
+INSERT INTO `admin_permissions` VALUES ('22', 'admin.workstatus.index', '打卡签到', '', '19', '',0,0, '2018-05-28 06:36:50', '2018-05-28 06:36:50',0);
+INSERT INTO `admin_permissions` VALUES ('23', 'admin.case.index', '案例列表', '', '14', '',0,0, '2018-05-28 09:55:22', '2018-05-28 09:55:22',0);
+INSERT INTO `admin_permissions` VALUES ('24', 'admin.case.create', '案例添加', '', '14', '',0,0, '2018-05-28 10:16:13', '2018-05-28 10:16:13',0);
+INSERT INTO `admin_permissions` VALUES ('25', 'admin.case.edit', '案例修改', '', '14', '',0,0, '2018-05-28 10:16:33', '2018-05-28 10:16:33',0);
+INSERT INTO `admin_permissions` VALUES ('26', 'admin.case.destroy', '案例删除', '', '14', '',0,0, '2018-05-28 10:16:52', '2018-05-28 10:16:52',0);
+INSERT INTO `admin_permissions` VALUES ('27', 'admin.recovery.index', '商品回收站', '', '14', '',0,0, '2018-05-28 10:18:07', '2018-05-28 10:18:07',0);
+INSERT INTO `admin_permissions` VALUES ('28', 'admin.member', '客户管理', '', '0', 'fa-users',0,0, '2018-05-29 02:50:41', '2018-05-29 02:50:41',0);
+INSERT INTO `admin_permissions` VALUES ('29', 'admin.member.index', '我的客户', '', '28', '',0,0, '2018-05-29 02:51:06', '2018-05-29 02:51:06',0);
+INSERT INTO `admin_permissions` VALUES ('30', 'admin.member.create', '客户添加', '', '28', '',0,0, '2018-05-29 07:34:31', '2018-05-29 07:34:31',0);
+INSERT INTO `admin_permissions` VALUES ('31', 'admin.member.edit', '客户修改', '', '28', '',0,0, '2018-05-29 07:34:50', '2018-05-29 07:34:50',0);
+INSERT INTO `admin_permissions` VALUES ('32', 'admin.member.destroy', '客户删除', '', '28', '',0,0, '2018-05-29 07:35:06', '2018-05-29 07:35:06',0);
+INSERT INTO `admin_permissions` VALUES ('33', 'admin.member.moneyedit', '修改余额', '', '28', '',0,0, '2018-05-29 07:50:09', '2018-05-29 07:50:32',0);
+INSERT INTO `admin_permissions` VALUES ('34', 'admin.memberlevel.index', '等级设置', '', '88', '',0,0, '2018-05-29 09:37:01', '2018-05-29 09:37:01',0);
+INSERT INTO `admin_permissions` VALUES ('35', 'admin.memberlevel.create', '等级添加', '', '88', '',0,0, '2018-05-29 09:49:01', '2018-05-29 09:49:01',0);
+INSERT INTO `admin_permissions` VALUES ('36', 'admin.memberlevel.edit', '等级修改', '', '88', '',0,0, '2018-05-29 09:49:22', '2018-05-29 09:49:22',0);
+INSERT INTO `admin_permissions` VALUES ('37', 'admin.memberlevel.destroy', '等级删除', '', '88', '',0,0, '2018-05-29 09:49:59', '2018-05-29 09:49:59',0);
+INSERT INTO `admin_permissions` VALUES ('38', 'admin.membersource.index', '来源设置', '', '88', '',0,0, '2018-05-29 10:06:45', '2018-05-29 10:06:45',0);
+INSERT INTO `admin_permissions` VALUES ('39', 'admin.order', '订单管理', '', '0', 'fa-reorder',0,0, '2018-05-29 11:12:38', '2018-05-29 11:12:38',0);
+INSERT INTO `admin_permissions` VALUES ('40', 'admin.order.index', '订单列表', '', '39', '',0,0, '2018-05-29 11:12:57', '2018-05-29 11:12:57',0);
+INSERT INTO `admin_permissions` VALUES ('41', 'admin.order.create', '订单添加', '', '39', '',0,0, '2018-06-01 02:41:10', '2018-06-01 02:41:10',0);
+INSERT INTO `admin_permissions` VALUES ('42', 'admin.order.edit', '订单修改', '', '39', '',0,0, '2018-06-01 02:42:25', '2018-06-01 02:42:25',0);
+INSERT INTO `admin_permissions` VALUES ('43', 'admin.order.destroy', '订单删除', '', '39', '',0,0, '2018-06-01 02:42:48', '2018-06-01 02:42:48',0);
+INSERT INTO `admin_permissions` VALUES ('44', 'admin.article', '文章管理', '', '0', 'fa-newspaper-o',0,0, '2018-06-01 03:14:31', '2018-06-01 03:14:31',0);
+INSERT INTO `admin_permissions` VALUES ('45', 'admin.articles.index', '新闻列表', '', '44', '',0,0, '2018-06-01 03:16:38', '2018-06-01 03:29:29',0);
+INSERT INTO `admin_permissions` VALUES ('46', 'admin.articles.create', '新闻添加', '', '44', '',0,0, '2018-06-01 03:30:02', '2018-06-01 03:30:41',0);
+INSERT INTO `admin_permissions` VALUES ('47', 'admin.articles.edit', '新闻修改', '', '44', '',0,0, '2018-06-01 03:30:33', '2018-06-01 07:26:33',0);
+INSERT INTO `admin_permissions` VALUES ('48', 'admin.articles.destroy', '新闻删除', '', '44', '',0,0, '2018-06-01 03:31:31', '2018-06-01 07:26:42',0);
+INSERT INTO `admin_permissions` VALUES ('49', 'admin.help.index', '使用帮助', '', '44', '',0,0, '2018-06-01 03:32:32', '2018-06-01 03:32:32',0);
+INSERT INTO `admin_permissions` VALUES ('50', 'admin.about.index', '关于我们', '', '44', '',0,0, '2018-06-01 03:32:54', '2018-06-01 03:32:54',0);
+INSERT INTO `admin_permissions` VALUES ('51', 'admin.log.index', '更新日志', '', '44', '',0,0, '2018-06-01 03:33:16', '2018-06-01 03:33:16',0);
+INSERT INTO `admin_permissions` VALUES ('52', 'admin.finance', '财务管理', '', '0', 'fa-diamond',0,0, '2018-06-01 08:36:34', '2018-06-01 08:36:34',0);
+INSERT INTO `admin_permissions` VALUES ('53', 'admin.wallet.index', '资金明细', '', '52', '',0,0, '2018-06-01 08:36:58', '2018-06-01 08:36:58',0);
+INSERT INTO `admin_permissions` VALUES ('54', 'admin.donation.index', '赠送金明细', '', '52', '',0,0, '2018-06-01 09:32:13', '2018-06-01 09:32:13',0);
+INSERT INTO `admin_permissions` VALUES ('55', 'admin.customer', '客户资源', '', '0', 'fa-user-md',0,0, '2018-06-01 09:36:25', '2018-06-01 09:36:25',0);
+INSERT INTO `admin_permissions` VALUES ('56', 'admin.customer.index', '我的客户资源', '', '55', '',0,0, '2018-06-01 09:36:55', '2018-06-01 09:36:55',0);
+INSERT INTO `admin_permissions` VALUES ('57', 'admin.problem', '问题反馈', '', '0', 'fa-mail-reply-all',0,0, '2018-06-05 09:54:51', '2018-06-05 09:54:51',0);
+INSERT INTO `admin_permissions` VALUES ('58', 'admin.problem.index', '日常问题', '', '57', '',0,0, '2018-06-05 09:55:16', '2018-06-05 09:55:16',0);
+INSERT INTO `admin_permissions` VALUES ('59', 'admin.problem.create', '问题添加', '', '57', '',0,0, '2018-06-05 10:01:37', '2018-06-05 10:01:37',0);
+INSERT INTO `admin_permissions` VALUES ('60', 'admin.problem.edit', '问题修改', '', '57', '',0,0, '2018-06-05 10:01:55', '2018-06-05 10:01:55',0);
+INSERT INTO `admin_permissions` VALUES ('61', 'admin.problem.destroy', '问题删除', '', '57', '',0,0, '2018-06-05 10:02:33', '2018-06-05 10:02:33',0);
+INSERT INTO `admin_permissions` VALUES ('80', 'admin.customer.create', '客户资源添加', '', '55', '',0,0, '2018-06-07 18:10:32', '2018-06-07 18:10:32',0);
+INSERT INTO `admin_permissions` VALUES ('81', 'admin.customer.edit', '客户资源修改', '', '55', '',0,0, '2018-06-07 18:10:51', '2018-06-07 18:10:51',0);
+INSERT INTO `admin_permissions` VALUES ('82', 'admin.customer.destroy', '客户资源删除', '', '55', '',0,0, '2018-06-07 18:11:08', '2018-06-07 18:11:08',0);
+INSERT INTO `admin_permissions` VALUES ('83', 'admin.achievement.index', '业绩订单', '', '39', '',0,0, '2018-06-08 11:39:25', '2018-06-08 11:39:25',0);
+INSERT INTO `admin_permissions` VALUES ('84', 'admin.globaldata.index', '业绩排行榜', '', '19', '',0,0, '2018-06-08 16:52:14', '2018-06-08 16:52:14',0);
+INSERT INTO `admin_permissions` VALUES ('85', 'admin.index.home', '登录初始化', '', '19', '',0,0, '2018-06-12 17:12:07', '2018-06-12 17:12:07',0);
+INSERT INTO `admin_permissions` VALUES ('86', 'admin.member.goods', '业绩商品', '', '28', '',0,0, '2018-06-12 21:14:35', '2018-06-12 21:14:35',0);
+INSERT INTO `admin_permissions` VALUES ('88', 'admin.configs', '系统设置', '', '0', 'fa-cog',0,0, '2018-06-23 11:00:50', '2018-06-23 11:00:50',0);
+INSERT INTO `admin_permissions` VALUES ('89', 'admin.configs.index', '站点信息', '', '88', '',0,0, '2018-06-23 11:01:21', '2018-06-23 11:01:21',0);
+INSERT INTO `admin_permissions` VALUES ('90', 'admin.salebonusrule.index', '提成设置', '', '88', '',0,0, '2018-06-23 11:09:45', '2018-06-23 11:09:45',0);
+INSERT INTO `admin_permissions` VALUES ('91', 'admin.aftersale.index', '售后订单', '', '39', '',0,0, '2018-06-24 20:37:59', '2018-06-24 20:37:59',0);
+INSERT INTO `admin_permissions` VALUES ('92', 'admin.achievement.create', '业绩增加', '', '39', '',0,0, '2018-06-26 11:52:21', '2018-06-26 11:52:21',0);
+INSERT INTO `admin_permissions` VALUES ('93', 'admin.achievement.edit', '业绩修改', '', '39', '',0,0, '2018-06-26 11:52:38', '2018-06-26 11:52:38',0);
+INSERT INTO `admin_permissions` VALUES ('94', 'admin.achievement.destroy', '业绩删除', '', '39', '',0,0, '2018-06-26 11:52:52', '2018-06-26 11:52:52',0);
+INSERT INTO `admin_permissions` VALUES ('95', 'admin.aftersale.create', '售后增加', '', '39', '',0,0, '2018-06-29 17:59:15', '2018-06-29 17:59:15',0);
+INSERT INTO `admin_permissions` VALUES ('96', 'admin.aftersale.edit', '售后修改', '', '39', '',0,0, '2018-06-29 18:00:03', '2018-06-29 18:00:03',0);
+INSERT INTO `admin_permissions` VALUES ('97', 'admin.aftersale.destroy', '售后删除', '', '39', '',0,0, '2018-06-29 18:01:01', '2018-06-29 18:01:01',0);
+INSERT INTO `admin_permissions` VALUES ('98', 'admin.achievement.export', '业绩导出', '', '39', '',0,0, '2018-07-12 17:55:32', '2018-07-12 17:55:32',0);
+INSERT INTO `admin_permissions` VALUES ('99', 'admin.siteconfig.index', '站点设置', '', '88', '',0,0, '2018-07-12 17:56:00', '2018-07-12 17:56:00',0);
+INSERT INTO `admin_permissions` VALUES ('100', 'admin.project.index', '项目设置', '', '88', '',0,0, '2018-07-12 18:02:41', '2018-07-12 18:02:41',0);
+INSERT INTO `admin_permissions` VALUES ('101', 'admin.achievement.examine', '业绩审核', '', '39', '',0,0, '2018-07-16 19:01:46', '2018-07-16 19:01:46',0);
+INSERT INTO `admin_permissions` VALUES ('102', 'admin.customer.assign', '客户资源指派', '', '55', '',0, 0, '2018-07-18 16:43:15', '2018-07-18 16:43:15',0);
+INSERT INTO `admin_permissions` VALUES ('103', 'admin.takemoney.index', '提现管理', '', '52', '',0,0, '2018-07-18 16:43:15', '2018-07-18 16:43:15',0);
+INSERT INTO `admin_permissions` VALUES ('104', 'admin.takemoney.create', '提现', '', '52', '',0,0, '2018-07-18 16:43:15', '2018-07-18 16:43:15',0);
+INSERT INTO `admin_permissions` VALUES ('105', 'admin.takemoney.edit', '提现审核', '', '52', '',0,0, '2018-07-18 16:43:15', '2018-07-18 16:43:15',0);
+INSERT INTO `admin_permissions` VALUES ('106', 'admin.bonuslog.index', '提成记录', '', '52', '',0,0, '2018-08-02 15:37:11', '2018-08-02 15:37:11',0);
+INSERT INTO `admin_permissions` VALUES ('107', 'admin.customer.excel', '客户资源导入导出', '', '55', '',0,0, '2018-08-17 16:28:58', '2018-08-17 16:28:58',0);
+INSERT INTO `admin_permissions` VALUES ('108', 'admin.company.index', '公司设置', '', '88', '',0,0, '2018-08-27 14:51:20', '2018-08-27 14:51:20',0);
+INSERT INTO `admin_permissions` VALUES ('109', 'admin.sysupdate.index', 'CRM版本', '', '88', '',0,0, '2018-10-26 19:15:11', '2018-10-26 19:15:11',0);
+INSERT INTO `admin_permissions` VALUES ('110', 'admin.achievement.updaterecord', '更新订单信息', '', '39', '',0, 0, '2018-10-26 19:15:47', '2018-10-26 19:15:47',0);
+INSERT INTO `admin_permissions` VALUES ('111', 'admin.achievement.updatedetail', '更新订单详情', '', '39', '',0, 0, '2018-10-26 19:15:47', '2018-10-26 19:15:47',0);
+INSERT INTO `admin_permissions` VALUES ('112', 'admin.hr', '人事管理', '人事管理列表', '0', 'fa-steam',0, 0, '2018-10-26 19:15:47', '2018-10-26 19:15:47',0);
+INSERT INTO `admin_permissions` VALUES ('113', 'admin.hr.index', '员工列表', '', '112', '',0, 0, '2018-10-26 19:15:47', '2018-10-26 19:15:47',0);
+INSERT INTO `admin_permissions` VALUES ('114', 'admin.hr.edit', '员工资料编辑', '', '112', '',0,0, '2018-10-26 19:15:47', '2018-10-26 19:15:47',0);
+INSERT INTO `admin_permissions` VALUES ('115', 'admin.achievement.exchangeorder', '业绩订单转移', '', '39', '',0, 0, '2018-10-26 19:15:47', '2018-10-26 19:15:47',0);
+INSERT INTO `admin_permissions` VALUES ('116', 'admin.aftersale.exchangeorder', '售后订单转移', '', '39', '',0, 0, '2018-10-26 19:15:47', '2018-10-26 19:15:47',0);
+INSERT INTO `admin_permissions` VALUES ('117', 'admin.workorder.index', '工单列表', '', '57', '',0, 0, '2018-10-23 14:56:04', '2018-10-23 14:56:04',0);
+INSERT INTO `admin_permissions` VALUES ('118', 'admin.workorder.edit', '工单处理', '', '57', '',0, 0, '2018-10-23 14:56:04', '2018-10-23 14:56:04',0);
+INSERT INTO `admin_permissions` VALUES ('119', 'personalInformation', '个人人事信息', '查看个人人事信息', '112', '',0, 0, '2019-01-15 18:50:06', '2019-01-15 18:50:06',0);
+INSERT INTO `admin_permissions` VALUES ('123', 'admin.tencent','腾讯云','腾讯云模块','0','',1,0,'2019-03-11 17:54:14','2019-03-25 17:08:33',0);
+INSERT INTO `admin_permissions` VALUES ('124', 'admin.tencent.customer','腾讯云客户','腾讯云客户','123','',1,0,'2019-03-11 17:55:36','2019-03-11 17:55:36',0);
+INSERT INTO `admin_permissions` VALUES ('125', 'admin.tencent.order','腾讯云订单','腾讯云订单','123','',1,0,'2019-03-11 17:56:07','2019-03-11 17:56:07',0);
+INSERT INTO `admin_permissions` VALUES ('126', 'admin.tencent.config','腾讯云配置','腾讯云配置','123','',1,0,'2019-03-11 17:56:37','2019-03-11 17:56:37',0);
+INSERT INTO `admin_permissions` VALUES ('127', 'admin.wallet','我的钱包','我的钱包','0','',0,0,'2019-05-18 17:56:37','2019-05-18 17:56:37',0);
+INSERT INTO `admin_permissions` VALUES ('128', 'admin.wallet.details','钱包明细','钱包明细','127','',0,0,'2019-05-18 17:56:37','2019-05-18 17:56:37',0);
+INSERT INTO `admin_permissions` VALUES ('129', 'admin.wallet.bonus','预期奖金列表','预期奖金列表','127','',0,0,'2019-05-18 17:56:37','2019-05-18 17:56:37',0);
+INSERT INTO `admin_permissions` VALUES ('130', 'admin.wallet.bonus.get','奖金提现','奖金提现','127','',0,0,'2019-05-18 17:56:37','2019-05-18 17:56:37',0);
+INSERT INTO `admin_permissions` VALUES ('131', 'admin.tencent.power','权限管理','权限管理','123','',1,0,'2019-05-18 17:56:37','2019-05-18 17:56:37',0);
+INSERT INTO `admin_permissions` VALUES ('132', 'admin.tencent.customerOrder','腾讯云订单','腾讯云订单','123','',1,0,'2019-05-18 17:56:37','2019-05-18 17:56:37',0);
+INSERT INTO `admin_permissions` VALUES ('133', 'admin.plugin.index','插件设置','插件设置','88','',0,0,'2019-05-18 17:56:37','2019-05-18 17:56:37',0);
+INSERT INTO `admin_permissions` VALUES ('134', 'admin.product.productType','产品类型','产品类型','14','',0,0,'2019-05-18 17:56:37','2019-05-18 17:56:37',0);
+INSERT INTO `admin_permissions` VALUES (135,'admin.activity','活动报名','活动报名',0,'',1,0,'2019-07-09 11:16:30','2019-07-12 12:04:52',0);
+INSERT INTO `admin_permissions` VALUES (136,'admin.activity.list','活动列表','活动列表',135,'',1,0,'2019-07-09 11:18:24','2019-07-12 12:04:52',0);
+INSERT INTO `admin_permissions` VALUES (137,'admin.activity.typeList','活动类型','活动类型列表',135,'',1,0,'2019-07-09 11:19:12','2019-07-12 12:04:52',0);
+INSERT INTO `admin_permissions` VALUES (138,'admin.activity.comment','活动留言','活动留言列表',135,'',1,0,'2019-07-09 11:21:11','2019-07-12 12:04:52',0);
+INSERT INTO `admin_permissions` VALUES (139,'admin.activity.create','创建活动','创建活动',135,'',1,0,'2019-07-09 11:23:15','2019-07-12 12:04:52',0);
+INSERT INTO `admin_permissions` VALUES (140,'admin.activity.modify','编辑活动','编辑活动',135,'',1,0,'2019-07-09 11:24:13','2019-07-12 12:04:52',0);
+INSERT INTO `admin_permissions` VALUES (141,'admin.activity.cancel','取消活动','取消活动',135,'',1,0,'2019-07-09 11:24:29','2019-07-12 12:04:52',0);
+INSERT INTO `admin_permissions` VALUES (142,'admin.activity.delete','删除活动','删除活动',135,'',1,0,'2019-07-09 11:24:47','2019-07-12 12:04:52',0);
+INSERT INTO `admin_permissions` VALUES (143,'admin.activity.reviewMember','审核用户','审核申请参加活动的用户',135,'',1,0,'2019-07-09 11:27:17','2019-07-12 12:04:52',0);
+INSERT INTO `admin_permissions` VALUES (144,'admin.activity.reviewComment','审核评论','审核参加活动的用户的评论',135,'',1,0,'2019-07-09 11:27:17','2019-07-12 12:04:52',0);
+INSERT INTO `admin_permissions` VALUES (145,'admin.activity.exportJoinMenber','导出参加者','导出参加者',135,'',1,0,'2019-07-09 11:27:17','2019-07-12 12:04:52',0);
+INSERT INTO `admin_permissions` VALUES (146,'admin.memberManage','会员管理','会员管理',0,'',1,0,'2019-07-09 11:34:44','2019-07-12 14:27:36',0);
+INSERT INTO `admin_permissions` VALUES (147,'admin.memberManage.list','会员列表','会员列表',146,'',1,0,'2019-07-09 11:36:07','2019-07-12 14:27:36',0);
+INSERT INTO `admin_permissions` VALUES (148,'admin.memberManage.type','会员类型','会员类型',146,'',1,0,'2019-07-09 11:36:37','2019-07-12 14:27:36',0);
+INSERT INTO `admin_permissions` VALUES (149,'amdin.memberManage.create','添加会员','添加会员',146,'',1,0,'2019-07-09 11:37:38','2019-07-12 14:27:36',0);
+INSERT INTO `admin_permissions` VALUES (150,'admin.memberManage.edit','编辑会员','编辑会员',146,'',1,0,'2019-07-09 11:38:03','2019-07-12 14:27:36',0);
+INSERT INTO `admin_permissions` VALUES (151,'admin.memberManage.delete','会员删除','会员删除',146,'',1,0,'2019-07-09 11:38:49','2019-07-12 14:27:36',0);
+INSERT INTO `admin_permissions` VALUES (152,'admin.memberManage.import','导入会员','导入会员',146,'',1,0,'2019-07-09 11:39:21','2019-07-12 14:27:36',0);
+INSERT INTO `admin_permissions` VALUES (153,'admin.exam','考试培训','考试培训',0,'',1,0,'2019-07-09 11:42:25','2019-07-12 14:27:39',0);
+INSERT INTO `admin_permissions` VALUES (154,'admin.memberManage.details','会员详情','会员详情',146,'',1,0,'2019-07-09 11:48:31','2019-07-12 14:27:36',0);
+INSERT INTO `admin_permissions` VALUES (155,'admin.exam.statistics','数据统计','考试数据统计',153,'',1,0,'2019-07-09 13:38:29','2019-07-12 14:27:39',0);
+INSERT INTO `admin_permissions` VALUES (156,'admin.exam.analysis','试题分析','考试试题分析',153,'',1,0,'2019-07-09 13:38:58','2019-07-12 14:27:39',0);
+INSERT INTO `admin_permissions` VALUES (157,'admin.exam.list','考试列表','考试列表',153,'',1,0,'2019-07-09 13:39:41','2019-07-12 14:27:39',0);
+INSERT INTO `admin_permissions` VALUES (158,'admin.exam.create','创建考试','创建考试',153,'',1,0,'2019-07-09 13:40:18','2019-07-12 14:27:39',0);
+INSERT INTO `admin_permissions` VALUES (159,'admin.exam.examinee','考生管理','考生管理',153,'',1,0,'2019-07-09 14:55:53','2019-07-12 14:27:39',0);
+INSERT INTO `admin_permissions` VALUES (160,'admin.lookarticles.index','类型列表','--',44,'',0,0,'2019-07-09 15:16:21','2019-07-12 12:04:40',0);
+INSERT INTO `admin_permissions` VALUES (161,'admin.lookarticles.create','添加类型','--',44,'',0,0,'2019-07-09 15:17:07','2019-07-12 12:04:40',0);
+INSERT INTO `admin_permissions` VALUES (162,'admin.lookarticles.edit','修改类型','--',44,'',0,0,'2019-07-09 15:17:31','2019-07-12 12:04:40',0);
+INSERT INTO `admin_permissions` VALUES (163,'admin.lookarticles.destroy','删除类型','--',44,'',0,0,'2019-07-09 15:17:57','2019-07-12 12:04:40',0);
+INSERT INTO `admin_permissions` VALUES (164,'admin.articles.wxappPlugin','新闻模块小程序插件','通过这个控制是否安装小程序新闻插件',174,'',1,0,'2019-07-09 17:26:49','2019-07-12 12:04:40',0);
+INSERT INTO `admin_permissions` VALUES (165,'admin.tencent.wxappPlugin','腾讯云小程序插件','通过这个控制是否安装小程序腾讯云插件',174,'',1,0,'2019-07-09 17:36:42','2019-07-12 12:04:49',0);
+INSERT INTO `admin_permissions` VALUES (166,'admin.activity.wxappPlugin','活动报名小程序插件','通过这个控制是否安装小程序活动插件',174,'',1,0,'2019-07-09 17:37:30','2019-07-12 12:04:52',0);
+INSERT INTO `admin_permissions` VALUES (167,'admin.memberManage.wxappPlugin','会员管理小程序插件','通过这个控制是否安装小程序会员管理(通讯录)插件',174,'',1,0,'2019-07-09 17:38:31','2019-07-12 14:27:36',0);
+INSERT INTO `admin_permissions` VALUES (168,'admin.exam.wxappPlugin','考试培训小程序插件','通过这个控制是否安装小程序考试培训插件',174,'',1,0,'2019-07-09 17:39:12','2019-07-12 14:27:39',0);
+INSERT INTO `admin_permissions` VALUES (169,'admin.member.authentication','客户认证','客户认证',28,'',0,0,'2019-07-10 09:16:33','2019-07-12 12:04:36',0);
+INSERT INTO `admin_permissions` VALUES (170,'admin.customer.overdue','逾期客户列表','逾期客户列表',55,'',0,0,'2019-07-10 18:21:55','2019-07-12 12:04:44',0);
+INSERT INTO `admin_permissions` VALUES (171,'admin.customer.lose','丢单客户列表','丢单客户列表',55,'',0,0,'2019-07-10 18:23:28','2019-07-12 12:04:44',0);
+INSERT INTO `admin_permissions` VALUES (172,'admin.exam.questions','题库管理','题库管理',153,'',1,0,'2019-07-11 16:53:19','2019-07-12 14:27:39',0);
+INSERT INTO `admin_permissions` VALUES (173,'admin.exam.paper','试卷管理','试卷管理',153,'',1,0,'2019-07-11 16:53:54','2019-07-12 14:27:39',0);
+INSERT INTO `admin_permissions` VALUES (174,'admin.wxappPlugin','小程序插件管理','小程序插件管理',0,'',1,0,'2019-07-25 09:50:59','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (175,'admin.wxappPlugin.shop','商城业务','小程序商城',174,'',1,0,'2019-07-25 09:52:11','2019-07-25 10:12:06',0);
+INSERT INTO `admin_permissions` VALUES (176,'admin.wxappPlugin.recharge','快速充值','快速充值',174,'',1,0,'2019-07-25 09:53:03','2019-07-25 10:06:52',0);
+INSERT INTO `admin_permissions` VALUES (177,'admin.wxappPlugin.wallet','我的钱包','钱包',174,'',1,0,'2019-07-25 09:53:54','2019-07-25 10:12:14',0);
+INSERT INTO `admin_permissions` VALUES (178,'admin.wxappPlugin.order','订单管理','订单管理',174,'',1,0,'2019-07-25 09:54:29','2019-07-25 10:06:58',0);
+INSERT INTO `admin_permissions` VALUES (179,'admin.wxappPlugin.workOrder','提交工单','提交工单',174,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (180,'admin.wxapp','小程序管理','小程序管理',0,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (181,'admin.wxapp.staff','员工小程序设置','员工小程序设置',180,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (182,'admin.wxapp.agent','代理商小程序','代理商小程序',180,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (183,'admin.adminWxappPlugin','内部小程序插件管理','内部小程序插件管理',0,'',1,0,'2019-08-15 09:25:08','2019-09-12 09:59:29',0);
+INSERT INTO `admin_permissions` VALUES (184,'admin.adminWxappPlugin.customer','客户中心','客户中心',183,'',1,0,'2019-08-15 09:26:15','2019-09-12 09:59:29',0);
+INSERT INTO `admin_permissions` VALUES (185,'admin.adminWxappPlugin.exam','考试培训','考试培训',183,'',1,0,'2019-08-15 09:26:46','2019-09-12 09:59:29',0);
+INSERT INTO `admin_permissions` VALUES (186,'admin.user.wallet','系统用户钱包明细','员工钱包明细',1,'',1,0,'2019-08-16 10:35:05','2019-09-12 10:13:57',0);
+INSERT INTO `admin_permissions` VALUES (187,'admin.wallet.modify','余额修改( 慎用 )','慎用,仅管理员可提供该权限',127,'',1,0,'2019-08-16 10:38:50','2019-09-12 09:59:32',0);
+INSERT INTO `admin_permissions` VALUES (188,'admin.exam.stop','停止考试','停止考试',153,'',1,0,'2019-08-16 11:06:12','2019-08-19 09:52:43',0);
+INSERT INTO `admin_permissions` VALUES (189,'admin.exam.delete','删除考试','删除考试',153,'',1,0,'2019-08-16 11:06:43','2019-08-19 09:52:43',0);
+INSERT INTO `admin_permissions` VALUES (190,'admin.exam.analysis','考试答卷详情','考试考生答卷详情统计',153,'',1,0,'2019-08-16 11:07:58','2019-08-19 09:52:44',0);
+INSERT INTO `admin_permissions` VALUES (191,'admin.examinee.edit','考生编辑','考生信息编辑',153,'',1,0,'2019-08-16 11:10:08','2019-08-19 09:52:45',0);
+INSERT INTO `admin_permissions` VALUES (192,'admin.examinee.assign','考生分配','考生分配到分组',153,'',1,0,'2019-08-16 11:11:29','2019-08-19 09:52:46',0);
+INSERT INTO `admin_permissions` VALUES (193,'admin.examinee.team','考生分组管理','考生分组管理',153,'',1,0,'2019-08-16 11:11:52','2019-08-19 09:52:47',0);
+INSERT INTO `admin_permissions` VALUES (194,'admin.examPaper.create','试卷创建','试卷创建',153,'',1,0,'2019-08-16 11:13:37','2019-08-19 09:52:48',0);
+INSERT INTO `admin_permissions` VALUES (195,'admin.examPaper.export','试卷导出','试卷导出',153,'',1,0,'2019-08-16 11:14:02','2019-08-19 09:52:48',0);
+INSERT INTO `admin_permissions` VALUES (196,'admin.examPaper.modify','试卷修改','试卷修改',153,'',1,0,'2019-08-16 11:14:56','2019-08-19 09:52:49',0);
+INSERT INTO `admin_permissions` VALUES (197,'admin.examPaper.question','试卷题目管理','试卷题目管理',153,'',1,0,'2019-08-16 11:15:22','2019-08-19 09:52:50',0);
+INSERT INTO `admin_permissions` VALUES (198,'admin.examPaper.type','试卷分类管理','试卷分类管理',153,'',1,0,'2019-08-16 11:16:10','2019-08-19 09:52:50',0);
+INSERT INTO `admin_permissions` VALUES (199,'admin.member.afterSales','售后管理','售后管理',28,'',1,0,'2019-08-19 09:59:36','2019-09-04 11:59:00',0);
+INSERT INTO `admin_permissions` VALUES (200,'admin.member.toAgent','跳转代理商端','跳转代理商端',28,'',1,0,'2019-08-19 10:00:08','2019-09-12 10:18:23',0);
+INSERT INTO `admin_permissions` VALUES (201,'admin.operation.index','平台运营数据','平台运营数据',19,'',1,0,'2019-08-19 10:00:17','2019-09-12 10:28:30',0);
+INSERT INTO `admin_permissions` VALUES (202,'admin.user.toUser','跳转系统用户账号','跳转系统用户账号',1,'',1,0,'2019-08-26 16:58:41','2019-09-12 10:12:32',0);
+INSERT INTO `admin_permissions` VALUES (203,'admin.member.modifyLevel','客户等级修改','客户等级修改',28,'',1,0,'2019-09-06 15:22:11',NULL,0);
+INSERT INTO `admin_permissions` VALUES (204,'admin.update.stopWeb','更新时是否启用停站功能','更新时是否启用停站功能',1,'',1,0,'2019-09-06 15:25:11','2019-09-06 15:25:30',0);
+INSERT INTO `admin_permissions` VALUES (205,'admin.workOrder','工单管理','工单管理',0,'',1,0,'2019-09-11 14:52:05','2019-09-11 15:01:54',0);
+INSERT INTO `admin_permissions` VALUES (206,'admin.workOrder.list','工单列表','工单列表',205,'',1,0,'2019-09-11 14:55:54','2019-09-11 15:01:52',0);
+INSERT INTO `admin_permissions` VALUES (207,'admin.workOrder.staff','服务人员管理','服务人员管理',205,'',1,0,'2019-09-11 14:57:58','2019-09-11 15:01:52',0);
+INSERT INTO `admin_permissions` VALUES (208,'admin.workOrder.area','服务范围管理','服务范围管理',205,'',1,0,'2019-09-11 14:58:35','2019-09-11 15:01:53',0);
+INSERT INTO `admin_permissions` VALUES (209,'admin.workOrder.statistics','数据分析','数据分析',205,'',1,0,'2019-09-11 14:59:18','2019-09-11 15:01:54',0);
+INSERT INTO `admin_permissions` VALUES (210,'admin.workOrder.serviceType','问题类别管理','问题类别管理',205,'',1,0,'2019-09-11 15:01:16','2019-09-11 15:01:54',0);
+INSERT INTO `admin_permissions` VALUES (211,'admin.enterprise.display','企业展示','企业展示',44,'',1,0,'2019-09-11 15:03:41','2019-09-11 15:05:38',0);
+INSERT INTO `admin_permissions` VALUES (212,'admin.enterprise.edit','企业展示编辑','企业展示编辑',44,'',1,0,'2019-09-11 15:04:20','2019-09-11 15:05:39',0);
+INSERT INTO `admin_permissions` VALUES (213,'admin.wxappPlugin.enterpriseDisplay','企业展示','企业展示',174,'',1,0,'2019-09-11 16:07:17','2019-09-11 16:15:17',0);
+INSERT INTO `admin_permissions` VALUES (214,'admin.wxappPlugin.feedback','反馈工单','反馈工单',174,'',1,0,'2019-09-11 16:08:25','2019-09-11 16:15:18',0);
+INSERT INTO `admin_permissions` VALUES (215,'admin.wxappPlugin.hotline','服务热线','服务热线',174,'',1,0,'2019-09-11 16:09:32','2019-09-11 16:15:18',0);
+INSERT INTO `admin_permissions` VALUES (216,'admin.setting.qyWechat','站点设置-企业微信','站点设置-企业微信',88,'',1,0,'2019-09-12 10:06:04',NULL,0);
+INSERT INTO `admin_permissions` VALUES (217,'admin.setting.bonus','站点设置-奖金设置','站点设置-奖金设置',88,'',1,0,'2019-09-12 10:07:32',NULL,0);
+INSERT INTO `admin_permissions` VALUES (218,'admin.user.transferOrder','系统用户订单转移','离职人员订单转移',1,'',1,0,'2019-09-12 10:14:53',NULL,0);
+INSERT INTO `admin_permissions` VALUES (219,'admin.information.lsit','信息列表','信息列表',44,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (220,'admin.information.type','信息类型','信息类型',44,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (221,'admin.information.wxappPlugin','信息展示','另一个新闻列表',174,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (222,'admin.workOrder.export','导出工单','导出工单',205,'',1,0,'2019-07-25 11:28:21','2019-11-05 18:21:20',0);
+INSERT INTO `admin_permissions` VALUES (223,'admin.workOrder.delete','删除工单','删除工单',205,'',1,0,'2019-07-25 11:28:21','2019-11-05 18:21:22',0);
+INSERT INTO `admin_permissions` VALUES (224,'admin.ranking.sale','成单率排行榜','成单率排行榜',19,'',1,0,'2019-07-25 11:28:21','2019-10-15 09:19:08',0);
+INSERT INTO `admin_permissions` VALUES (225,'admin.wordOrder.transfer','转单管理','转单管理',205,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (226,'admin.staffWxapp.tabbar','底部导航栏配置-管理端','底部导航栏配置-管理端',180,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (227,'admin.agentWxapp.tabbar','底部导航栏配置-用户端','底部导航栏配置-用户端',180,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (228,'admin.helpline','服务热线','服务热线',44,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (229,'admin.pluginCenter','插件中心','插件中心',0,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
+INSERT INTO `admin_permissions` VALUES (230,'admin.pluginCenter.index','插件中心首页','插件中心首页',229,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);
 
 DROP TABLE IF EXISTS `admin_role_user`;
 CREATE TABLE `admin_role_user` (
@@ -335,7 +338,7 @@ CREATE TABLE `admin_users` (
   `status` tinyint(1) DEFAULT '0' COMMENT '0为有效  1为无效',
   `sex` enum('女','男') COLLATE utf8_unicode_ci DEFAULT NULL,
   `wechat_id` varchar(50) COLLATE utf8_unicode_ci DEFAULT '' COMMENT '企业微信账号',
-  `wechat_pic` varchar(120) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '企业微信头像',
+  `wechat_pic` varchar(225) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '企业微信头像',
   `work_status` tinyint(1) DEFAULT '0' COMMENT '0为接待  1为不接待',
   `power` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '权限范围',
   `work_time` datetime DEFAULT NULL COMMENT '工作签到时间',
@@ -446,7 +449,7 @@ CREATE TABLE `articles` (
   `picture_type` int(11) NOT NULL DEFAULT '0' COMMENT '图片类型 1：大图 2小图 3三图',
   `video_cover` varchar(255) DEFAULT NULL COMMENT '视频封面图',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=71 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT '文章表';
 
 
 INSERT INTO `articles` (`title`,`typeid`,`content`) VALUES ('使用帮助','2', '使用帮助说明');
@@ -526,8 +529,6 @@ CREATE TABLE `configs` (
   `company_id` varchar(30) DEFAULT NULL COMMENT '企业ID',
   `tongxl_secret` varchar(60) DEFAULT NULL COMMENT '通讯录secret',
   `push_secret` varchar(60) DEFAULT NULL COMMENT '自动推送secret',
-  `wechat_appid` varchar(60) DEFAULT NULL COMMENT '微信appid',
-  `wechat_secret` varchar(60) DEFAULT NULL COMMENT '微信secret',
   `wechat_name` varchar(60) DEFAULT NULL COMMENT '微信名称',
   `wechat_color` varchar(60) DEFAULT NULL COMMENT '微信主题色',
   `qy_mch_id` varchar(35) DEFAULT NULL COMMENT '企业支付商户号',
@@ -569,7 +570,8 @@ CREATE TABLE `configs` (
   `avatar_status` tinyint(3) NOT NULL DEFAULT '0' COMMENT '头像状态 1：强制上传 0：非强制上传',
   `agent_tarbar_list` text COMMENT '客户底部导航栏',
   `admin_tarbar_list` text COMMENT '员工底部导航栏',
-  `agent_wxchat_configs` text COMMENT '员工小程序配置',
+  `agent_wechat_configs` text COMMENT '客户小程序配置',
+  `plugin_open_type` tinyint(3) NOT NULL DEFAULT '0' COMMENT '插件开启状态 0：关闭 1：开启',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT '配置表';
 
@@ -613,7 +615,7 @@ CREATE TABLE `goods` (
   `goods_type` tinyint(5) NOT NULL DEFAULT '1' COMMENT '商品类型表id',
   `price` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '价格',
   `price_type` tinyint(1) NOT NULL COMMENT '价格类型',
-  `goods_pic` varchar(255) DEFAULT NULL COMMENT '缩略图',
+  `goods_pic` varchar(500) DEFAULT NULL COMMENT '缩略图',
   `body` text,
   `long` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1:永久 1:年 2:月 3:日',
   `status` tinyint(1) DEFAULT '0' COMMENT '状态(0:上架  1:下架)',
@@ -905,7 +907,7 @@ CREATE TABLE `work_order_type` (
   `created_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COMMENT='工单类型';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='工单类型';
 
 
 DROP TABLE IF EXISTS `verification`;
@@ -960,7 +962,7 @@ CREATE TABLE `tencent_order_price` (
   `policy` varchar(255) DEFAULT NULL,
   `unitPrice` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`tencent_order_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='';
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='腾讯云订单关联表';
 
 
 DROP TABLE IF EXISTS `picture`;
@@ -968,13 +970,12 @@ CREATE TABLE `picture` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) DEFAULT NULL COMMENT '图片名称',
   `uid` int(11) DEFAULT NULL COMMENT '上传人员id',
-  `url` varchar(255) DEFAULT NULL COMMENT '图片地址',
   `status` tinyint(3) DEFAULT '1' COMMENT '是否删除 0：已删除 1：正常',
   `time` timestamp NULL DEFAULT NULL COMMENT '上传时间',
   `type` varchar(255) DEFAULT NULL COMMENT '图片类型',
   `src` varchar(255) DEFAULT NULL COMMENT '图片相对路径',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COMMENT='图片记录表';
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='图片记录表';
 
 DROP TABLE IF EXISTS `bonus_sale`;
 CREATE TABLE `bonus_sale` (
@@ -996,7 +997,7 @@ CREATE TABLE `bonus_sale` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COMMENT='售后奖金表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='售后奖金表';
 
 DROP TABLE IF EXISTS `goods_type`;
 CREATE TABLE `goods_type` (
@@ -1028,7 +1029,7 @@ CREATE TABLE `activity` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `activity_status` tinyint(3) DEFAULT '0' COMMENT '活动状态 0：已取消 1：正常进行 2已结束',
+  `activity_status` tinyint(3) DEFAULT '0' COMMENT '活动状态 0已取消 1报名中 2报名截止 3活动进行中 4活动已结束',
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='活动';
 
@@ -1062,7 +1063,7 @@ CREATE TABLE `articles_type` (
   `deleted_at` timestamp NULL DEFAULT NULL,
   `icon` varchar(255) DEFAULT NULL COMMENT '图标',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COMMENT='新闻类型表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='新闻类型表';
 
 
 DROP TABLE IF EXISTS `attend`;
@@ -1143,7 +1144,7 @@ CREATE TABLE `form_id` (
   `create_time` timestamp NULL DEFAULT NULL COMMENT '创建时间',
   `is_used` tinyint(1) DEFAULT '0' COMMENT '是否已使用',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=85 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `home_page`;
 CREATE TABLE `home_page` (
@@ -1243,122 +1244,124 @@ CREATE TABLE `permissions` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `is_limit` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否开启限制 0否 1是',
   `new_name` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '小程序显示名称',
+  `show_mode` tinyint(3) NOT NULL DEFAULT '0' COMMENT '是否在左导航栏显示 0：否 1：是',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='客户权限列表';
 
-INSERT INTO `permissions` VALUES (1,'admin.permission','权限管理','',0,'fa-users',0,1,'2016-05-21 02:06:50','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (2,'admin.permission.index','权限列表','',1,'',0,0,'2016-05-21 02:08:04','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (3,'admin.permission.create','权限添加','',1,'',0,0,'2016-05-21 02:08:18','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (4,'admin.permission.edit','权限修改','',1,'',0,0,'2016-05-21 02:08:35','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (5,'admin.permission.destroy ','权限删除','',1,'',0,0,'2016-05-21 02:09:57','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (6,'admin.role.index','角色列表','',1,'',0,0,'2016-05-23 02:36:40','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (7,'admin.role.create','角色添加','',1,'',0,0,'2016-05-23 02:37:07','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (8,'admin.role.edit','角色修改','',1,'',0,0,'2016-05-23 02:37:22','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (9,'admin.role.destroy','角色删除','',1,'',0,0,'2016-05-23 02:37:48','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (10,'admin.user.index','系统用户','',1,'',0,0,'2016-05-23 02:38:52','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (11,'admin.user.create','管理员添加','',1,'',0,0,'2016-05-23 02:39:21','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (12,'admin.user.edit','管理员编辑','',1,'',0,0,'2016-05-23 02:39:52','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (13,'admin.user.destroy','管理员删除','',1,'',0,0,'2016-05-23 02:40:36','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (14,'admin.goods','商品管理','',0,'fa-sliders',0,0,'2018-05-24 09:58:48','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (15,'admin.goods.index','商品列表','',14,'',0,0,'2018-05-24 10:09:57','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (16,'admin.goods.create','商品添加','',14,'',0,0,'2018-05-25 10:00:17','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (17,'admin.goods.edit','商品修改','',14,'',0,0,'2018-05-25 10:00:34','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (18,'admin.goods.destroy','商品删除','',14,'',0,0,'2018-05-25 10:01:06','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (19,'admin.index','控制面板','',0,'fa-tachometer',0,2,'2018-05-25 10:01:47','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (20,'admin.index.index','首页','',19,'',0,0,'2018-05-25 10:02:03','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (21,'admin.branch.index','分部列表','',1,'',0,0,'2018-05-28 05:43:31','2019-08-15 10:34:14',0,NULL);
-INSERT INTO `permissions` VALUES (22,'admin.workstatus.index','打卡签到','',19,'',0,0,'2018-05-28 06:36:50','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (23,'admin.case.index','案例列表','',14,'',0,0,'2018-05-28 09:55:22','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (24,'admin.case.create','案例添加','',14,'',0,0,'2018-05-28 10:16:13','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (25,'admin.case.edit','案例修改','',14,'',0,0,'2018-05-28 10:16:33','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (26,'admin.case.destroy','案例删除','',14,'',0,0,'2018-05-28 10:16:52','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (27,'admin.recovery.index','商品回收站','',14,'',0,0,'2018-05-28 10:18:07','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (28,'admin.member','客户管理','',0,'fa-users',0,0,'2018-05-29 02:50:41','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (29,'admin.member.index','我的客户','',28,'',0,0,'2018-05-29 02:51:06','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (30,'admin.member.create','客户添加','',28,'',0,0,'2018-05-29 07:34:31','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (31,'admin.member.edit','客户修改','',28,'',0,0,'2018-05-29 07:34:50','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (32,'admin.member.destroy','客户删除','',28,'',0,0,'2018-05-29 07:35:06','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (33,'admin.member.moneyedit','修改余额','',28,'',0,0,'2018-05-29 07:50:09','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (34,'admin.memberlevel.index','等级设置','',88,'',0,0,'2018-05-29 09:37:01','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (35,'admin.memberlevel.create','等级添加','',88,'',0,0,'2018-05-29 09:49:01','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (36,'admin.memberlevel.edit','等级修改','',88,'',0,0,'2018-05-29 09:49:22','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (37,'admin.memberlevel.destroy','等级删除','',88,'',0,0,'2018-05-29 09:49:59','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (38,'admin.membersource.index','来源设置','',88,'',0,0,'2018-05-29 10:06:45','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (39,'admin.order','订单管理','',0,'fa-reorder',0,0,'2018-05-29 11:12:38','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (40,'admin.order.index','订单列表','',39,'',0,0,'2018-05-29 11:12:57','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (41,'admin.order.create','订单添加','',39,'',0,0,'2018-06-01 02:41:10','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (42,'admin.order.edit','订单修改','',39,'',0,0,'2018-06-01 02:42:25','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (43,'admin.order.destroy','订单删除','',39,'',0,0,'2018-06-01 02:42:48','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (44,'admin.article','文章管理','',0,'fa-newspaper-o',0,0,'2018-06-01 03:14:31','2019-08-15 10:34:18',0,NULL);
-INSERT INTO `permissions` VALUES (45,'admin.articles.index','新闻列表','',44,'',0,0,'2018-06-01 03:16:38','2019-08-15 10:34:18',0,NULL);
-INSERT INTO `permissions` VALUES (46,'admin.articles.create','新闻添加','',44,'',0,0,'2018-06-01 03:30:02','2019-08-15 10:34:18',0,NULL);
-INSERT INTO `permissions` VALUES (47,'admin.articles.edit','新闻修改','',44,'',0,0,'2018-06-01 03:30:33','2019-08-15 10:34:18',0,NULL);
-INSERT INTO `permissions` VALUES (48,'admin.articles.destroy','新闻删除','',44,'',0,0,'2018-06-01 03:31:31','2019-08-15 10:34:18',0,NULL);
-INSERT INTO `permissions` VALUES (49,'admin.help.index','使用帮助','',44,'',0,0,'2018-06-01 03:32:32','2019-08-15 10:34:18',0,NULL);
-INSERT INTO `permissions` VALUES (50,'admin.about.index','关于我们','',44,'',0,0,'2018-06-01 03:32:54','2019-08-15 10:34:18',0,NULL);
-INSERT INTO `permissions` VALUES (51,'admin.log.index','更新日志','',44,'',0,0,'2018-06-01 03:33:16','2019-08-15 10:34:18',0,NULL);
-INSERT INTO `permissions` VALUES (52,'admin.finance','财务管理','',0,'fa-diamond',0,0,'2018-06-01 08:36:34','2019-08-15 10:35:04',0,NULL);
-INSERT INTO `permissions` VALUES (53,'admin.wallet.index','资金明细','',52,'',0,0,'2018-06-01 08:36:58','2019-08-15 10:35:04',0,NULL);
-INSERT INTO `permissions` VALUES (54,'admin.donation.index','赠送金明细','',52,'',0,0,'2018-06-01 09:32:13','2019-08-15 10:35:04',0,NULL);
-INSERT INTO `permissions` VALUES (55,'admin.customer','客户资源','',0,'fa-user-md',0,0,'2018-06-01 09:36:25','2019-08-15 10:34:19',0,NULL);
-INSERT INTO `permissions` VALUES (56,'admin.customer.index','我的客户资源','',55,'',0,0,'2018-06-01 09:36:55','2019-08-15 10:34:19',0,NULL);
-INSERT INTO `permissions` VALUES (57,'admin.problem','问题反馈','',0,'fa-mail-reply-all',0,0,'2018-06-05 09:54:51','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (58,'admin.problem.index','日常问题','',57,'',0,0,'2018-06-05 09:55:16','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (59,'admin.problem.create','问题添加','',57,'',0,0,'2018-06-05 10:01:37','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (60,'admin.problem.edit','问题修改','',57,'',0,0,'2018-06-05 10:01:55','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (61,'admin.problem.destroy','问题删除','',57,'',0,0,'2018-06-05 10:02:33','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (80,'admin.customer.create','客户资源添加','',55,'',0,0,'2018-06-07 18:10:32','2019-08-15 10:34:19',0,NULL);
-INSERT INTO `permissions` VALUES (81,'admin.customer.edit','客户资源修改','',55,'',0,0,'2018-06-07 18:10:51','2019-08-15 10:34:19',0,NULL);
-INSERT INTO `permissions` VALUES (82,'admin.customer.destroy','客户资源删除','',55,'',0,0,'2018-06-07 18:11:08','2019-08-15 10:34:19',0,NULL);
-INSERT INTO `permissions` VALUES (83,'admin.achievement.index','业绩订单','',39,'',0,0,'2018-06-08 11:39:25','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (84,'admin.globaldata.index','业绩排行榜','',19,'',0,0,'2018-06-08 16:52:14','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (85,'admin.index.home','登录初始化','',19,'',0,0,'2018-06-12 17:12:07','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (86,'admin.member.goods','业绩商品','',28,'',0,0,'2018-06-12 21:14:35','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (88,'admin.configs','系统设置','',0,'fa-cog',0,0,'2018-06-23 11:00:50','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (89,'admin.configs.index','站点信息','',88,'',0,0,'2018-06-23 11:01:21','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (90,'admin.salebonusrule.index','提成设置','',88,'',0,0,'2018-06-23 11:09:45','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (91,'admin.aftersale.index','售后订单','',39,'',0,0,'2018-06-24 20:37:59','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (92,'admin.achievement.create','业绩增加','',39,'',0,0,'2018-06-26 11:52:21','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (93,'admin.achievement.edit','业绩修改','',39,'',0,0,'2018-06-26 11:52:38','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (94,'admin.achievement.destroy','业绩删除','',39,'',0,0,'2018-06-26 11:52:52','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (95,'admin.aftersale.create','售后增加','',39,'',0,0,'2018-06-29 17:59:15','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (96,'admin.aftersale.edit','售后修改','',39,'',0,0,'2018-06-29 18:00:03','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (97,'admin.aftersale.destroy','售后删除','',39,'',0,0,'2018-06-29 18:01:01','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (98,'admin.achievement.export','业绩导出','',39,'',0,0,'2018-07-12 17:55:32','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (99,'admin.siteconfig.index','站点设置','',88,'',0,0,'2018-07-12 17:56:00','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (100,'admin.project.index','项目设置','',88,'',0,0,'2018-07-12 18:02:41','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (101,'admin.achievement.examine','业绩审核','',39,'',0,0,'2018-07-16 19:01:46','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (102,'admin.customer.assign','客户资源指派','',55,'',0,0,'2018-07-18 16:43:15','2019-08-15 10:34:19',0,NULL);
-INSERT INTO `permissions` VALUES (103,'admin.takemoney.index','提现管理','',52,'',0,0,'2018-07-18 16:43:15','2019-08-15 10:35:04',0,NULL);
-INSERT INTO `permissions` VALUES (104,'admin.takemoney.create','提现','',52,'',0,0,'2018-07-18 16:43:15','2019-08-15 10:35:04',0,NULL);
-INSERT INTO `permissions` VALUES (105,'admin.takemoney.edit','提现审核','',52,'',0,0,'2018-07-18 16:43:15','2019-08-15 10:35:04',0,NULL);
-INSERT INTO `permissions` VALUES (106,'admin.bonuslog.index','提成记录','',52,'',0,0,'2018-08-02 15:37:11','2019-08-15 10:35:04',0,NULL);
-INSERT INTO `permissions` VALUES (107,'admin.customer.excel','客户资源导入导出','',55,'',0,0,'2018-08-17 16:28:58','2019-08-15 10:34:19',0,NULL);
-INSERT INTO `permissions` VALUES (108,'admin.company.index','公司设置','',88,'',0,0,'2018-08-27 14:51:20','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (109,'admin.sysupdate.index','CRM版本','',88,'',0,0,'2018-10-26 19:15:11','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (110,'admin.achievement.updaterecord','更新订单信息','',39,'',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (111,'admin.achievement.updatedetail','更新订单详情','',39,'',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (112,'admin.hr','人事管理','人事管理列表',0,'fa-steam',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:21',0,NULL);
-INSERT INTO `permissions` VALUES (113,'admin.hr.index','员工列表','',112,'',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:21',0,NULL);
-INSERT INTO `permissions` VALUES (114,'admin.hr.edit','员工资料编辑','',112,'',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:21',0,NULL);
-INSERT INTO `permissions` VALUES (115,'admin.achievement.exchangeorder','业绩订单转移','',39,'',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (116,'admin.aftersale.exchangeorder','售后订单转移','',39,'',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (117,'admin.workorder.index','工单列表','',57,'',0,0,'2018-10-23 14:56:04','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (118,'admin.workorder.edit','工单处理','',57,'',0,0,'2018-10-23 14:56:04','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (119,'personalInformation','个人人事信息','查看个人人事信息',112,'',0,0,'2019-01-15 18:50:06','2019-08-15 10:34:21',0,NULL);
-INSERT INTO `permissions` VALUES (127,'admin.wallet','我的钱包','我的钱包',0,'',0,0,'2019-05-18 17:56:37','2019-08-15 10:34:23',0,NULL);
-INSERT INTO `permissions` VALUES (128,'admin.wallet.details','钱包明细','钱包明细',127,'',0,0,'2019-05-18 17:56:37','2019-08-15 10:34:23',0,NULL);
-INSERT INTO `permissions` VALUES (129,'admin.wallet.bonus','预期奖金列表','预期奖金列表',127,'',0,0,'2019-05-18 17:56:37','2019-08-15 10:34:23',0,NULL);
-INSERT INTO `permissions` VALUES (130,'admin.wallet.bonus.get','奖金提现','奖金提现',127,'',0,0,'2019-05-18 17:56:37','2019-08-15 10:34:23',0,NULL);
-INSERT INTO `permissions` VALUES (133,'admin.plugin.index','插件设置','插件设置',88,'',0,0,'2019-05-18 17:56:37','2019-08-15 10:34:20',0,NULL);
-INSERT INTO `permissions` VALUES (134,'admin.product.productType','产品类型','产品类型',14,'',0,0,'2019-05-18 17:56:37','2019-08-15 10:34:15',0,NULL);
-INSERT INTO `permissions` VALUES (160,'admin.lookarticles.index','类型列表','--',44,'',0,0,'2019-07-09 15:16:21','2019-08-15 10:34:18',0,NULL);
-INSERT INTO `permissions` VALUES (161,'admin.lookarticles.create','添加类型','--',44,'',0,0,'2019-07-09 15:17:07','2019-08-15 10:34:18',0,NULL);
-INSERT INTO `permissions` VALUES (162,'admin.lookarticles.edit','修改类型','--',44,'',0,0,'2019-07-09 15:17:31','2019-08-15 10:34:18',0,NULL);
-INSERT INTO `permissions` VALUES (163,'admin.lookarticles.destroy','删除类型','--',44,'',0,0,'2019-07-09 15:17:57','2019-08-15 10:34:18',0,NULL);
-INSERT INTO `permissions` VALUES (169,'admin.member.authentication','客户认证','客户认证',28,'',0,0,'2019-07-10 09:16:33','2019-08-15 10:34:17',0,NULL);
-INSERT INTO `permissions` VALUES (170,'admin.customer.overdue','逾期客户列表','逾期客户列表',55,'',0,0,'2019-07-10 18:21:55','2019-08-15 10:34:19',0,NULL);
-INSERT INTO `permissions` VALUES (171,'admin.customer.lose','丢单客户列表','丢单客户列表',55,'',0,0,'2019-07-10 18:23:28','2019-08-15 10:34:19',0,NULL);
+INSERT INTO `permissions` VALUES (1,'admin.permission','权限管理','',0,'fa-users',0,1,'2016-05-21 02:06:50','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (2,'admin.permission.index','权限列表','',1,'',0,0,'2016-05-21 02:08:04','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (3,'admin.permission.create','权限添加','',1,'',0,0,'2016-05-21 02:08:18','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (4,'admin.permission.edit','权限修改','',1,'',0,0,'2016-05-21 02:08:35','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (5,'admin.permission.destroy ','权限删除','',1,'',0,0,'2016-05-21 02:09:57','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (6,'admin.role.index','角色列表','',1,'',0,0,'2016-05-23 02:36:40','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (7,'admin.role.create','角色添加','',1,'',0,0,'2016-05-23 02:37:07','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (8,'admin.role.edit','角色修改','',1,'',0,0,'2016-05-23 02:37:22','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (9,'admin.role.destroy','角色删除','',1,'',0,0,'2016-05-23 02:37:48','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (10,'admin.user.index','系统用户','',1,'',0,0,'2016-05-23 02:38:52','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (11,'admin.user.create','管理员添加','',1,'',0,0,'2016-05-23 02:39:21','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (12,'admin.user.edit','管理员编辑','',1,'',0,0,'2016-05-23 02:39:52','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (13,'admin.user.destroy','管理员删除','',1,'',0,0,'2016-05-23 02:40:36','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (14,'admin.goods','商品管理','',0,'fa-sliders',0,0,'2018-05-24 09:58:48','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (15,'admin.goods.index','商品列表','',14,'',0,0,'2018-05-24 10:09:57','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (16,'admin.goods.create','商品添加','',14,'',0,0,'2018-05-25 10:00:17','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (17,'admin.goods.edit','商品修改','',14,'',0,0,'2018-05-25 10:00:34','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (18,'admin.goods.destroy','商品删除','',14,'',0,0,'2018-05-25 10:01:06','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (19,'admin.index','控制面板','',0,'fa-tachometer',0,2,'2018-05-25 10:01:47','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (20,'admin.index.index','首页','',19,'',0,0,'2018-05-25 10:02:03','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (21,'admin.branch.index','分部列表','',1,'',0,0,'2018-05-28 05:43:31','2019-08-15 10:34:14',0,NULL,0);
+INSERT INTO `permissions` VALUES (22,'admin.workstatus.index','打卡签到','',19,'',0,0,'2018-05-28 06:36:50','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (23,'admin.case.index','案例列表','',14,'',0,0,'2018-05-28 09:55:22','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (24,'admin.case.create','案例添加','',14,'',0,0,'2018-05-28 10:16:13','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (25,'admin.case.edit','案例修改','',14,'',0,0,'2018-05-28 10:16:33','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (26,'admin.case.destroy','案例删除','',14,'',0,0,'2018-05-28 10:16:52','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (27,'admin.recovery.index','商品回收站','',14,'',0,0,'2018-05-28 10:18:07','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (28,'admin.member','客户管理','',0,'fa-users',0,0,'2018-05-29 02:50:41','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (29,'admin.member.index','我的客户','',28,'',0,0,'2018-05-29 02:51:06','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (30,'admin.member.create','客户添加','',28,'',0,0,'2018-05-29 07:34:31','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (31,'admin.member.edit','客户修改','',28,'',0,0,'2018-05-29 07:34:50','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (32,'admin.member.destroy','客户删除','',28,'',0,0,'2018-05-29 07:35:06','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (33,'admin.member.moneyedit','修改余额','',28,'',0,0,'2018-05-29 07:50:09','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (34,'admin.memberlevel.index','等级设置','',88,'',0,0,'2018-05-29 09:37:01','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (35,'admin.memberlevel.create','等级添加','',88,'',0,0,'2018-05-29 09:49:01','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (36,'admin.memberlevel.edit','等级修改','',88,'',0,0,'2018-05-29 09:49:22','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (37,'admin.memberlevel.destroy','等级删除','',88,'',0,0,'2018-05-29 09:49:59','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (38,'admin.membersource.index','来源设置','',88,'',0,0,'2018-05-29 10:06:45','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (39,'admin.order','订单管理','',0,'fa-reorder',0,0,'2018-05-29 11:12:38','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (40,'admin.order.index','订单列表','',39,'',0,0,'2018-05-29 11:12:57','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (41,'admin.order.create','订单添加','',39,'',0,0,'2018-06-01 02:41:10','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (42,'admin.order.edit','订单修改','',39,'',0,0,'2018-06-01 02:42:25','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (43,'admin.order.destroy','订单删除','',39,'',0,0,'2018-06-01 02:42:48','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (44,'admin.article','文章管理','',0,'fa-newspaper-o',0,0,'2018-06-01 03:14:31','2019-08-15 10:34:18',0,NULL,0);
+INSERT INTO `permissions` VALUES (45,'admin.articles.index','新闻列表','',44,'',0,0,'2018-06-01 03:16:38','2019-08-15 10:34:18',0,NULL,0);
+INSERT INTO `permissions` VALUES (46,'admin.articles.create','新闻添加','',44,'',0,0,'2018-06-01 03:30:02','2019-08-15 10:34:18',0,NULL,0);
+INSERT INTO `permissions` VALUES (47,'admin.articles.edit','新闻修改','',44,'',0,0,'2018-06-01 03:30:33','2019-08-15 10:34:18',0,NULL,0);
+INSERT INTO `permissions` VALUES (48,'admin.articles.destroy','新闻删除','',44,'',0,0,'2018-06-01 03:31:31','2019-08-15 10:34:18',0,NULL,0);
+INSERT INTO `permissions` VALUES (49,'admin.help.index','使用帮助','',44,'',0,0,'2018-06-01 03:32:32','2019-08-15 10:34:18',0,NULL,0);
+INSERT INTO `permissions` VALUES (50,'admin.about.index','关于我们','',44,'',0,0,'2018-06-01 03:32:54','2019-08-15 10:34:18',0,NULL,0);
+INSERT INTO `permissions` VALUES (51,'admin.log.index','更新日志','',44,'',0,0,'2018-06-01 03:33:16','2019-08-15 10:34:18',0,NULL,0);
+INSERT INTO `permissions` VALUES (52,'admin.finance','财务管理','',0,'fa-diamond',0,0,'2018-06-01 08:36:34','2019-08-15 10:35:04',0,NULL,0);
+INSERT INTO `permissions` VALUES (53,'admin.wallet.index','资金明细','',52,'',0,0,'2018-06-01 08:36:58','2019-08-15 10:35:04',0,NULL,0);
+INSERT INTO `permissions` VALUES (54,'admin.donation.index','赠送金明细','',52,'',0,0,'2018-06-01 09:32:13','2019-08-15 10:35:04',0,NULL,0);
+INSERT INTO `permissions` VALUES (55,'admin.customer','客户资源','',0,'fa-user-md',0,0,'2018-06-01 09:36:25','2019-08-15 10:34:19',0,NULL,0);
+INSERT INTO `permissions` VALUES (56,'admin.customer.index','我的客户资源','',55,'',0,0,'2018-06-01 09:36:55','2019-08-15 10:34:19',0,NULL,0);
+INSERT INTO `permissions` VALUES (57,'admin.problem','问题反馈','',0,'fa-mail-reply-all',0,0,'2018-06-05 09:54:51','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (58,'admin.problem.index','日常问题','',57,'',0,0,'2018-06-05 09:55:16','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (59,'admin.problem.create','问题添加','',57,'',0,0,'2018-06-05 10:01:37','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (60,'admin.problem.edit','问题修改','',57,'',0,0,'2018-06-05 10:01:55','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (61,'admin.problem.destroy','问题删除','',57,'',0,0,'2018-06-05 10:02:33','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (80,'admin.customer.create','客户资源添加','',55,'',0,0,'2018-06-07 18:10:32','2019-08-15 10:34:19',0,NULL,0);
+INSERT INTO `permissions` VALUES (81,'admin.customer.edit','客户资源修改','',55,'',0,0,'2018-06-07 18:10:51','2019-08-15 10:34:19',0,NULL,0);
+INSERT INTO `permissions` VALUES (82,'admin.customer.destroy','客户资源删除','',55,'',0,0,'2018-06-07 18:11:08','2019-08-15 10:34:19',0,NULL,0);
+INSERT INTO `permissions` VALUES (83,'admin.achievement.index','业绩订单','',39,'',0,0,'2018-06-08 11:39:25','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (84,'admin.globaldata.index','业绩排行榜','',19,'',0,0,'2018-06-08 16:52:14','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (85,'admin.index.home','登录初始化','',19,'',0,0,'2018-06-12 17:12:07','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (86,'admin.member.goods','业绩商品','',28,'',0,0,'2018-06-12 21:14:35','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (88,'admin.configs','系统设置','',0,'fa-cog',0,0,'2018-06-23 11:00:50','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (89,'admin.configs.index','站点信息','',88,'',0,0,'2018-06-23 11:01:21','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (90,'admin.salebonusrule.index','提成设置','',88,'',0,0,'2018-06-23 11:09:45','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (91,'admin.aftersale.index','售后订单','',39,'',0,0,'2018-06-24 20:37:59','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (92,'admin.achievement.create','业绩增加','',39,'',0,0,'2018-06-26 11:52:21','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (93,'admin.achievement.edit','业绩修改','',39,'',0,0,'2018-06-26 11:52:38','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (94,'admin.achievement.destroy','业绩删除','',39,'',0,0,'2018-06-26 11:52:52','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (95,'admin.aftersale.create','售后增加','',39,'',0,0,'2018-06-29 17:59:15','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (96,'admin.aftersale.edit','售后修改','',39,'',0,0,'2018-06-29 18:00:03','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (97,'admin.aftersale.destroy','售后删除','',39,'',0,0,'2018-06-29 18:01:01','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (98,'admin.achievement.export','业绩导出','',39,'',0,0,'2018-07-12 17:55:32','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (99,'admin.siteconfig.index','站点设置','',88,'',0,0,'2018-07-12 17:56:00','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (100,'admin.project.index','项目设置','',88,'',0,0,'2018-07-12 18:02:41','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (101,'admin.achievement.examine','业绩审核','',39,'',0,0,'2018-07-16 19:01:46','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (102,'admin.customer.assign','客户资源指派','',55,'',0,0,'2018-07-18 16:43:15','2019-08-15 10:34:19',0,NULL,0);
+INSERT INTO `permissions` VALUES (103,'admin.takemoney.index','提现管理','',52,'',0,0,'2018-07-18 16:43:15','2019-08-15 10:35:04',0,NULL,0);
+INSERT INTO `permissions` VALUES (104,'admin.takemoney.create','提现','',52,'',0,0,'2018-07-18 16:43:15','2019-08-15 10:35:04',0,NULL,0);
+INSERT INTO `permissions` VALUES (105,'admin.takemoney.edit','提现审核','',52,'',0,0,'2018-07-18 16:43:15','2019-08-15 10:35:04',0,NULL,0);
+INSERT INTO `permissions` VALUES (106,'admin.bonuslog.index','提成记录','',52,'',0,0,'2018-08-02 15:37:11','2019-08-15 10:35:04',0,NULL,0);
+INSERT INTO `permissions` VALUES (107,'admin.customer.excel','客户资源导入导出','',55,'',0,0,'2018-08-17 16:28:58','2019-08-15 10:34:19',0,NULL,0);
+INSERT INTO `permissions` VALUES (108,'admin.company.index','公司设置','',88,'',0,0,'2018-08-27 14:51:20','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (109,'admin.sysupdate.index','CRM版本','',88,'',0,0,'2018-10-26 19:15:11','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (110,'admin.achievement.updaterecord','更新订单信息','',39,'',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (111,'admin.achievement.updatedetail','更新订单详情','',39,'',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (112,'admin.hr','人事管理','人事管理列表',0,'fa-steam',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:21',0,NULL,0);
+INSERT INTO `permissions` VALUES (113,'admin.hr.index','员工列表','',112,'',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:21',0,NULL,0);
+INSERT INTO `permissions` VALUES (114,'admin.hr.edit','员工资料编辑','',112,'',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:21',0,NULL,0);
+INSERT INTO `permissions` VALUES (115,'admin.achievement.exchangeorder','业绩订单转移','',39,'',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (116,'admin.aftersale.exchangeorder','售后订单转移','',39,'',0,0,'2018-10-26 19:15:47','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (117,'admin.workorder.index','工单列表','',57,'',0,0,'2018-10-23 14:56:04','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (118,'admin.workorder.edit','工单处理','',57,'',0,0,'2018-10-23 14:56:04','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (119,'personalInformation','个人人事信息','查看个人人事信息',112,'',0,0,'2019-01-15 18:50:06','2019-08-15 10:34:21',0,NULL,0);
+INSERT INTO `permissions` VALUES (127,'admin.wallet','我的钱包','我的钱包',0,'',0,0,'2019-05-18 17:56:37','2019-08-15 10:34:23',0,NULL,0);
+INSERT INTO `permissions` VALUES (128,'admin.wallet.details','钱包明细','钱包明细',127,'',0,0,'2019-05-18 17:56:37','2019-08-15 10:34:23',0,NULL,0);
+INSERT INTO `permissions` VALUES (129,'admin.wallet.bonus','预期奖金列表','预期奖金列表',127,'',0,0,'2019-05-18 17:56:37','2019-08-15 10:34:23',0,NULL,0);
+INSERT INTO `permissions` VALUES (130,'admin.wallet.bonus.get','奖金提现','奖金提现',127,'',0,0,'2019-05-18 17:56:37','2019-08-15 10:34:23',0,NULL,0);
+INSERT INTO `permissions` VALUES (133,'admin.plugin.index','插件设置','插件设置',88,'',0,0,'2019-05-18 17:56:37','2019-08-15 10:34:20',0,NULL,0);
+INSERT INTO `permissions` VALUES (134,'admin.product.productType','产品类型','产品类型',14,'',0,0,'2019-05-18 17:56:37','2019-08-15 10:34:15',0,NULL,0);
+INSERT INTO `permissions` VALUES (160,'admin.lookarticles.index','类型列表','--',44,'',0,0,'2019-07-09 15:16:21','2019-08-15 10:34:18',0,NULL,0);
+INSERT INTO `permissions` VALUES (161,'admin.lookarticles.create','添加类型','--',44,'',0,0,'2019-07-09 15:17:07','2019-08-15 10:34:18',0,NULL,0);
+INSERT INTO `permissions` VALUES (162,'admin.lookarticles.edit','修改类型','--',44,'',0,0,'2019-07-09 15:17:31','2019-08-15 10:34:18',0,NULL,0);
+INSERT INTO `permissions` VALUES (163,'admin.lookarticles.destroy','删除类型','--',44,'',0,0,'2019-07-09 15:17:57','2019-08-15 10:34:18',0,NULL,0);
+INSERT INTO `permissions` VALUES (169,'admin.member.authentication','客户认证','客户认证',28,'',0,0,'2019-07-10 09:16:33','2019-08-15 10:34:17',0,NULL,0);
+INSERT INTO `permissions` VALUES (170,'admin.customer.overdue','逾期客户列表','逾期客户列表',55,'',0,0,'2019-07-10 18:21:55','2019-08-15 10:34:19',0,NULL,0);
+INSERT INTO `permissions` VALUES (171,'admin.customer.lose','丢单客户列表','丢单客户列表',55,'',0,0,'2019-07-10 18:23:28','2019-08-15 10:34:19',0,NULL,0);
+
 DROP TABLE IF EXISTS `customer_log`;
 CREATE TABLE `customer_log` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1431,7 +1434,7 @@ CREATE TABLE `item_bank` (
   `annex` varchar(255) DEFAULT NULL COMMENT '标题附件',
   `type` tinyint(3) DEFAULT NULL COMMENT '类型 1单选 2多选 3填空',
   `must` tinyint(3) NOT NULL DEFAULT '0' COMMENT '是否必填 0否 1是',
-  `option` varchar(255) DEFAULT NULL COMMENT '选项json存储',
+  `option` text COMMENT '选项json存储',
   `answer` varchar(50) DEFAULT NULL COMMENT '答案',
   `fraction` tinyint(3) DEFAULT NULL COMMENT '分数',
   `remarks` varchar(300) DEFAULT NULL COMMENT '备注',
@@ -1470,7 +1473,7 @@ CREATE TABLE `operate_log` (
   `id` int(11) DEFAULT NULL COMMENT '记录标识id，部门id或个人id 0为平台数据',
   PRIMARY KEY (`log_id`),
   KEY `log_id` (`log_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8 COMMENT='平台运营数据记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='平台运营数据记录表';
 
 DROP TABLE IF EXISTS `member_contact_log`;
 CREATE TABLE `member_contact_log` (
@@ -1530,15 +1533,15 @@ CREATE TABLE `exam_results` (
   `name` varchar(255) DEFAULT NULL COMMENT '用户名',
   `exam_id` int(11) DEFAULT NULL COMMENT '考试id',
   `answer` text COMMENT '回答json存储',
-  `branch` tinyint(3) NOT NULL DEFAULT '0' COMMENT '分数',
-  `number` tinyint(3) NOT NULL DEFAULT '0' COMMENT '考试次数',
+  `branch` int(5) NOT NULL DEFAULT '0' COMMENT '分数',
+  `number` int(5) NOT NULL DEFAULT '0' COMMENT '考试次数',
   `status` tinyint(3) NOT NULL DEFAULT '0' COMMENT '状态 0不及格 1及格',
   `start_time` timestamp NULL DEFAULT NULL COMMENT '开考时间',
   `end_time` timestamp NULL DEFAULT NULL COMMENT '提交时间',
   `use_time` float(5,2) DEFAULT NULL COMMENT '用时(单位：分钟)',
   `type` tinyint(3) DEFAULT NULL COMMENT '考生类型 1客户 2员工',
   `created_at` timestamp NULL DEFAULT NULL,
-  `lately_results` tinyint(3) NOT NULL DEFAULT '0',
+  `lately_results` int(5) NOT NULL DEFAULT '0' COMMENT '上次考试分数',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='考试结果表';
 
@@ -1548,8 +1551,8 @@ CREATE TABLE `exam` (
   `name` varchar(255) DEFAULT NULL COMMENT '试卷标题',
   `start_time` timestamp NULL DEFAULT NULL COMMENT '开始考试时间',
   `end_time` timestamp NULL DEFAULT NULL COMMENT '结束考试时间',
-  `qualified_score` tinyint(3) NOT NULL DEFAULT '0' COMMENT '合格分数',
-  `total_score` tinyint(3) NOT NULL DEFAULT '0' COMMENT '总分',
+  `qualified_score` int(5) NOT NULL DEFAULT '0' COMMENT '合格分数',
+  `total_score` int(5) NOT NULL DEFAULT '0' COMMENT '总分',
   `cover` varchar(255) DEFAULT NULL COMMENT '封面图片',
   `explain` varchar(255) DEFAULT NULL COMMENT '考试说明',
   `limit_time` varchar(255) DEFAULT NULL COMMENT '考试限制时间（分钟）',
@@ -1567,7 +1570,7 @@ CREATE TABLE `exam` (
   `subject_number` int(5) DEFAULT NULL COMMENT '题目总数',
   `test_paper_name` varchar(255) DEFAULT NULL COMMENT '所选试卷的名称',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=utf8 COMMENT='考试表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='考试表';
 
 DROP TABLE IF EXISTS `achievement_extend`;
 CREATE TABLE `achievement_extend` (
@@ -1616,7 +1619,7 @@ CREATE TABLE `wxapp_page` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8 COMMENT='小程序页面路径表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='小程序页面路径表';
 
 INSERT INTO `wxapp_page` VALUES (1,'/pages/agent/homepage/index/index','首页',1,1,'0000-00-00 00:00:00','0000-00-00 00:00:00');
 INSERT INTO `wxapp_page` VALUES (2,'/pages/agent/center/index/index','个人中心',1,1,'0000-00-00 00:00:00','0000-00-00 00:00:00');
@@ -1666,7 +1669,7 @@ CREATE TABLE `transfer_work_order` (
   `change_remarks` varchar(255) DEFAULT NULL COMMENT '转单备注',
   `verify_time` timestamp NULL DEFAULT NULL COMMENT '审核时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='工单转移记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='工单转移记录表';
 
 DROP TABLE IF EXISTS `service_hotline`;
 CREATE TABLE `service_hotline` (

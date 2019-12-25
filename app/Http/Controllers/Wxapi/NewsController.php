@@ -47,7 +47,7 @@ class NewsController extends BaseController{
             }
         }
         $this->result['data'] = $types;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //分类父子级处理
@@ -93,17 +93,12 @@ class NewsController extends BaseController{
                 }
                 $v['thumb'] = $thumb;
             }
+            if($v['created_at']){
+                $v['created_at'] = (substr($v['created_at'],0,10));
+            }
         }
         $this->result['data'] = $res;
-        return response()->json($this->result);
-    }
-
-    //新闻
-    public function TypeNewsList(){
-        $a = new Articles();
-        $res = $a->getTypeNews();
-        $this->result['data'] = $res;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //新闻详情
@@ -120,18 +115,18 @@ class NewsController extends BaseController{
         }
         if ($res['file_url']){
             $res['file_url'] = $this->processingPictures($res['file_url']);
-            if ($res['video_cover']){
-                $res['video_cover'] = $this->processingPictures($res['video_cover']);
-            }else{
-                $video_cover = 'uploads/default/video.jpg';
-                $res['video_cover'] = $this->processingPictures($video_cover);
-            }
+        }
+        if ($res['video_cover']){
+            $res['video_cover'] = $this->processingPictures($res['video_cover']);
+        }else{
+            $video_cover = 'uploads/default/video.jpg';
+            $res['video_cover'] = $this->processingPictures($video_cover);
         }
         if ($res['created_at']){
             $res['created_at'] = (substr($res['created_at'],0,10));
         }
         $this->result['data'] = $res;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //视频中心
@@ -150,7 +145,7 @@ class NewsController extends BaseController{
             }
         }
         $this->result['data'] = array_values($res);
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
 }

@@ -52,7 +52,6 @@ class ItemBank extends Model
             return false;
         }
         $res = json_decode(json_encode($res),true);
-        $res['url'] = 'https://'.$_SERVER['SERVER_NAME'].$res['annex'];
         if ($res['type'] != 3){
             $res['answer'] = json_decode($res['answer'],1);
         }
@@ -119,6 +118,24 @@ class ItemBank extends Model
         return true;
     }
 
+    //根据条件获取信息
+    public function getFields($field, $filter = [], $one = true){
+        if (!$filter){
+            return false;
+        }
+        $db = DB::table($this->table)->where($filter)->select($field);
+        if ($one){
+            $data = $db->first();
+        }else{
+            $data = $db->get();
+        }
+        if (!$data){
+            return [];
+        }else{
+            $data = json_decode(json_encode($data),true);
+        }
+        return $data;
+    }
 
 
 

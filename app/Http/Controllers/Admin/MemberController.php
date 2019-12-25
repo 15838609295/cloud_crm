@@ -62,9 +62,9 @@ class MemberController extends BaseController
             return $this->returnData;
         }
         $memberLevelModel = new MemberLevel();
-        $data = $memberLevelModel->getMemberLevelList();
+        $data = $memberLevelModel->getFields(['id','name'],[['name','!=','']],false);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 客户来源列表 */
@@ -75,7 +75,7 @@ class MemberController extends BaseController
         $memberSourceModel = new MemberSource();
         $data = $memberSourceModel->getMemberSourceList();
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 客户数据列表 */
@@ -106,7 +106,7 @@ class MemberController extends BaseController
         $data = $memberModel->getMemberListWithFilter($searchFilter);
 
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 客户详情 */
@@ -119,11 +119,11 @@ class MemberController extends BaseController
         if(!is_array($data) || count($data)<1){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
             $this->returnData['msg'] = '该数据不存在';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $data['avatar'] = $this->processingPictures($data['avatar']);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 添加客户 */
@@ -145,7 +145,7 @@ class MemberController extends BaseController
         $res = $memberModel->validMemberRepeat(['mobile'=>$member['mobile'],'email'=>$member['email']]);
         if($res['is_repeat']==1){
             $this->returnData = $res['returnData'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $member['status'] = 1;
         if($member['password'] == ''){
@@ -170,10 +170,10 @@ class MemberController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '添加失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '添加成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 修改用户 */
@@ -202,7 +202,7 @@ class MemberController extends BaseController
         $res = $memberModel->validMemberRepeat(['mobile'=>$member['mobile'],'email'=>$member['email']],$id);
         if($res['is_repeat']==1){
             $this->returnData = $res['returnData'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if(isset($member['password']) && $member['password'] != ''){
             $member['password'] = bcrypt($member['password']);
@@ -220,10 +220,10 @@ class MemberController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '修改失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '修改成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 客户删除 */
@@ -236,10 +236,10 @@ class MemberController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '删除失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '删除成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
     
     /* 用户状态操作 */
@@ -249,25 +249,25 @@ class MemberController extends BaseController
         }
         if (!isset($request->action) || !in_array(strval($request->action),['status'],true)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $id = $request->id;
         if($request->action=='status'){
             $status = trim($request->post('status',''));
             if($status=='' || !in_array(strval($status),['0','1'],true)){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $memberModel = new MemberBase();
             $res = $memberModel->memberUpdate($id,['status'=>$status]);
             if($res){
                 $this->returnData['msg'] = '操作成功';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
         }
         $this->returnData = ErrorCode::$admin_enum['fail'];
         $this->returnData['msg'] = '操作失败';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
     
     /* 客户金额操作 */
@@ -279,17 +279,17 @@ class MemberController extends BaseController
         if (!$this->is_su){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = '无权限访问';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if(trim($request->post('remarks',''))==''){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = '请填写备注';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if ($request->input('money_type','') == ''){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = '请填金额类型';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $memberModel = new MemberBase();
         $info = $memberModel->getMemberExtendByID((int)$id);
@@ -306,7 +306,7 @@ class MemberController extends BaseController
                 if ($info['balance'] < $money){
                     $this->returnData = ErrorCode::$admin_enum['params_error'];
                     $this->returnData['msg'] = '客户余额不足扣除';
-                    return response()->json($this->returnData);
+                    return $this->return_result($this->returnData);
                 }
                 $data["balance"] = $info['balance'] - $money;
                 $log["money"] = '-'.$money;
@@ -323,7 +323,7 @@ class MemberController extends BaseController
                 if ($info['cash_coupon'] < $money){
                     $this->returnData = ErrorCode::$admin_enum['params_error'];
                     $this->returnData['msg'] = '客户赠送金不足扣除';
-                    return response()->json($this->returnData);
+                    return $this->return_result($this->returnData);
                 }
                 $data['cash_coupon'] = $info['cash_coupon'] - $money;
                 $log['operation'] = '减少赠送金';
@@ -338,7 +338,7 @@ class MemberController extends BaseController
         }else{
             $this->returnData['status'] = 105;
             $this->returnData['msg'] = '未知操作';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $walletLogModel = new WalletLogs();
         $walletLogModel->walletLogInsert($log);
@@ -346,10 +346,10 @@ class MemberController extends BaseController
         if(!$res){
             $this->returnData['status'] = 99;
             $this->returnData['msg'] = '更新失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '更新成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 来源列表 */
@@ -371,7 +371,7 @@ class MemberController extends BaseController
         $customerModel = new MemberSource();
         $data = $customerModel->getMemberSourceWithFilter($searchFilter);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //查看客户资金明细
@@ -415,7 +415,7 @@ class MemberController extends BaseController
             ->orderBy($sortName, $sortOrder)
             ->get();
 
-        return response()->json($data);
+        return $this->return_result($data);
     }
 
     //售后服务列表
@@ -442,7 +442,7 @@ class MemberController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //沟通记录
@@ -482,7 +482,7 @@ class MemberController extends BaseController
         $res['duty_id'] = $extend['duty_id'];
         $res['star_class'] = $extend['star_class'];
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改管理人员
@@ -501,7 +501,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改指派人失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加联系记录
@@ -520,7 +520,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加沟通记录失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //维护信息
@@ -539,7 +539,7 @@ class MemberController extends BaseController
             }
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改提醒信息
@@ -555,7 +555,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改星级
@@ -571,7 +571,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改详情
@@ -587,7 +587,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加账号信息
@@ -606,7 +606,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除运维信息和合同信息
@@ -623,7 +623,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加代码托管
@@ -641,7 +641,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加附件信息
@@ -659,7 +659,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //合同信息
@@ -678,7 +678,7 @@ class MemberController extends BaseController
             }
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加合同信息
@@ -696,7 +696,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //订单列表
@@ -718,7 +718,7 @@ class MemberController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改账号信息
@@ -737,7 +737,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改托管地址
@@ -755,7 +755,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改附件地址
@@ -773,7 +773,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改合同信息
@@ -791,7 +791,7 @@ class MemberController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
 

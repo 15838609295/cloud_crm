@@ -27,6 +27,21 @@ class MemberLevel extends Model
         return $res;
     }
 
+    //根据条件获取信息
+    public function getFields($fields, $filter, $one = true){
+        if (!$filter){
+            return false;
+        }
+        $db = DB::table($this->table_name)->where($filter)->select($fields);
+        if ($one){
+            $data = $db->first();
+        }else{
+            $data = $db->get();
+        }
+        $data = json_decode(json_encode($data),true);
+        return $data;
+    }
+
     /* 等级名称是否存在 */
     public function getMemberLevelByName($name)
     {

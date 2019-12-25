@@ -36,7 +36,7 @@ class WorkOrderController extends BaseController
             $res['picture'] = $this->processingPictures($res['picture']);
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改企业简介
@@ -44,19 +44,25 @@ class WorkOrderController extends BaseController
         if ($this->returnData['code'] > 0){
             return $this->returnData;
         }
+        global $scf_data;
         $data['name'] = $request->post('name','');
         $data['introduce'] = $request->post('introduce','');
         $data['picture'] = $request->post('picture','');
         $data['tel'] = $request->post('tel','');
         $data['address'] = $request->post('address','');
-        if ($data['address'] != ''){
-            $url = 'https://apis.map.qq.com/ws/geocoder/v1/?address='.$data['address'].'&key=DD6BZ-RTV6U-5C6VH-BTXIA-BLNMK-Y7BPK';  //微信号：微微开发 注册腾讯地址 获得
+        if (isset($scf_data['apiKey'])){
+            $key = $scf_data['apiKey'];
+        }else{
+            $key = '';
+        }
+        if ($data['address'] != '' && $key != '' ){
+            $url = 'https://apis.map.qq.com/ws/geocoder/v1/?address='.$data['address'].'&key='.$key;
             $result = file_get_contents($url);
             $result = json_decode($result,true);
             if ($result['status'] != 0){
                 $this->returnData['code'] = 1;
                 $this->returnData['msg'] = '未获取到坐标，请重新输入地址（省、市、区格式）';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $position['lng'] = $result['result']['location']['lng'];
             $position['lat'] = $result['result']['location']['lat'];
@@ -68,7 +74,7 @@ class WorkOrderController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //街道无分页
@@ -83,7 +89,7 @@ class WorkOrderController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //街道列表
@@ -103,7 +109,7 @@ class WorkOrderController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改街道信息
@@ -113,7 +119,7 @@ class WorkOrderController extends BaseController
         }
         $id = $request->post('id','');
         $data['name'] =$request->post('name','');
-//        $data['admin_id'] = $request->post('admin_id','');
+        $data['admin_id'] = $request->post('admin_id','');
 //        $data['tel'] = $request->post('tel','');
         $data['cid'] = $request->post('cid','');
 //        $data['wx_status'] = $request->post('wx_status','');
@@ -123,7 +129,7 @@ class WorkOrderController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加街道信息
@@ -132,7 +138,7 @@ class WorkOrderController extends BaseController
             return $this->returnData;
         }
         $data['name'] = $request->post('name','');
-//        $data['admin_id'] = $request->post('admin_id','');
+        $data['admin_id'] = $request->post('admin_id','');
         $data['cid'] = $request->post('cid','');
 //        $data['wx_status'] = $request->post('wx_status','');
 //        $data['tel'] = $request->post('tel','');
@@ -142,7 +148,7 @@ class WorkOrderController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
 //    //修改街道信息状态
@@ -158,7 +164,7 @@ class WorkOrderController extends BaseController
 //            $this->returnData['code'] = 1;
 //            $this->returnData['msg'] = '修改失败';
 //        }
-//        return response()->json($this->returnData);
+//        return $this->return_result($this->returnData);
 //    }
 
     //街道删除
@@ -175,7 +181,7 @@ class WorkOrderController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '请删除街道下的范围信息';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //管理员绑定街道
@@ -191,7 +197,7 @@ class WorkOrderController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '绑定失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //问题类型列表
@@ -209,7 +215,7 @@ class WorkOrderController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加反馈类型
@@ -221,7 +227,7 @@ class WorkOrderController extends BaseController
         if (!$name || !preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $name)){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '类型名称不能为空或包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $workOrderModel = new WorkOrder();
         $res = $workOrderModel->addFeedback($name);
@@ -229,7 +235,7 @@ class WorkOrderController extends BaseController
             $this->returnData['status'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改反馈类型
@@ -245,7 +251,7 @@ class WorkOrderController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除问题标签
@@ -259,7 +265,7 @@ class WorkOrderController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //工单列表
@@ -284,7 +290,7 @@ class WorkOrderController extends BaseController
         $workOrderModel = new WorkOrder();
         $data = $workOrderModel->getWorkOrderListWithFilter($searchFilter);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //工单详情
@@ -320,7 +326,7 @@ class WorkOrderController extends BaseController
             }
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //转单列表
@@ -343,7 +349,7 @@ class WorkOrderController extends BaseController
         $transferWorkOrder = new TransferWorkOrder();
         $res = $transferWorkOrder->getWorkOrderChangeOrder($searchFilter);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
 
     }
 
@@ -377,7 +383,7 @@ class WorkOrderController extends BaseController
             }
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //转单人员列表
@@ -387,7 +393,7 @@ class WorkOrderController extends BaseController
         }
         $companyModel = new Company();
         $this->returnData['data'] = $companyModel->getCompanyAdminList();
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //转单审核
@@ -403,7 +409,7 @@ class WorkOrderController extends BaseController
         if ($data['admin_id'] == '' && $data['status'] == 1){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '未选择管理员';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $transferWorkOrder = new TransferWorkOrder();
         $res = $transferWorkOrder->changeOrderAdmin($id,$data);
@@ -413,7 +419,7 @@ class WorkOrderController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '审核失败，此单已解决';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //工单导出
@@ -426,7 +432,7 @@ class WorkOrderController extends BaseController
         $ids = explode(',',$id);
         $workOrderModel = new WorkOrder();
         $res = $workOrderModel->getWorkOrderListInfo($ids,$type);
-        $arr[] = ['反馈人','反馈人电话','反馈信息','街道','区域','详细地址','网格员','网格员电话','状态','反馈时间','处理时间','确认解决时间'];
+        $arr[] = ['反馈人','反馈人电话','反馈信息','街道','区域','反馈类型','详细地址','网格员','网格员电话','状态','反馈时间','处理时间','确认解决时间'];
         if ($type == 1){
             foreach ($res as $k=>&$v) {
                 $arr[] = [
@@ -435,6 +441,7 @@ class WorkOrderController extends BaseController
                     $v['description'],
                     $v['street_father_name'],
                     $v['street_son_name'],
+                    $v['type_name'],
                     $v['address'],
                     $v['admin_name'],
                     $v['admin_mobile'],
@@ -460,6 +467,7 @@ class WorkOrderController extends BaseController
                     $v['description'],
                     $v['street_father_name'],
                     $v['street_son_name'],
+                    $v['type_name'],
                     $v['address'],
                     $v['admin_name'],
                     $v['admin_mobile'],
@@ -533,7 +541,7 @@ class WorkOrderController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //工单数据统计
@@ -549,7 +557,7 @@ class WorkOrderController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //工单统计查询
@@ -573,7 +581,7 @@ class WorkOrderController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //工单统计导出
@@ -644,6 +652,9 @@ class WorkOrderController extends BaseController
         }
 	    $streetModel = new Street();
 	    $res = $streetModel->getAllStreetList();
+        if (!$res){
+            return $this->return_result(ErrorCode::$admin_enum['customized'],'无数据');
+        }
         $arr[] = ['记录id','街道名称','组长','电话','下属区域'];
         foreach ($res as $k=>&$v) {
             $arr[$k +1] = [

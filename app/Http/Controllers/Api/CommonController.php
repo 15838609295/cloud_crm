@@ -48,7 +48,7 @@ class CommonController extends BaseController
             file_put_contents($temp_file, base64_decode(str_replace($result[1], '', $base64_img)));  //文件流写入文件
             //创建文件夹
             $time = date('Ymd',time());
-            $cloud_file = '/apipicture/'.$time;
+            $cloud_file = '/uploads/picture/'.$time;
             $img_name = $cloud_file.'/'.time().rand(11111,99999).'.'.$result[2];
             $pictureModel = new Picture();
             $url = $pictureModel->uploadImg($img_name,$temp_file);
@@ -124,6 +124,12 @@ class CommonController extends BaseController
         $admin_res = $adminModel->getRankingList($fields);
         if(!$admin_res){
             $admin_res = '';
+        }else{
+            foreach ($admin_res as &$v){
+                if (isset($v['wechat_pic'])){
+                    $v['wechat_pic'] = $this->processingPictures($v['wechat_pic']);
+                }
+            }
         }
 		$this->returnData['data'] = $admin_res;
         return response()->json($this->returnData);
@@ -297,6 +303,13 @@ class CommonController extends BaseController
         $res = $articleModel->getSpecialApiArticle(1);
 		if(!$res){
 		    $res = '';
+        }else{
+		    if (isset($res['video_cover'])){
+                $res['video_cover'] = $this->processingPictures($res['video_cover']);
+            }
+            if (isset($res['thumb'])){
+		        $res['thumb'] = $this->processingPictures($res['thumb']);
+            }
         }
 		$this->returnData['data']= $res;
         return response()->json($this->returnData);

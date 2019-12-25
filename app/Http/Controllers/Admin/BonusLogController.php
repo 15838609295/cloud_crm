@@ -32,6 +32,6 @@ class BonusLogController extends Controller
         $bonusLogModel = new AdminBonusLog();
         $res = $bonusLogModel->getBonusLogWithFilter($searchFilter);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

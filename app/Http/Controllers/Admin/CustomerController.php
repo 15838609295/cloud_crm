@@ -103,34 +103,35 @@ class CustomerController extends BaseController
         );
         $customerModel = new CustomerBase();
         $data = $customerModel->getCustomerListWithFilter($searchFilter);
-
-        foreach ($data["rows"] as $k => $v){
-            if ($v['cust_state'] != '1') {
-                if ($v['contact_next_time'] != '' && $v['contact_next_time'] != null && $v['contact_next_time'] != "0000-00-00 00:00:00") {
-//                    $temp = ceil((strtotime($v['contact_next_time'])-time())/(24 * 60 * 60));
-                    $set_time = substr($v['contact_next_time'], 0, 10);
-                    $enddate = date("Y-m-d",time());
-                    $temp = ceil((strtotime($set_time)-strtotime($enddate))/(24 * 60 * 60));
-                    if($temp==0){
-                        $data["rows"][$k]["contact_next_times"] = "今天";
-                    }else if($temp>0 && $temp<30){
-                        $data["rows"][$k]["contact_next_times"] = $temp."天";
-                    }else if($temp>=30&&$temp<360){
-                        $data["rows"][$k]["contact_next_times"] = ceil($temp/30)."月";
-                    }else if($temp>=360){
-                        $data["rows"][$k]["contact_next_times"] = ceil($temp/(30*12))."年";
+        $endDate = date("Y-m-d",time());
+        foreach ($data["rows"] as $k => &$v){
+            switch ($v['cust_state']){
+                case 0;
+                    if ($v['contact_next_time'] != '' && $v['contact_next_time'] != null && $v['contact_next_time'] != "0000-00-00 00:00:00"){
+                        $set_time = substr($v['contact_next_time'], 0, 10);
+                        $temp = ceil((strtotime($set_time)-strtotime($endDate))/(24 * 60 * 60));
+                        if($temp==0){
+                            $v["contact_next_times"] = "今天";
+                        }else if($temp>0 && $temp<30){
+                            $v["contact_next_times"] = $temp."天";
+                        }else if($temp>=30&&$temp<360){
+                            $v["contact_next_times"] = ceil($temp/30)."月";
+                        }else if($temp>=360){
+                            $v["contact_next_times"] = ceil($temp/(30*12))."年";
+                        }else{
+                            $v["contact_next_times"] = "逾期$temp" ."天";
+                        }
                     }else{
-                        $data["rows"][$k]["contact_next_times"] = "逾期$temp" ."天";
+                        $v["contact_next_times"] = "未联系";
                     }
-                } else {
-                    $data["rows"][$k]["contact_next_times"] = "未联系";
-                }
-            } else {
-                $data["rows"][$k]["contact_next_times"] = "已成交";
+                    break;
+                case 1;
+                    $v['contact_next_times'] = '已成交';
+                    break;
             }
         }
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
 
@@ -144,7 +145,7 @@ class CustomerController extends BaseController
         if(!is_array($data) || count($data)<1){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
             $this->returnData['msg'] = '该数据不存在';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $assignModel = new AssignLog();
         $assign_res = $assignModel->getAssignLogByCustomerID($id);
@@ -163,7 +164,7 @@ class CustomerController extends BaseController
             $data['contact_record'] = $contact_log;
         }
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /*修改客户信息记录*/
@@ -178,7 +179,7 @@ class CustomerController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 	
     /* 添加客户 */
@@ -191,11 +192,33 @@ class CustomerController extends BaseController
             /* 验证参数未做 */
             $customer[$field] = $request->post($field,$this->fields[$field]);
         }
+        //过滤需要验证字段的空格
+        if ($customer['mobile'] != ''){
+            $customer['mobile'] = preg_replace('# #','',$customer['mobile']);
+        }
+        if ($customer['email'] != ''){
+            $customer['email'] = preg_replace('# #','',$customer['email']);
+        }
+        if ($customer['wechat'] != ''){
+            $customer['wechat'] = preg_replace('# #','',$customer['wechat']);
+        }
+        if ($customer['qq'] != ''){
+            $customer['qq'] = preg_replace('# #','',$customer['qq']);
+        }
+        if ($customer['company'] != ''){
+            $customer['company'] = preg_replace('# #','',$customer['company']);
+        }
+        $rule_res = preg_match("/1((((3[0-3,5-9])|(4[5,7,9])|(5[0-3,5-9])|(66)|(7[1-3,5-8])|(8[0-9])|(9[1,8,9]))[0-9]{8})|((34)[0-8]\d{7}))/",$customer['mobile']);
+        if ($rule_res != 1){
+            $this->returnData['code'] = 1;
+            $this->returnData['msg'] = '手机号格式不正确';
+            return response()->json($this->returnData);
+        }
         $customerModel = new CustomerBase();
         $res = $customerModel->validCustomerRepeat(['mobile'=>$customer['mobile'],'email'=>$customer['email'],'qq'=>$customer['qq'],'wechat'=>$customer['wechat'],'company'=>$customer['company']]);
         if($res['is_repeat'] == 1){
             $this->returnData = $res['returnData'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $customer['status'] = 1;
         $customer['recommend'] = $this->AU['id'];
@@ -204,10 +227,10 @@ class CustomerController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '添加失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '添加成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 修改客户 */
@@ -228,7 +251,7 @@ class CustomerController extends BaseController
         $res = $customerModel->validCustomerRepeat(['mobile'=>$customer['mobile'],'email'=>$customer['email'],'qq'=>$customer['qq'],'wechat'=>$customer['wechat'],'company'=>$customer['company']],$id);
         if($res['is_repeat']==1){
             $this->returnData = $res['returnData'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         //添加修改记录
         $customerModel->updateCustomerLog($this->AU['id'],$this->AU['name'],$id);
@@ -236,10 +259,10 @@ class CustomerController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '修改失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '修改成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     public function ajax(Request $request){
@@ -248,31 +271,31 @@ class CustomerController extends BaseController
         }
         if (!isset($request->action) || !in_array(strval($request->action),['batch_assign','batch_lead_in','submit_log','active_customer'],true)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         //批量指派
         if($request->action=='batch_assign'){
             $result = $this->_batchAssign($request);
-            return response()->json($result);
+            return $this->return_result($result);
         }
         //批量导入客户
         if($request->action=='batch_lead_in'){
             $result = $this->_batchLeading($request);
-            return response()->json($result);
+            return $this->return_result($result);
         }
         //提交沟通记录
         if($request->action=='submit_log'){
             $result = $this->_submitContactLog($request);
-            return response()->json($result);
+            return $this->return_result($result);
         }
         //提交激活信息
         if($request->action=='active_customer'){
             $result = $this->_activeCustomer($request);
-            return response()->json($result);
+            return $this->return_result($result);
         }
         $this->returnData = ErrorCode::$admin_enum['fail'];
         $this->returnData['msg'] = '操作失败';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 批量指派 */
@@ -378,7 +401,7 @@ class CustomerController extends BaseController
             if (!$base64_excel){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $files = json_decode($base64_excel,true);
             $temp_file = tempnam(sys_get_temp_dir(),"php");  //临时文件
@@ -390,7 +413,7 @@ class CustomerController extends BaseController
             if (!$url){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = 'Excel上传失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             //下载
             $path = urldecode($url['ObjectURL']);
@@ -604,7 +627,7 @@ class CustomerController extends BaseController
         }
         if (!isset($request->action) || !in_array(strval($request->action),['demo','data'],true)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if($request->action=='demo'){
             $fileName = 'demo';
@@ -622,13 +645,13 @@ class CustomerController extends BaseController
             }
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
             $this->returnData['msg'] = '文件不存在';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if($request->action=='data'){
             if(trim($request->get('list',''))==''){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '勾选列表不能为空';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $list = explode(',',trim($request->get('list','')));
             $customerModel = new CustomerBase();
@@ -705,7 +728,7 @@ class CustomerController extends BaseController
         }
         $this->returnData = ErrorCode::$admin_enum['fail'];
         $this->returnData['msg'] = '操作失败';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 	
 	/* 客户删除 */
@@ -718,10 +741,10 @@ class CustomerController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '删除失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '删除成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //批量删除
@@ -735,9 +758,9 @@ class CustomerController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '删除失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '删除成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

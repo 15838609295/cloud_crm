@@ -37,7 +37,7 @@ class RoleController extends BaseController
         $roleModel = new AuthRole();
         $data = $roleModel->getRoleListWithFilter($searchFilter);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     public function roleList(){
@@ -50,10 +50,10 @@ class RoleController extends BaseController
         if(count($res)<1){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '暂无数据';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 角色权限列表 */
@@ -65,7 +65,7 @@ class RoleController extends BaseController
         $permissionModel = new AuthPermission();
         $data = $permissionModel->getRolePermission($role_id);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 添加角色 */
@@ -80,7 +80,7 @@ class RoleController extends BaseController
         if(count($permission_arr)!=count($permission_list)){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '角色权限错误';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $data = array(
             'name' => trim($request->post('name','')),
@@ -91,7 +91,7 @@ class RoleController extends BaseController
         if (!preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $data['name'])) {
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '角色名称不能包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
 
         $authRoleModel = new AuthRole();
@@ -99,10 +99,10 @@ class RoleController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '角色添加失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '角色添加成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
 	/* 修改角色 */
@@ -114,12 +114,12 @@ class RoleController extends BaseController
             $data['code'] = 1;
             $data['msg'] = '无权限';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         $id = trim($request->id);
         if($id==null || !is_numeric($id)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $tmp_str = trim($request->post('permissions',''));
         $permission_arr = explode(',',$tmp_str);
@@ -128,7 +128,7 @@ class RoleController extends BaseController
         if(count($permission_arr)!=count($permission_list)){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '角色权限错误';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $data = array(
             'name' => trim($request->post('name','')),
@@ -140,10 +140,10 @@ class RoleController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '角色修改失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '角色修改成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 删除角色 */
@@ -153,16 +153,16 @@ class RoleController extends BaseController
         }
         if($id==null || !is_numeric($id)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $authRoleModel = new AuthRole();
         $res = $authRoleModel->roleDelete($id);
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '角色删除失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '角色删除成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

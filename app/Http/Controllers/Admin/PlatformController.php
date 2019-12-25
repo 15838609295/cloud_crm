@@ -78,7 +78,7 @@ class PlatformController extends BaseController
             $data['month_conversion'] =sprintf('%.2f',($month_member/$data['month_customer'])*100);
         }
         //当月丢单率
-        $data['month_no_conversion'] = 100-$data['month_conversion'];
+        $data['month_no_conversion'] = sprintf('%.2f',100-$data['month_conversion']);
         //昨日业绩 修改为上月客户数
         //$data['yesterday_bonus_number'] = $achievementModel->statisticsAchievent($yesterday);
         //记录表获取上月数据信息
@@ -105,14 +105,14 @@ class PlatformController extends BaseController
             $data['conversion'] = sprintf('%.2f',($total_number/$customer)*100);
         }
         //总单率
-        $data['no_conversion'] = 100-$data['conversion'];
+        $data['no_conversion'] = sprintf('%.2f',100-$data['conversion']);
         //统计用户来源
         $memberSourceModel = new MemberSource();
         $fields['ids'] = '';
         $data['source'] = $memberSourceModel->sourceStatistics($fields);
 
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //部门运营数据统计
@@ -176,7 +176,7 @@ class PlatformController extends BaseController
             $data['month_conversion'] = sprintf('%.2f',($month_member_number/$data['month_customer'])*100);
         }
         //当月丢单率
-        $data['month_no_conversion'] = 100-$data['month_conversion'];
+        $data['month_no_conversion'] = sprintf('%.2f',100-$data['month_conversion']);
         //昨日业绩  修改为上月激活客户数
         //$data['yesterday_bonus_number'] = $achievementModel->statisticsAchievent($yesterday);
         $fields['ids'] = $ids;
@@ -228,9 +228,9 @@ class PlatformController extends BaseController
             $data['conversion'] = sprintf('%.2f',($activation_customer/$customer)*100);
         }
         //总丢单率
-        $data['no_conversion'] = 100-$data['conversion'];
+        $data['no_conversion'] = sprintf('%.2f',100-$data['conversion']);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //部门下个人数据列表
@@ -321,7 +321,7 @@ class PlatformController extends BaseController
             $list[$k]['last_bonus_number'] = $res['bonus_number'];
         }
         $this->returnData['data'] = $list;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //个人运营数据统计
@@ -438,7 +438,7 @@ class PlatformController extends BaseController
         //总丢单率
         $data['no_conversion'] = sprintf('%.2f',100-$data['conversion']);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
 

@@ -17,7 +17,7 @@ class AuthPermission extends Model
 //        $res = DB::table('admin_permissions')
         $res = DB::table('permissions')
             ->where('display',0)
-            ->select('id','name','label','cid','icon','display','sort');
+            ->select('id','name','label','cid','icon','display','sort','show_mode as showMode');
         if(is_array($id)){
             $res->whereIn('id',$id);
         }

@@ -15,7 +15,8 @@ class BaseController extends Controller
 
     public function __construct()
     {
-        header('Access-Control-Allow-Origin:http://www.wegouer.com');
+        header('Access-Control-Allow-Origin:*');
+//        header('Access-Control-Allow-Origin:http://www.wegouer.com');
         if(!in_array(\request()->route()->getActionMethod(), $this->noCheckOpenidAction)) {
             $openid = request()->post("openid", "");
             $res = $this->_memberInfo($openid);
@@ -62,11 +63,20 @@ class BaseController extends Controller
         }
         if(!strstr($url,"https")){
             if ($scf_data['IS_SCF'] == true) {
-                $url = 'https://' . $scf_data['host'] .$url;
+	        $host = 'https://'.$scf_data['system']['bucketConfig']['bucket'].'.cos.'.$scf_data['system']['bucketConfig']['region'].'.myqcloud.com';
+                $url = $host.$url;
             }else{
                 $url = 'https://'.$_SERVER['SERVER_NAME'].$url;
             }
         }
         return $url;
+    }
+
+    function return_result($data,$text="")
+    {
+        if(strpos($data['msg'], "%s") !== false && $text){
+            $data['msg'] = sprintf($data['msg'], $text);
+        }
+        return response()->json($data);
     }
 }

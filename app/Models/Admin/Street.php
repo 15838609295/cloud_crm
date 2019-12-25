@@ -35,15 +35,19 @@ class Street extends Model
         $admin = json_decode(json_encode($admin),true);
         foreach ($data['rows'] as &$v){
             $v['admin_name'] = '';
-            $admin_id = explode(',',$v['admin_id']);
-            foreach ($admin_id as $a_v){
-                foreach ($admin as $admin_v){
-                    if ($admin_v['id'] == $a_v){
-                        $v['admin_name'] .= $admin_v['name'].'/';
+            if ($v['admin_id']){
+                $admin_id = explode(',',$v['admin_id']);
+                foreach ($admin_id as $a_v){
+                    foreach ($admin as $admin_v){
+                        if ($admin_v['id'] == $a_v){
+                            $v['admin_name'] .= $admin_v['name'].'/';
+                        }
                     }
                 }
+                $v['admin_name'] = substr($v['admin_name'],0,strlen($v['admin_name'])-1);
+            }else{
+                $v['admin_id'] = '';
             }
-            $v['admin_name'] = substr($v['admin_name'],0,strlen($v['admin_name'])-1);
         }
         return $data;
     }
@@ -186,11 +190,12 @@ class Street extends Model
             ->select('id','name','cid','tel as mobile','admin_id')
             ->get();
         $res = json_decode(json_encode($res),true);
-        if (count($res) < 1){
+        if (!$res){
             return false;
         }
         $admin_res = DB::table('admin_users')->select('id','name')->get();
         $admin_res = json_decode(json_encode($admin_res),true);
+        $list = [];
         foreach ($res as &$v){
             if ($v['admin_id']){
                 $admin_ids = explode(',',$v['admin_id']);
@@ -203,10 +208,9 @@ class Street extends Model
                     }
                 }
                 $v['admin_name'] = substr($name,0,strlen($name)-1);
+            }else{
+                $v['admin_name'] = '';
             }
-        }
-        $list = [];
-        foreach ($res as $v){
             if ($v['cid'] == 0){
                 $list[$v['id']] = $v;
             }else{

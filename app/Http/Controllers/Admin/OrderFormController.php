@@ -28,7 +28,7 @@ class OrderFormController extends BaseController{
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //部门成单率排行
@@ -46,7 +46,7 @@ class OrderFormController extends BaseController{
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //团队成单率排行
@@ -64,6 +64,6 @@ class OrderFormController extends BaseController{
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

@@ -20,7 +20,7 @@ class OrderController extends BaseController{
     //客户订单
     public function memberOrder(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->post();
         $type = isset($params['type']) && $params['type']!='' ? $params['type'] : 1;
@@ -68,12 +68,12 @@ class OrderController extends BaseController{
             ->get();
         if(!$res){
             $this->result['data'] = $data;
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $res = json_decode(json_encode($res),true);
         if(!is_array($res) || count($res)<1){
             $this->result['data'] = $data;
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         foreach ($res as $k=>$v){
             $v['dlprice'] =  number_format($v['price']*$v['discount']/100,2);
@@ -82,62 +82,62 @@ class OrderController extends BaseController{
         }
         $data['rows'] = $res;
         $this->result['data'] = $data;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //客户订单详情
     public function memberOrderDetail(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->post();
         if(!isset($params['order_id']) || trim($params['order_id']) == ''){
             $this->result['status'] = 1;
             $this->result['msg'] = 'order_id不能为空';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $this->result['data'] = [];
         $res = Orders::where('id', $params['order_id'])->first();
         if(!$res){
             $this->result['status'] = 1;
             $this->result['msg'] = '订单不存在';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $res = json_decode(json_encode($res),true);
         if(!is_array($res) || count($res)<1){
             $this->result['status'] = 1;
             $this->result['msg'] = '订单不存在';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $this->result['data'] = $res;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     /* 提交订单 */
     public function submitOrder(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->post();
         if(!isset($params['goods_id']) || trim($params['goods_id']) == ''){
             $this->result['status'] = 1;
             $this->result['msg'] = 'goods_id不能为空';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         if(!isset($params['amount']) || trim($params['amount']) == ''){
             $this->result['status'] = 1;
             $this->result['msg'] = 'amount不能为空';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         if(!isset($params['goods_version']) || trim($params['goods_version']) == ''){
             $this->result['status'] = 1;
             $this->result['msg'] = 'goods_version不能为空';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         if(!isset($params['pay_type']) || trim($params['pay_type']) == ''){
             $this->result['status'] = 1;
             $this->result['msg'] = 'pay_type不能为空';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         //选中的商品规格
         $params['goods_version'] = explode(',',$params['goods_version']);
@@ -153,7 +153,7 @@ class OrderController extends BaseController{
         if ($params['amount'] > $number){ //库存不足
             $data['status'] = 1;
             $data['msg'] = '库存不足';
-            return response()->json($data);
+            return $this->return_result($data);
         }else{  //库存充足
             $goods_version[$params['goods_version'][0]]['subitem'][$params['goods_version'][1]]['count'] = $number -  $params['amount'];
             $goods['goods_version'] = json_encode($goods_version);
@@ -204,21 +204,21 @@ class OrderController extends BaseController{
         if(!$res_id){
             $this->result["status"] = 1;
             $this->result["msg"] = "下单失败,稍后重试！";
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $this->payOrder($res_id,$order,$order["remarks"]);
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     /* 扣款 */
     public function payOrder($id,$order,$remarks){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         if(!is_numeric($order["pay_type"])){
             $this->result["status"] = 1;
             $this->result["msg"] = "参数错误！";
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         //0:余额   1:赠送金
         if($order["pay_type"] == 0){
@@ -245,7 +245,7 @@ class OrderController extends BaseController{
                 $goods_id = $goods['id'];
                 unset($goods['id']);
                 DB::table('goods')->where('id',$goods_id)->update($goods);
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }
             $log["uid"] = $this->user['id'];
             $log["type"] = 9;
@@ -282,7 +282,7 @@ class OrderController extends BaseController{
             }
             $data["status"] = 0;
             $data["msg"] = "购买成功";
-            return response()->json($data);
+            return $this->return_result($data);
 
         }elseif($order["pay_type"] == 1){
             //赠送金支付
@@ -308,7 +308,7 @@ class OrderController extends BaseController{
                 $goods_id = $goods['id'];
                 unset($goods['id']);
                 DB::table('goods')->where('id',$goods_id)->update($goods);
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }
             $log["uid"] = $this->user['id'];
             $log["type"] = 3;
@@ -343,24 +343,24 @@ class OrderController extends BaseController{
             if ($config['qywxLogin'] == 1){
                 $notifyModel->sendQYWechat($params);
             }
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $this->result["status"] = 1;
         $this->result["msg"] = "参数错误！";
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
 
     /* 取消订单 继续支付 申请退款等操作 */
     public function orderAction(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->post();
         if(!isset($params['id']) || trim($params['id']) == ''){
             $this->result['status'] = 1;
             $this->result['msg'] = 'id不能为空';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $id = $params['id'];
         $c = $params['action'];
@@ -395,19 +395,19 @@ class OrderController extends BaseController{
             $res = $this->payOrder($id,$data,$params['remarks']);
             if($res["status"] == 1){
                 $this->result=$res;
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }
             $this->result['msg']='付款成功';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $res = Orders::where("id","=",$id)->update($updata);
         if(!$res){
             $this->result['status'] = 1;
             $this->result['msg']='操作失败';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $this->result['msg']=$msg;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     /**

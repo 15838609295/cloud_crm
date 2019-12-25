@@ -63,8 +63,11 @@ class SiteconfigController extends BaseController
             $data['privacyTitle'] = $privacy['title'];
             $data['privacyContent'] = $privacy['content'];
         }
+        if (isset($data['member_wechat_qr'])){
+            $data['member_wechat_qr'] = $this->processingPictures($data['member_wechat_qr']);
+        }
         $this->returnData["data"] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //更新系统配置
@@ -111,7 +114,7 @@ class SiteconfigController extends BaseController
 //            if (!$numbytes3 && !$numbytes4){
 //                $this->returnData['code'] = 1;
 //                $this->returnData['msg'] = '修改支付配置失败';
-//                return response()->json($this->returnData);
+//                return $this->return_result($this->returnData);
 //            }else{
 //                unset($data['member_apiclient_cert']);
 //                unset($data['member_apiclient_key']);
@@ -132,7 +135,7 @@ class SiteconfigController extends BaseController
 //            if(!$numbytes1 && !$numbytes2){
 //                $this->returnData['code'] = 1;
 //                $this->returnData['msg'] = '修改支付配置失败';
-//                return response()->json($this->returnData);
+//                return $this->return_result($this->returnData);
 //            }else{
 //                unset($data['admin_apiclient_cert']);
 //                unset($data['admin_apiclient_key']);
@@ -160,9 +163,9 @@ class SiteconfigController extends BaseController
             if (!$update_res){
                 $this->returnData['code'] = 1;
                 $this->returnData['msg'] = '修改失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }else{
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
         }else if ($request->post('type') == "privacy") {  //隐私协议修改
             $res = Articles::where('typeid',7)->first();
@@ -179,24 +182,24 @@ class SiteconfigController extends BaseController
             if (!$update_res){
                 $this->returnData['code'] = 1;
                 $this->returnData['msg'] = '修改失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }else{
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
         }else{
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
             $this->returnData['msg'] = 'type参数错误';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
     	$configModel = new Configs();
     	$res = $configModel->configUpdate($id,$data);
     	if(!$res){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
             $this->returnData['msg'] = '更新失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "更新成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
     
 }

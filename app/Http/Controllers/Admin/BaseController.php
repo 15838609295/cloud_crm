@@ -112,7 +112,7 @@ class BaseController extends Controller
 
     //处理图片路径
     function processingPictures($url){
-        global $scf_data;
+        global $scf_data; 
         if (!$url){
             return $url;
         }
@@ -128,11 +128,41 @@ class BaseController extends Controller
         }
         if(!strstr($url,"https")){
             if ($scf_data['IS_SCF'] == true) {
-                $url = 'https://' . $scf_data['host'] .$url;
+	     $host = 'https://'.$scf_data['system']['bucketConfig']['bucket'].'.cos.'.$scf_data['system']['bucketConfig']['region'].'.myqcloud.com';
+                $url = $host.$url;
             }else{
-                $url = 'https://'.$_SERVER['SERVER_NAME'].$url;
+                $path = $_SERVER['DOCUMENT_ROOT'];//获取网站根目录
+                if (strstr($path,'public')){
+                    $url = 'http://'.$_SERVER['SERVER_NAME'].$url;
+                }else{
+                    $url = 'https://'.$_SERVER['SERVER_NAME'].'/public'.$url;
+                }
             }
         }
         return $url;
+    }
+
+    //处理输入的名称类
+    function checkName($name,$txt = 'name'){
+        if (!$name || $name == ''){
+            $this->returnData = ErrorCode::$admin_enum['customized'];
+            $this->returnData['msg'] = $txt.'不能为空';
+            return $this->returnData;
+        }
+        if (!preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $name)){
+            $this->returnData = ErrorCode::$admin_enum['customized'];
+            $this->returnData['msg'] = $txt.'不能为空或包含特殊字符';
+            return $this->returnData;
+        }
+        return true;
+    }
+
+    //统一返回数据
+    public function return_result($data, $text = '')
+    {
+        if(!is_array($data['msg']) && $text && strpos($data['msg'], "%s") !== false){
+            $data['msg'] = sprintf($data['msg'], $text);
+        }
+        return response()->json($data);
     }
 }

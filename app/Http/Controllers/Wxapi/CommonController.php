@@ -31,12 +31,18 @@ class CommonController extends Controller
 
     public $result = array("status"=>0,'msg'=>'请求成功','data'=>"");
 
+    public function return_result($data,$text = ""){
+        if(strpos($data['msg'], "%s") !== false && $text){
+            $data['msg'] = sprintf($data['msg'], $text);
+        }
+        return response()->json($data);
+    }
     //获取客户信息
     public function getMember(){
         $params = request()->input();
         //判断必传参数
         if(!isset($params['code']) || trim($params['code']) == ''){
-            return $this->verify_parameter(ErrorCode::$api_enum['params_not_exist'],'code');
+            return $this->return_result(ErrorCode::$api_enum['params_not_exist'],'code');
         }
         $con = Configs::first();
         if (isset($params['wxType'])&&trim($params['wxType'])==1){
@@ -50,7 +56,7 @@ class CommonController extends Controller
             if (isset($tmp_res['errcode']) && !empty($tmp_res['errcode'])) {
                 $this->result['status'] = 1;
                 $this->result['msg'] = '请求微信接口报错！！！请联系管理员...';
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }
             $memberModel = new MemberBase();
             $where['openid'] = $tmp_res['openid'];
@@ -59,10 +65,11 @@ class CommonController extends Controller
                 $this->result['status'] = 206;
                 $this->result['msg'] = '未绑定账号信息';
                 $this->result['data'] = array('openid'=> $tmp_res['openid']);
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }
             $this->result['data'] = $res;
-            return response()->json($this->result);
+            unset($res);
+            return $this->return_result($this->result);
         }else{
             $res = file_get_contents("https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=".$con->company_id."&corpsecret=".$con->qy_appid);
             $ar = json_decode($res,true);
@@ -93,7 +100,7 @@ class CommonController extends Controller
                     'openid'=> $params001['userid']
                 );
             }
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
     }
 
@@ -113,7 +120,7 @@ class CommonController extends Controller
             if (isset($tmp_res['errcode']) && !empty($tmp_res['errcode'])) {
                 $this->result['status'] = 1;
                 $this->result['msg'] = '请求微信接口报错！！！请联系管理员...';
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }
             $sessionKey = $tmp_res['session_key'];
             $pc = new WXBizDataCrypt($appid,$sessionKey);
@@ -124,16 +131,16 @@ class CommonController extends Controller
             if ($errCode == 0){
                 $data = json_decode($data,true);
                 $this->result['data'] = $data;
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }else{
                 $this->result['status'] = 1;
                 $this->result['msg'] = '获取失败，请重试';
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }
         }else{
             $this->result['status'] = 1;
             $this->result['msg'] = '企业微信不支持微信授权登陆！！！';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
     }
 
@@ -147,12 +154,15 @@ class CommonController extends Controller
             $result = DB::table('member')->where('mobile',$params['mobile'])->update($where);
             $this->result['status'] = 0;
             $this->result['msg'] = '该手机号已注册,是否前往绑定';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         //查询openid是否绑定用户
 //        if(DB::table('member')->where('openid',$params['openid'])->where("id", "!=", $res)->count()){
 //            DB::table('member')->where('openid',$params['openid'])->update(["openid" => ""]);
 //        }
+        if (!$params['nickName']){
+            $params['nickName'] = '新用户'.rand(0000,9999);
+        }
         //添加用户信息
         $member['name']           = $params['nickName'];                       //名称
         $member['mobile']         = $params['mobile'];                         //手机号
@@ -167,7 +177,7 @@ class CommonController extends Controller
         $member_extend['realname'] = $params['nickName'];
         $member_extend['avatar']  = $params['avatarUrl'];
         $member_extend['type']  = 0;
-        $member_extend['source']  = '客户小程序';
+        $member_extend['source'] = "客户小程序";
         $member_extend['update_time']  = Carbon::now();
         $member_extend['recommend']  = 1;
         $member_extend['addperson']  = 'root';
@@ -175,37 +185,35 @@ class CommonController extends Controller
         $member_extend['company']  = '';
         $member_extend['wechat']  = '';
         $member_extend['qq']  = '';
-        $member_extend['source']  = '';
         $member_extend['project']  = '';
         $member_extend['remarks']  = '';
-
         $res = $memberModel->memberInsert($member,$member_extend);
         if(!$res){
             $this->result['status'] = 1;
             $this->result['msg'] = '添加失败';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $this->result['msg'] = '添加成功';
         $this->result['data'] = ['result'=>0];
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //客户绑定
     public function bindAccount(){
         $params = request()->input();
         if(!isset($params['openid']) || trim($params['openid']) == ''){
-            return $this->verify_parameter(ErrorCode::$api_enum["params_not_exist"], 'openid'); //返回必传参数为空
+            return $this->return_result(ErrorCode::$api_enum["params_not_exist"], 'openid'); //返回必传参数为空
         }
         if(!isset($params['account']) || trim($params['account']) == ''){
-            return $this->verify_parameter(ErrorCode::$api_enum["params_not_exist"], 'account'); //返回必传参数为空
+            return $this->return_result(ErrorCode::$api_enum["params_not_exist"], 'account'); //返回必传参数为空
         }
         if(!isset($params['password']) || trim($params['password']) == ''){
-            return $this->verify_parameter(ErrorCode::$api_enum["params_not_exist"], 'password'); //返回必传参数为空
+            return $this->return_result(ErrorCode::$api_enum["params_not_exist"], 'password'); //返回必传参数为空
         }
         $preg_phone='/^1[3456789]\d{9}$/';
         $preg_email='/^[a-zA-Z0-9]+([-_.][a-zA-Z0-9]+)*@([a-zA-Z0-9]+[-.])+([a-z]{2,5})$/';
         if(!preg_match($preg_phone,$params['account']) && !preg_match($preg_email,$params['account'])){
-            return $this->verify_parameter(ErrorCode::$api_enum["customized"], '账号必须为正确的手机号或者邮箱');
+            return $this->return_result(ErrorCode::$api_enum["customized"], '账号必须为正确的手机号或者邮箱');
         }
         $data = array(
             'openid' => $params['openid']
@@ -213,15 +221,15 @@ class CommonController extends Controller
         $memberModel = new MemberBase();
         $res = $memberModel->validateMemberAccount($params['account'],trim($params['password']));
         if(!$res){
-            return $this->verify_parameter(ErrorCode::$api_enum["customized"], '账号或密码错误,请联系管理员');
+            return $this->return_result(ErrorCode::$api_enum["customized"], '账号或密码错误,请联系管理员');
         }elseif ($res < 0){
-            return $this->verify_parameter(ErrorCode::$api_enum["customized"], '账号已被禁用，请联系管理员');
+            return $this->return_result(ErrorCode::$api_enum["customized"], '账号已被禁用，请联系管理员');
         }
         $member_res = $memberModel->memberUpdate($res,$data);
         if(!$member_res){
-            return $this->verify_parameter(ErrorCode::$api_enum["customized"], '绑定失败');
+            return $this->return_result(ErrorCode::$api_enum["customized"], '绑定失败');
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //发送短信
@@ -244,7 +252,7 @@ class CommonController extends Controller
                 $data['status'] = 0;
                 $data['msg'] = '手机号已注册';
                 $data['data']['result'] = 2;
-                return response()->json($data);
+                return $this->return_result($data);
             }
             $templateId ='';
         }else if($params['type'] == 2){    //2修改密码/修改手机号
@@ -253,14 +261,14 @@ class CommonController extends Controller
                     $data['status'] = 301;
                     $data['msg'] = '用户id不存在';
                     $data['data']['result'] = 3;
-                    return response()->json($data);
+                    return $this->return_result($data);
                 }else{
                     $res = $memberModel->getMemberByID($params['id']);
                     if ($res['mobile'] != $mobile ){
                         $data['status'] = 0;
                         $data['msg'] = '手机号与绑定账号手机不一致';
                         $data['data']['result'] = 3;
-                        return response()->json($data);
+                        return $this->return_result($data);
                     }
                 }
             }else{     //找回密码
@@ -269,7 +277,7 @@ class CommonController extends Controller
                     $data['status'] = 0;
                     $data['msg'] = '手机号不存在';
                     $data['data']['result'] = 2;
-                    return response()->json($data);
+                    return $this->return_result($data);
                 }
             }
             $templateId ='424301';
@@ -279,7 +287,7 @@ class CommonController extends Controller
                 $data['status'] = 0;
                 $data['msg'] = '手机号已绑定';
                 $data['data']['result'] = 2;
-                return response()->json($data);
+                return $this->return_result($data);
             }
             $templateId ='';
         }
@@ -311,19 +319,19 @@ class CommonController extends Controller
                 $data['status'] = 0;
                 $data['msg'] = '请求成功';
                 $data['data']['result'] = 0;
-                return response()->json($data);
+                return $this->return_result($data);
             }else{
                 $data['status'] = 1;
                 $data['msg'] = '请求失败';
                 $data['data']['result'] = 1;
-                return response()->json($data);
+                return $this->return_result($data);
             }
 
         } catch(\Exception $e) {
             $data['status'] = 1;
             $data['msg'] = '请求失败';
             $data['data']['result'] = 1;
-            return response()->json($data);
+            return $this->return_result($data);
         }
     }
 
@@ -336,20 +344,20 @@ class CommonController extends Controller
             $data['status'] = 0;
             $data['msg'] = '验证码过期';
             $data['data']['result'] = 2;
-            return response()->json($data);
+            return $this->return_result($data);
         }
         if ($res['code'] != $params['verification']){
             $data['status'] = 0;
             $data['msg'] = '修改秘密失败';
             $data['data']['result'] = 1;
-            return response()->json($data);
+            return $this->return_result($data);
         }else{
             $where['password'] = bcrypt($params['password']);
             DB::table('member')->where('mobile',$params['mobile'])->update($where);
             $data['status'] = 0;
             $data['msg'] = '修改密码成功';
             $data['data']['result'] = 0;
-            return response()->json($data);
+            return $this->return_result($data);
         }
     }
 
@@ -362,18 +370,18 @@ class CommonController extends Controller
             $data['status'] = 0;
             $data['msg'] = '验证码过期';
             $data['data']['result'] = 2;
-            return response()->json($data);
+            return $this->return_result($data);
         }
         if ($res['code'] != $params['verification']){
             $data['status'] = 0;
             $data['msg'] = '验证码错误';
             $data['data']['result'] = 1;
-            return response()->json($data);
+            return $this->return_result($data);
         }else{
             $data['status'] = 0;
             $data['msg'] = '请求成功';
             $data['data']['result'] = 0;
-            return response()->json($data);
+            return $this->return_result($data);
         }
     }
 
@@ -382,16 +390,16 @@ class CommonController extends Controller
         $params = request()->input();
         $member_res = DB::table('member')->where('openid',$params['openid'])->first();
         if (!$member_res){
-            return $this->verify_parameter(ErrorCode::$api_enum["customized"], '解除绑定失败，未找到账号');
+            return $this->return_result(ErrorCode::$api_enum["customized"], '解除绑定失败，未找到账号');
         }
         $where['openid'] = '';
         $res = DB::table('member')->where('openid',$params['openid'])->update($where);
         if (!$res){
-            return $this->verify_parameter(ErrorCode::$api_enum["customized"], '解除绑定失败，未找到账号');
+            return $this->return_result(ErrorCode::$api_enum["customized"], '解除绑定失败，未找到账号');
         }else{
             $data['status'] = 0;
             $data['msg'] = '解除绑定成功';
-            return response()->json($data);
+            return $this->return_result($data);
         }
     }
 
@@ -399,16 +407,7 @@ class CommonController extends Controller
     public function getNewsList(){
         $res = Articles::where('typeid',2)->first();
         $this->result['data'] = json_decode(json_encode($res),true);
-        return response()->json($this->result);
-    }
-
-    //返回失败的原因
-    private function verify_parameter($data,$text="")
-    {
-        if (isset($data['msg']) && strpos($data['msg'], "%s") !== false && $text) {
-            $data['msg'] = sprintf($data['msg'], $text);
-        }
-        return response()->json($data);
+        return $this->return_result($this->result);
     }
 
     /* 微信支付完成，回调地址url方法  xiao_notify_url() */
@@ -593,17 +592,14 @@ class CommonController extends Controller
     }
 
     //获取关于我们
-    public function getAbout()
-    {
+    public function getAbout(){
         $articleModel = new Articles();
         $res = $articleModel->getApiArticle(4);
         if(!$res){
             $res = '';
         }
-        $data['status'] = 0;
-        $data['msg'] = '请求成功';
-        $data['data']['result'] = $res;
-        return response()->json($data);
+        $this->result['data'] = ['result' => $res];
+        return $this->return_result($this->result);
     }
 
     //获取首页排版信息
@@ -618,31 +614,29 @@ class CommonController extends Controller
         }else{
             foreach ($res as &$v){
                 if ($v['id'] == 1){  //轮播图
-                    $bannerList = $plugUnitModel->showBanner($data['type']);
-                    if ($bannerList){
-                        foreach ($bannerList as &$b_v){
+                    $v['bannerList'] = $plugUnitModel->showBanner($data['type']);
+                    if ($v['bannerList']){
+                        foreach ($v['bannerList'] as &$b_v){
                             if ($b_v['url']){
                                 $b_v['url'] = $this->processingPictures($b_v['url']);
                             }
                         }
                     }
-                    $v['bannerList'] = $bannerList;
                 }
                 if ($v['id'] == 3){   //插件列表插进去
-                     $plugUnitList = $this->getPlugUnitOrder();
-                     foreach ($plugUnitList as &$p_v){
+                    $v['plugUnitList'] = $this->getPlugUnitOrder();
+                     foreach ($v['plugUnitList'] as &$p_v){
                          if ($p_v['icon']){
                              $p_v['icon'] = $this->processingPictures($p_v['icon']);
                          }
                      }
-                     $v['plugUnitList'] = $plugUnitList;
                 }
                 if ($v['id'] == 2){   //公告
                     $v['newsList'] = $articleModel->getNotice();
                 }
                 if ($v['id'] == 4){  //新闻
-                    $newsList = $articleModel->getNews();
-                    foreach ($newsList as &$n_v){
+                    $v['newsList'] = $articleModel->getNews();
+                    foreach ($v['newsList'] as &$n_v){
                         if ($n_v['thumb']){
                             $n_v['thumb'] = $this->processingPictures($n_v['thumb']);
                         }
@@ -650,15 +644,22 @@ class CommonController extends Controller
                             $n_v['created_at'] = (substr($n_v['created_at'],0,10));
                         }
                     }
-                    $v['newsList'] = $newsList;
                 }
                 if ($v['id'] == 5){  //推荐
                     $v['activityList'] = $activityModel->getNewActivity();
+                    if ($v['activityList']){
+                        foreach ($v['activityList'] as &$a_v){
+                            if (isset($a_v['picture'])){
+                                $a_v['picture'] = $this->processingPictures($a_v['picture']);
+                            }
+                        }
+                    }
                 }
             }
             $this->result['data'] = array_values($res);
+            unset($res);
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //获取底部导航栏根据排序和状态
@@ -694,7 +695,7 @@ class CommonController extends Controller
 
     //获取小程序名称和排版信息
     public function getWxconfig(){
-        $data = DB::table('configs')->where('id',1)->select('wxapplet_name as wxappletName','wxapplet_color as wxappletColor','member_format as memberFormat,','agent_wechat_configs')->first();
+        $data = DB::table('configs')->where('id',1)->select('wxapplet_name as wxappletName','wxapplet_color as wxappletColor','member_format as memberFormat','env','agent_wechat_configs')->first();
         $data = json_decode(json_encode($data),true);
         $navigationList = $this->getNavigationList(1);
         foreach ($navigationList as &$v){
@@ -712,25 +713,46 @@ class CommonController extends Controller
         $admin_navigationList = $this->getNavigationList(0);
         if (isset($admin_navigationList[0]['pagePath'])){
             $data['adminHomePageUrl'] = $admin_navigationList[0]['pagePath'];
+            unset($admin_navigationList);
         }else{
             $data['adminHomePageUrl'] = '';
         }
         //处理配置信息
         if (!$data['agent_wechat_configs']){
             $configs = [
-                'album' > [
+                'album' => [
+                    'status' => 0,
+                    'bgImage' => ''
+                ],
+                'workOrder' => [
                     'status' => 0,
                     'bgImage' => ''
                 ]
             ];
         }else {
             $configs = json_decode($data['agent_wechat_configs'],true);
-            $configs['album']['bgImage'] = $this->processingPictures($configs['album']['bgImage']);
+            if (isset($configs['album'])){
+                $configs['album']['bgImage'] = $this->processingPictures($configs['album']['bgImage']);
+            }else{
+                $configs['album'] = [
+                    'status' => 0,
+                    'bgImage' => ''
+                ];
+            }
+            if (isset($configs['workOrder'])){
+                $configs['workOrder']['bgImage'] = $this->processingPictures($configs['workOrder']['bgImage']);
+            }else{
+                $configs['workOrder'] = [
+                    'status' => 0,
+                    'bgImage' => ''
+                ];
+            }
         }
+        unset($data['agent_wechat_configs']);
         $data['configs'] = $configs;
         $data['tabbarList'] = $navigationList;
         $this->result['data'] = $data;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //省市区地址
@@ -738,7 +760,7 @@ class CommonController extends Controller
         $chinaModel = new China();
         $res = $chinaModel->getRegionList();
         $this->result['data'] = $res;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //公告列表
@@ -759,7 +781,8 @@ class CommonController extends Controller
         $articleModel = new Articles();
         $res = $articleModel->getCustomArticlesWithFilter($searchFilter);
         $this->result['data'] = $res['rows'];
-        return response()->json($this->result);
+        unset($res);
+        return $this->return_result($this->result);
     }
 
     //公告详情
@@ -768,7 +791,7 @@ class CommonController extends Controller
         $articleModel = new Articles();
         $res = $articleModel->getArticlesByID($id);
         $this->result['data'] = $res;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //最新新闻
@@ -776,7 +799,7 @@ class CommonController extends Controller
         $articleModel = new Articles();
         $res = $articleModel->getNews();
         $this->result['data'] = $res;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //获取form_id
@@ -788,10 +811,7 @@ class CommonController extends Controller
         $data['is_used'] = 0;
         $formIdModle = new FormId();
         $res = $formIdModle->addData($data);
-        if (!$res){
-            Log::info($id.'form_id error',array('info'=>$data));
-        }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //获取管理员信息
@@ -799,11 +819,8 @@ class CommonController extends Controller
         $params = request()->post();
         //判断必传参数
         if(!isset($params['code']) || trim($params['code']) == ''){
-            $this->result['status'] = 1;
-            $this->result['msg'] = 'code不能为空';
-            return response()->json($this->result);
+            return $this->return_result(ErrorCode::$api_enum['fail'],'code不能为空');
         }
-
         $con = Configs::first();
         if(isset($params['wxType'])&&trim($params['wxType'])==1){
             $url = "https://api.weixin.qq.com/sns/jscode2session?";
@@ -811,23 +828,23 @@ class CommonController extends Controller
             $url .= "&secret=".$con->member_wechat_secret;
             $url .= "&js_code=".$params['code'];
             $url .= "&grant_type=authorization_code";
-
             $res = file_get_contents($url);  //请求微信小程序获取用户接口
             $params001 = json_decode($res,true);
 
             if (isset($params001['errcode']) && !empty($params001['errcode'])) {
                 $this->result['status'] = 1;
                 $this->result['msg'] = "请求微信接口报错！！！请联系管理员...";
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }
             $admin = AdminUser::where('openid','=',$params001['openid'])->first();
-
             if($admin){
                 if($admin["status"] != "0"){
                     $this->result['status'] = 1;
                     $this->result["msg"] = "您的账号已被禁用，无法登陆，如有疑问，请联系管理员！";
                 }else {
-                    $this->result['data'] = $admin->toArray();
+                    $admin = json_decode(json_encode($admin),true);
+                    $this->result['data'] = $admin;
+                    unset($admin);
                 }
             }else{
                 $this->result['data'] = array(
@@ -847,7 +864,7 @@ class CommonController extends Controller
             if (isset($params001['errcode']) && !empty($params001['errcode'])) {
                 $this->result['status'] = 1;
                 $this->result['msg'] = "请求微信接口报错！！！请联系管理员...";
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }
             $admin = AdminUser::where('openid','=',$params001['userid'])->first();
             if($admin){
@@ -863,7 +880,7 @@ class CommonController extends Controller
                 );
             }
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //绑定管理员
@@ -871,12 +888,10 @@ class CommonController extends Controller
         $params = request()->post();
         //判断必传参数
         if(!isset($params['username']) || trim($params['username']) == ''){
-            $this->result = ErrorCode::$api_enum['name_empty'];
-            return response()->json($this->result);
+            return $this->return_result(ErrorCode::$api_enum['fail'],'username');
         }
         if(!isset($params['user_pass']) || trim($params['user_pass']) == ''){
-            $this->result = ErrorCode::$api_enum['pass_empty'];
-            return response()->json($this->result);
+            return $this->return_result(ErrorCode::$api_enum['fail'],'user_pass');
         }
         $data['openid'] = $params['openid'];
         $adminModel = new AdminUser();
@@ -884,7 +899,7 @@ class CommonController extends Controller
         if($admin_id<1){
             $this->result['status'] = 1;
             $this->result['msg'] = '账号或密码错误';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         //去查询有没有管理占用此openid
         $old_admin_user = AdminUser::where('openid',$params['openid'])->select('id')->first();
@@ -898,9 +913,9 @@ class CommonController extends Controller
         if(!$res){
             $this->result['status'] = 1;
             $this->result['msg'] = '绑定失败';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //公司简介
@@ -913,13 +928,13 @@ class CommonController extends Controller
             $res['picture'] = $this->processingPictures($res['picture']);
             $this->result['data'] = $res;
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //服务热线
     public function hotlineList(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $pageNo = request()->input('pageNo',1);
         $pageSize = request()->input('pageSize',10);
@@ -934,7 +949,7 @@ class CommonController extends Controller
         $serviceHotlineModel = new ServiceHotline();
         $res = $serviceHotlineModel->getList($params);
         $this->result['data'] = $res;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //图片 视频 路径处理
@@ -955,7 +970,8 @@ class CommonController extends Controller
         }
         if(!strstr($url,"https")){
             if ($scf_data['IS_SCF'] == true) {
-                $url = 'https://' . $scf_data['host'] .$url;
+	        $host = 'https://'.$scf_data['system']['bucketConfig']['bucket'].'.cos.'.$scf_data['system']['bucketConfig']['region'].'.myqcloud.com';
+                $url = $host.$url;
             }else{
                 $url = 'https://'.$_SERVER['SERVER_NAME'].$url;
             }

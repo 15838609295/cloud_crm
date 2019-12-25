@@ -143,6 +143,7 @@ class Wechat extends Model
     /* 企业微信转账 */
     public function payment($data)
     {
+        global $scf_data;
         $config = self::Conf();
         $arr = array(
             'amount' => $data['bonus_money'] * 100,
@@ -156,7 +157,8 @@ class Wechat extends Model
         );
         $arr['workwx_sign'] = $this->makeSign($arr,['column' => 'secret', 'value' => $config['qy_pay_secret']]);  //企业微信支付secret
         $arr['check_name'] = 'NO_CHECK';
-        $arr['spbill_create_ip'] = $_SERVER['SERVER_ADDR'];
+        $arr['spbill_create_ip'] = $scf_data['ip'];
+//        $arr['spbill_create_ip'] = $_SERVER['SERVER_ADDR'];
         $arr['act_name'] = '售后提成';
         $arr['sign'] = $this->makeSign($arr,['column' => 'key', 'value' => $config['qy_wx_pay_key']]);//此处value填写商户号的API密钥
         $url = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/paywwsptrans2pocket';
@@ -186,8 +188,10 @@ class Wechat extends Model
         curl_setopt($ch,CURLOPT_SSL_VERIFYPEER,FALSE);
         curl_setopt($ch,CURLOPT_SSL_VERIFYHOST,FALSE);//严格校验
 
-        curl_setopt($ch, CURLOPT_SSLCERT,$_SERVER['DOCUMENT_ROOT'].'/key/apiclient_cert.pem');
-        curl_setopt($ch, CURLOPT_SSLKEY,$_SERVER['DOCUMENT_ROOT'].'/key/apiclient_key.pem');
+        curl_setopt($ch, CURLOPT_SSLCERT, "/var/user/public/key/apiclient_cert.pem");
+//        curl_setopt($ch, CURLOPT_SSLCERT,$_SERVER['DOCUMENT_ROOT'].'/key/apiclient_cert.pem');
+        curl_setopt($ch, CURLOPT_SSLKEY,"/var/user/public/key/apiclient_key.pem");
+//        curl_setopt($ch, CURLOPT_SSLKEY,$_SERVER['DOCUMENT_ROOT'].'/key/apiclient_key.pem');
         // post数据
         curl_setopt($ch, CURLOPT_POST, 1);
         // post的变量

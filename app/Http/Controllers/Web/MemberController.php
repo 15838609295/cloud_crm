@@ -20,7 +20,12 @@ class MemberController extends BaseController
             return response()->json($this->returnData);
         }
         $memberExtendModel = new MemberExtend();
-        $this->returnData['data'] = $memberExtendModel->getUserInfo($this->AU);
+        $data = $memberExtendModel->getUserInfo($this->AU);
+        $data = json_decode(json_encode($data),true);
+        if (isset($data['avatar'])){
+            $data['avatar'] = $this->processingPictures($data['avatar']);
+        }
+        $this->returnData['data'] = $data;
     	return response()->json($this->returnData);
     }
 

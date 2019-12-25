@@ -88,18 +88,31 @@ class BaseController extends Controller
         return $this->returnData;
     }
 
-
-
-    function view_json($data)
-    {
-        header("Content-Type:application/json; charset=utf-8");
-        $callback = isset($_REQUEST['callback']) ? $_REQUEST['callback'] : '';
-        if (!empty($callback)) {
-            echo $callback . '(' . json_encode($data) . ')';
+    //处理图片路径
+    function processingPictures($url){
+        global $scf_data;
+        if (!$url){
+            return $url;
         }
-        else {
-            echo json_encode($data);
+        //去除路径一个点的字符
+        if(substr($url,0,1) == '.'){
+            $url = substr($url,1,(strlen($url)-1));
         }
-        exit();
+        if(substr($url,0,1) != '/' && substr($url,0,1) != 'h'){
+            $url = '/'.$url;
+        }
+        if(strstr($url,"http://")){
+            $url = str_ireplace('http://','https://',$url);
+        }
+        if(!strstr($url,"https")){
+            if ($scf_data['IS_SCF'] == true) {
+                $host = 'https://'.$scf_data['system']['bucketConfig']['bucket'].'.cos.'.$scf_data['system']['bucketConfig']['region'].'.myqcloud.com';
+                $url = $host.$url;
+            }else{
+                $url = 'https://'.$_SERVER['SERVER_NAME'].$url;
+            }
+        }
+
+        return $url;
     }
 }

@@ -40,6 +40,42 @@ class ExamController extends BaseController
         parent::__construct($request);
     }
 
+    //题目参数判断
+    private function paramHandle($data){
+        if ($data['name'] == '' || strlen($data['name']) <= 0){
+            $this->returnData['code'] = 1;
+            $this->returnData['msg'] = '题目标题不能为空';
+            return $this->returnData;
+        }
+        if ($data['type'] != 3){
+            $option = json_decode($data['option'],true);
+           if (count($option) <= 0){
+               $this->returnData['code'] = 1;
+               $this->returnData['msg'] = '请添加选项';
+               return $this->returnData;
+           }
+            foreach ($option as $v){
+
+                if ($v['value'] == '' || !isset($v['value'])){
+                    $this->returnData['code'] = 1;
+                    $this->returnData['msg'] = '选项不能为空';
+                    return $this->returnData;
+                }
+            }
+        }
+        if ($data['answer'] == ''){
+            $this->returnData['code'] = 1;
+            $this->returnData['msg'] = '答案不能为空';
+            return $this->returnData;
+        }
+        if ((int)$data['fraction'] <= 0 || !$data['fraction']){
+            $this->returnData['code'] = 1;
+            $this->returnData['msg'] = '分数必须大于0';
+            return $this->returnData;
+        }
+        return true;
+    }
+
     //试卷类型列表
     public function examTypeList(){
         if ($this->returnData['code'] > 0){
@@ -48,7 +84,7 @@ class ExamController extends BaseController
         $examTypeModel = new ExamType();
         $res = $examTypeModel->getList();
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加试卷类型
@@ -60,7 +96,7 @@ class ExamController extends BaseController
         if (!$data['name'] || !preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $data['name'])){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '类型名称不能为空或包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if ($data['name'] == ''){
             $this->returnData['code'] = 1;
@@ -72,7 +108,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '类型数量已达上限';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改试卷类型名称
@@ -85,7 +121,7 @@ class ExamController extends BaseController
         if (!$data['name'] || !preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $data['name'])){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '类型名称不能为空或包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $examTypeModel = new ExamType();
         $res = $examTypeModel->updateData($id,$data);
@@ -93,7 +129,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除试卷类型
@@ -110,7 +146,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //试卷列表
@@ -134,7 +170,7 @@ class ExamController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //试卷列表无分页
@@ -149,7 +185,7 @@ class ExamController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //试卷题目列表
@@ -171,7 +207,7 @@ class ExamController extends BaseController
             $res['rows']=array_slice($res['rows'],$start,$pageSize);
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加试卷
@@ -183,7 +219,7 @@ class ExamController extends BaseController
         if (!$data['name'] || !preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $data['name'])){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '试卷名称不能为空或包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $data['type_id'] = $request->input('typeId','');
         $testPaperModel = new TestPaper();
@@ -192,7 +228,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改试卷
@@ -205,7 +241,7 @@ class ExamController extends BaseController
         if (!$data['name'] || !preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $data['name'])){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '试卷不能为空或包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $data['type_id'] = $request->input('typeId','');
         $testPaperModel = new TestPaper();
@@ -214,7 +250,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除试卷
@@ -228,7 +264,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加试卷题目
@@ -245,13 +281,19 @@ class ExamController extends BaseController
         $data['answer'] = $request->input('answer','');
         $data['fraction'] = $request->input('fraction','');
         $data['remarks'] = $request->input('remarks','');
+        //处理用户提交造成的空格问题
+        $data['answer'] = preg_replace('# #','',$data['answer']);
+        $param = $this->paramHandle($data);
+        if (isset($param['code'])){
+            return $this->return_result($param);
+        }
         $testPaperModel = new TestPaper();
         $res = $testPaperModel->addTestSubject($id,$data);
         if (!$res){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加题目失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //试卷从题库批量添加题目
@@ -264,7 +306,7 @@ class ExamController extends BaseController
         if (!$item_ids){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '请选择题目';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $item_ids = explode(',',$item_ids);
         foreach ($item_ids as &$v){
@@ -276,7 +318,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加题目失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改试卷题目
@@ -293,13 +335,19 @@ class ExamController extends BaseController
         $data['answer'] = $request->input('answer','');
         $data['fraction'] = $request->input('fraction','');
         $data['remarks'] = $request->input('remarks','');
+        //处理用户提交造成的空格问题
+        $data['answer'] = preg_replace('# #','',$data['answer']);
+        $param = $this->paramHandle($data);
+        if (isset($param['code'])){
+            return $this->return_result($param);
+        }
         $testPaperModel = new TestPaper();
         $res = $testPaperModel->updateTestItem($item_id,$data);
         if (!$res){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加题目失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除试卷题目
@@ -315,7 +363,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //试卷导出
@@ -327,7 +375,7 @@ class ExamController extends BaseController
         if (!$ids){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '请选择试卷';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $ids = explode(',',$ids);
         foreach ($ids as &$v){
@@ -474,7 +522,7 @@ class ExamController extends BaseController
         if (!$list){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '请选要删除的试题';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $list = explode(',',$list);
         $testPaperModel = new TestPaper();
@@ -483,7 +531,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //下载导入题目模板
@@ -496,7 +544,7 @@ class ExamController extends BaseController
         $env = $con->env;
         if ($env == 'CLOUD'){
             $data['code'] = 3;
-            $data['name'] = '客户报名信息.xlsx';
+            $data['name'] = '题目模板导入表.xlsx';
             $data['data'] = realpath(base_path('public/download')).'/'.$fileName.'.xlsx';
             return $data;
         }else{
@@ -506,7 +554,7 @@ class ExamController extends BaseController
         }
         $this->returnData = ErrorCode::$admin_enum['not_exist'];
         $this->returnData['msg'] = '文件不存在';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //试卷批量上传题目
@@ -515,12 +563,13 @@ class ExamController extends BaseController
             return $this->returnData;
         }
         $con = Configs::first();
+        $id = $request->post('id','');
         if ($con->env == 'CLOUD'){
             $base64_excel = trim($request->post('file',''));
             if (!$base64_excel){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $files = json_decode($base64_excel,true);
             $temp_file = tempnam(sys_get_temp_dir(),"php");  //临时文件
@@ -532,7 +581,7 @@ class ExamController extends BaseController
             if (!$url){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = 'Excel上传失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             //下载
             $path = urldecode($url['ObjectURL']);
@@ -551,7 +600,6 @@ class ExamController extends BaseController
                 $r_data['msg'] = '导入文件不能为空';
                 return $r_data;
             }
-            $id = $request->input('id','');
             $file = $request->file('file')->store('temporary');
             $file_path = 'storage/app/'.iconv('UTF-8', 'GBK',$file);
         }
@@ -633,7 +681,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = $txt;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //试题详情
@@ -647,8 +695,11 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '试题不存在';
         }
+        if(isset($res['annex'])){
+            $res['annex'] = $this->processingPictures($res['annex']);
+        }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //题库试题删除
@@ -662,7 +713,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //题库批量删除
@@ -682,7 +733,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //题库添加题目
@@ -693,18 +744,24 @@ class ExamController extends BaseController
         $data['name'] = $request->input('name','');
         $data['annex'] = $request->input('annex','');
         $data['type'] = $request->input('type','');
-        $data['must'] = $request->input('must','');
         $data['option'] = $request->input('option','');
         $data['answer'] = $request->input('answer','');
         $data['fraction'] = $request->input('fraction','');
         $data['remarks'] = $request->input('remarks','');
+        $data['must'] = $request->input('must','');
+        //处理用户提交造成的空格问题
+        $data['answer'] = preg_replace('# #','',$data['answer']);
+        $param = $this->paramHandle($data);
+        if (isset($param['code'])){
+            return $this->return_result($param);
+        }
         $itemBankModel = new ItemBank();
         $res = $itemBankModel->addItem($data);
         if (!$res){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //题库修改题目
@@ -721,13 +778,19 @@ class ExamController extends BaseController
         $data['answer'] = $request->input('answer','');
         $data['fraction'] = $request->input('fraction','');
         $data['remarks'] = $request->input('remarks','');
+        //处理用户提交造成的空格问题
+        $data['answer'] = preg_replace('# #','',$data['answer']);
+        $param = $this->paramHandle($data);
+        if (isset($param['code'])){
+            return $this->return_result($param);
+        }
         $itemBankModel = new ItemBank();
         $res = $itemBankModel->updateItem($id,$data);
         if (!$res){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //题库批量上传
@@ -741,7 +804,7 @@ class ExamController extends BaseController
             if (!$base64_excel){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $files = json_decode($base64_excel,true);
             $temp_file = tempnam(sys_get_temp_dir(),"php");  //临时文件
@@ -753,7 +816,7 @@ class ExamController extends BaseController
             if (!$url){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = 'Excel上传失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             //下载
             $path = urldecode($url['ObjectURL']);
@@ -853,7 +916,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = $txt;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //题库列表
@@ -872,7 +935,7 @@ class ExamController extends BaseController
         $itemBankModel = new ItemBank();
         $res = $itemBankModel->itemList($data);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //考试管理列表
@@ -911,14 +974,14 @@ class ExamController extends BaseController
             }
             $examinee_id = json_decode($v['examinee_id'],1);
             $v['group_name'] = '';
-            foreach ($examinee_id as $e_v){
-                $name = $examGropuModel->getGroupName($e_v);
-                $v['group_name'] .= $name.'/';
+            $name = $examGropuModel->getInArray('name',['id',$examinee_id]);
+            foreach ($name as $n_v){
+                $v['group_name'] .= $n_v['name'].'/';
             }
             $v['group_name'] = substr($v['group_name'],0,strlen($v['group_name'])-1);
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //停止考试
@@ -932,7 +995,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改考试状态失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //考试列表无分页
@@ -940,7 +1003,7 @@ class ExamController extends BaseController
         $examModel = new Exam();
         $res = $examModel->itenListNoPage();
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //创建考试
@@ -950,20 +1013,24 @@ class ExamController extends BaseController
         }
         $exam_data = [];
         foreach ($this->exam_fields as $key => $value) {
-            if (!$request->post($key) && $key !='isRanking' && $key !='isCopy' && $key !='isSort') {
+            if (!$request->post($key) && $key !='isRanking' && $key !='isCopy' && $key !='isSort' && $key != 'examineeId') {
                 $this->returnData['code'] = 1;
                 $this->returnData['msg'] = $value;
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $exam_data[$key] = $request->post($key);
         }
-
+        $exam_data['examineeId'] = $request->post('examineeId','');
+        if ($exam_data['examineeId'] == ''){
+            $this->returnData = ErrorCode::$admin_enum['error'];
+            $this->returnData['msg'] = '未选择考试分组';
+            return $this->return_result($this->returnData);
+        }
         if (!$exam_data['name'] || !preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $exam_data['name'])){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '考试名称不能为空或包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
-
         $exam_data['cuttingScreenNumber'] = $request->post('cuttingScreenNumber',0);
         $test_paper_id = $request->post('testId');
         $examModel = new Exam();
@@ -972,11 +1039,23 @@ class ExamController extends BaseController
         if ($res === -1){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '此试卷下无题目，请重新选择';
+        }elseif ($res === -2){
+            $this->returnData['code'] = 1;
+            $this->returnData['msg'] = '此试卷下存在有题目没有选项，请补充完整';
+        }elseif ($res === -3){
+            $this->returnData['code'] = 1;
+            $this->returnData['msg'] = '此试卷下存在有题目的分数小于等于0，请补充完整';
+        }elseif ($res === -4){
+            $this->returnData['code'] = 1;
+            $this->returnData['msg'] = '此试卷下存在有题目为空，请补充完整';
+        }elseif ($res === -5){
+            $this->returnData['code'] = 1;
+            $this->returnData['msg'] = '未创建考生分组';
         }elseif (!$res){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '创建失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //考试详情
@@ -990,6 +1069,9 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '考试不存在';
         }else{
+            if (isset($res['cover'])){
+                $res['cover'] = $this->processingPictures($res['cover']);
+            }
             $res['subject_list'] = json_decode($res['subject_list'],1);
             foreach ($res['subject_list'] as &$v){
                 $v['option'] = json_decode($v['option'],1);
@@ -997,7 +1079,7 @@ class ExamController extends BaseController
             }
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //考试结果统计分析
@@ -1016,7 +1098,7 @@ class ExamController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //考试答卷列表
@@ -1038,7 +1120,7 @@ class ExamController extends BaseController
         $examModel = new Exam();
         $res = $examModel->examResultList($id,$data);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //考试答卷导出
@@ -1148,7 +1230,7 @@ class ExamController extends BaseController
             $res['examinee_group_name'] = $name;
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //答卷详情
@@ -1169,7 +1251,7 @@ class ExamController extends BaseController
             $pagedata = array_slice($res,$start,$pageSize);
             $this->returnData['data'] = $pagedata;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //考生管理
@@ -1187,7 +1269,7 @@ class ExamController extends BaseController
         $examModel = new Exam();
         $res = $examModel->getExamineersList($data,$type);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //考生分组
@@ -1205,7 +1287,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加到分组失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //批量删除分组考生
@@ -1222,7 +1304,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //创建考生组
@@ -1235,12 +1317,12 @@ class ExamController extends BaseController
         if ($data['name'] == '' || !isset($data['group_type'])){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '参数缺失';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if (!$data['name'] || !preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $data['name'])){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '分组名称不能为空或包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $examineeGroupModel = new ExamineeGroup();
         $res = $examineeGroupModel->addExamineeGroupData($data);
@@ -1251,7 +1333,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //考生组列表
@@ -1263,7 +1345,7 @@ class ExamController extends BaseController
         $examineeGroupModel = new ExamineeGroup();
         $res = $examineeGroupModel->examineeGroupList($type);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除考生分组
@@ -1277,7 +1359,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //分组编辑
@@ -1290,7 +1372,7 @@ class ExamController extends BaseController
         if (!$data['name'] || !preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $data['name'])){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '分组名称不能为空或包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $examineeGroupModel = new ExamineeGroup();
         $res = $examineeGroupModel->updateExamineeGroup($data);
@@ -1298,7 +1380,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //考试统计
@@ -1310,7 +1392,7 @@ class ExamController extends BaseController
         $examModel = new Exam();
         $res = $examModel->examCompute($time_type);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //试题分析
@@ -1325,9 +1407,14 @@ class ExamController extends BaseController
         $start = ($pageNo -1)*$pageSize;
         $examModel = new Exam();
         $res = $examModel->examAnalyse($data);
+        if ($res === -2){
+            $this->returnData['code'] = 1;
+            $this->returnData['msg'] = '有试题不存在选项';
+            return $this->return_result($this->returnData);
+        }
         $res['rows'] = array_slice($res['rows'],$start,$pageSize);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //试题分析导出
@@ -1339,7 +1426,12 @@ class ExamController extends BaseController
         $data['type'] = 1;
         $examModel = new Exam();
         $res = $examModel->examAnalyse($data);
-        $list = $examModel->examList(['id'=>6,'status' => '','type_id' => '','start_time' => '','end_time' => '','search' => '','start'=>0,'page_size'=>50,'sort_name'=>'id','sort_order'=>'desc']);
+        if ($res === -2){
+            $this->returnData['code'] = 1;
+            $this->returnData['msg'] = '有试题不存在选项';
+            return $this->return_result($this->returnData);
+        }
+        $list = $examModel->examList(['id'=>$data['id'],'status' => '','type_id' => '','start_time' => '','end_time' => '','search' => '','start'=>0,'page_size'=>50,'sort_name'=>'id','sort_order'=>'desc']);
         $res['info'] = $list['rows'][0];
         $name = $examModel->getSelResult($data['id'],'name');
         $arr[] = ['试卷名称','试卷分类','总分'];
@@ -1360,20 +1452,13 @@ class ExamController extends BaseController
             }elseif ($v['type'] == 3){
                 $type_txt = '填空题';
             }
-            $vnew_option = '';
-            //处理选项
-            if ($v['type'] != 3){
-                foreach ($v['option'] as $v_o){
-                    $vnew_option .= $v_o['label'].$v_o['value'];
-                }
-            }
             //备注处理
             $v['remarks'] = strip_tags($v['remarks']);
             if ($v['type'] != 3){
                 $arr[] = [
                     $v['name'],
                     $type_txt,
-                    $vnew_option,
+                    $v['option'][0]['label'].'.'.$v['option'][0]['value'],
                     $v['remarks'],
                     $v['option'][0]['label'].'.'.$v['option'][0]['value'],
                     $v['option'][0]['number'],
@@ -1382,7 +1467,7 @@ class ExamController extends BaseController
                     $arr[] = [
                         '',
                         '',
-                        '',
+                        $v['option'][$i]['label'].'.'.$v['option'][$i]['value'],
                         '',
                         $v['option'][$i]['label'].'.'.$v['option'][$i]['value'],
                         $v['option'][$i]['number'],
@@ -1392,7 +1477,7 @@ class ExamController extends BaseController
                 $arr[] = [
                     $v['name'],
                     $type_txt,
-                    $vnew_option,
+                    '',
                     $v['remarks'],
                     $v['option'][0]['value'],
                     $v['option'][0]['number'],
@@ -1442,7 +1527,7 @@ class ExamController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
 

@@ -31,7 +31,7 @@ class FinanceController extends BaseController
         $data['month_use_money'] = sprintf("%.2f",$data['month_use_money']);
         $data['total_money'] = sprintf("%.2f",$data['total_money']);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 余额记录 */
@@ -56,7 +56,7 @@ class FinanceController extends BaseController
         $memberModel = new MemberBase();
         $res = $memberModel->getMemberRichListWithFilter($searchFilter);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 赠送金统计 */
@@ -71,7 +71,7 @@ class FinanceController extends BaseController
         $data = array_merge($data,$res);
         $data['month_money'] = sprintf("%.2f",$data['month_money']);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 赠送金记录 */
@@ -96,7 +96,7 @@ class FinanceController extends BaseController
         $memberModel = new MemberBase();
         $res = $memberModel->getMemberRichListWithFilter($searchFilter);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 提成记录 */
@@ -118,7 +118,7 @@ class FinanceController extends BaseController
         $bonusLogModel = new AdminBonusLog();
         $res = $bonusLogModel->getBonusLogWithFilter($searchFilter);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 提现记录 */
@@ -139,7 +139,7 @@ class FinanceController extends BaseController
         $withdrawalModel = new Withdrawal();
         $data = $withdrawalModel->getWithdrawalListWithFilter($searchFilter);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     public function ajax(Request $request){
@@ -150,16 +150,16 @@ class FinanceController extends BaseController
             $data['code']  =1;
             $data['msg']  = '无权限';
             $data['data']  ='';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         if (!isset($request->action) || !in_array(strval($request->action),['withdrawal'],true)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if($request->action == 'withdrawal'){
             if($request->post('check_res')===NULL || !in_array(strval($request->post('check_res')),['pass','refuse'],true)){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $data = array(
                 'id' => $request->id,
@@ -169,10 +169,10 @@ class FinanceController extends BaseController
             );
             $withdrawalModel = new Withdrawal();
             $res = $withdrawalModel->dealWithdrawal($data);
-            return response()->json($res);
+            return $this->return_result($res);
         }
         $this->returnData = ErrorCode::$admin_enum['fail'];
         $this->returnData['msg'] = '未知操作';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

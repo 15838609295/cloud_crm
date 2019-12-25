@@ -322,24 +322,6 @@ class Articles extends Model
         return $result;
     }
 
-    //根据分类获取新闻
-    public function getTypeNews(){
-        $types = DB::table('articles_type')->where('status',1)->get();
-        $types = json_decode(json_encode($types),true);
-        foreach ($types as &$v){
-            $res = DB::table($this->table_name)->where('typeid',1);
-            $res ->where(function ($query){
-                $query->where('read_power', 0)
-                    ->orwhere('read_power', 2);
-            });
-            $res->where('articles_type_id',$v['id']);
-            $result = $res->skip(0)->take(2)->where('is_display',0)->orderBy('id','desc')->get();
-            $result = json_decode(json_encode($result),true);
-            $v['list'] = $result;
-        }
-        return $types;
-    }
-
     //根据类型id获取类型下所有新闻
     public function getTypeNewsList($type_id,$data){
         $id_res = DB::table($this->table_name)

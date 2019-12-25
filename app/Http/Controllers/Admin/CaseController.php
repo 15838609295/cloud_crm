@@ -52,7 +52,7 @@ class CaseController extends BaseController
             ['id' => 29,'type_name' => '保险']
         );
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
 	/* 案例列表 */
@@ -72,7 +72,7 @@ class CaseController extends BaseController
         $caseModel = new Cases();
         $data = $caseModel->getCasesWithFilter($searchFilter);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 	
 	/* 添加案例 */
@@ -88,10 +88,10 @@ class CaseController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '添加失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '添加成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 修改案例 */
@@ -107,10 +107,10 @@ class CaseController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '修改失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '修改成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
     
     /* 删除案例 */
@@ -120,9 +120,9 @@ class CaseController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '删除失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '删除成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

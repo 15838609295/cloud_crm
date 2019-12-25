@@ -30,7 +30,7 @@ class BranchController extends BaseController
         $branchModel = new Branch();
         $res = $branchModel->getBranchWithFilter($searchFilter);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     public function branchList(){
@@ -43,10 +43,10 @@ class BranchController extends BaseController
         if(count($res)<1){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '暂无数据';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 添加团队 */
@@ -57,29 +57,29 @@ class BranchController extends BaseController
         $branch_name = trim($request->post('branch_name',''));
         if($branch_name==''){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         //正则验证只能包括汉字字母和数字
         if (!preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $branch_name)) {
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '团队名称不能包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $branchModel = new Branch();
         $res = $branchModel->getBranchByName($branch_name);
         if(is_array($res)){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '团队名称已使用,请重新输入';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $res = $branchModel->branchInsert(['branch_name'=>$branch_name]);
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '添加失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '添加成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 团队修改页面 */
@@ -91,23 +91,23 @@ class BranchController extends BaseController
         $branch_name = trim($request->post('branch_name',''));
         if($branch_name==''){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $branchModel = new Branch();
         $res = $branchModel->getBranchByName($branch_name,$id);
         if(is_array($res)){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '团队名称已使用,请重新输入';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $res = $branchModel->branchUpdate($id,['branch_name'=>$branch_name]);
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '修改失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '修改成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 团队删除 */
@@ -120,9 +120,9 @@ class BranchController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '删除失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '删除成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

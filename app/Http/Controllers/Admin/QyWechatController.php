@@ -13,9 +13,15 @@ class QyWechatController extends Controller
 {
     //企业微信登录跳转验证
     public function qywechat_login(Request $request){
+        global $scf_data;
+        $host = $scf_data['host'];
         if(!$request->input('code')){
-            Log::info("qyWxError: code Empty");
-            return redirect('/index.html');
+            $js = '';
+            $js .= "<script language = 'javascript' type = 'text/javascript' >";
+            $js .= "window.location.href = '$host' ";
+            $js .= " </script > ";
+            return $js;
+//            return redirect('/index.html');
         }
         $code = $request->input('code');
         $con = Configs::first();
@@ -24,29 +30,47 @@ class QyWechatController extends Controller
         $members = file_get_contents('https://qyapi.weixin.qq.com/cgi-bin/user/getuserinfo?access_token='.$arr["access_token"].'&code='.$code);
         $user = json_decode($members,true);
         if(!isset($user["UserId"])){
-            Log::info("qyWxError: userId error");
-            return redirect('/index.html');
+            $js = '';
+            $js .= " <script language = 'javascript' type = 'text/javascript' >";
+            $js .= "window.location.href = '$host' ";
+            $js .= " </script > ";
+            return $js;
+//            return redirect('/index.html');
         }
         $data = AdminUser::where('wechat_id','=',$user['UserId'])->select("id", 'status')->first();
 
         if(!isset($data["id"])){
-            Log::info("qyWxError: userInfo No");
-            return redirect('/index.html');
+            $js = '';
+            $js .= " <script language = 'javascript' type = 'text/javascript' >";
+            $js .= "window.location.href = '$host' ";
+            $js .= " </script > ";
+            return $js;
+//            return redirect('/index.html');
         }
         if($data["status"] != "0"){
-            //Log::info("您的账号已被禁用，无法登陆，如有疑问，请联系管理员！");
-            return redirect('/index.html#/login?msg=您的账号已被禁用，无法登陆，如有疑问，请联系管理员！&');
+            $js = '';
+            $js .= " <script language = 'javascript' type = 'text/javascript' >";
+            $js .= "window.location.href = '$host' ";
+            $js .= " </script > ";
+            return $js;
+//            return redirect('/index.html#/login?msg=您的账号已被禁用，无法登陆，如有疑问，请联系管理员！&');
         }
         $userSessionModel = new UserSession();
         $session_id = $userSessionModel->setSession(['admin_id'=>$data["id"]], $code);
         if(!$session_id){
-            Log::info("qyWxError: write login record error");
-            return redirect('/index.html');
+            $js = '';
+            $js .= " <script language = 'javascript' type = 'text/javascript' >";
+            $js .= "window.location.href = '$host' ";
+            $js .= " </script > ";
+            return $js;
+//            return redirect('/index.html');
         }
-//        return redirect('/admin/#/login?code='.$code . "&");
-        return redirect('/index.html#/login?code='.$code . "&");
-//        Auth::guard('admin')->loginUsingId($bool->id);
-//        return redirect('/admin/index');
+        $js = '';
+        $js .= " <script language = 'javascript' type = 'text/javascript' >";
+        $js .= "window.location.href ='$host/#/login?code=$code'";
+        $js .= " </script > ";
+        return $js;
+//        return redirect('/index.html#/login?code='.$code);
     }
 
     //个人微信登录跳转验证

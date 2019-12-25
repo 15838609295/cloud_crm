@@ -39,7 +39,8 @@ class ErrorCode
         'openid_exist'      => ['code'=>313,'msg'=>'openid已存在'],
         'unionid_exist'     => ['code'=>314,'msg'=>'unionid已存在'],
         'id_card_error'     => ['code'=>321,'msg'=>'身份证错误'],
-        'not_branch_user'   => ['code'=>331,'msg'=>'非团队成员']
+        'not_branch_user'   => ['code'=>331,'msg'=>'非团队成员'],
+        'customized'        => ['code' => 1, 'msg' => '%s'],
     ];
 
     static $web_enum = [

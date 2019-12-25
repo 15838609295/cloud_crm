@@ -47,7 +47,7 @@ class OrderController extends BaseController
             $v['goods_version'] = $goods_version['subitem']['goods_version'];
         }
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /*
@@ -62,7 +62,7 @@ class OrderController extends BaseController
         }
         if (!isset($request->action) || !in_array(strval($request->action),['confirm','cancel','refund','refuse'],true)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $id = $request->id;
         switch ($request->action)
@@ -82,17 +82,17 @@ class OrderController extends BaseController
             default:
                 $this->returnData = ErrorCode::$admin_enum['fail'];
                 $this->returnData['msg'] = '未知操作';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
         }
         $orderModel = new Order();
         $res = $orderModel->orderUpdate((int)$id,$data);
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '更新失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '更新成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     private function _confirmOrder($id){

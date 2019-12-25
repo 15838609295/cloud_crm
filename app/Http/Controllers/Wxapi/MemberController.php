@@ -79,7 +79,7 @@ class MemberController extends BaseController
     //获取客户详情
     public function memberDetail(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $memberModel = new MemberBase();
         $res = $memberModel->getMemberDetailByID($this->user['id']);
@@ -87,20 +87,20 @@ class MemberController extends BaseController
         if(!is_array($res) || count($res)<1){
             $this->result['status'] = 202;
             $this->result['msg'] = '该客户不存在';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $albumModel = new Album();
         //获取最近4张图片
         $album = $albumModel->getFour($this->user['id']);
         $res['album'] = $album;
         $this->result['data'] = $res;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //客户交易明细
     public function transactionDetails(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->input();
         $sortName ='id';    //排序列名
@@ -133,44 +133,54 @@ class MemberController extends BaseController
 
         $data['status'] = 0;
         $data['msg'] = '请求成功';
-        return response()->json($data);
+        return $this->return_result($data);
     }
 
     //修改名称
     public function update_name(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->post();
         $where['name'] = $params['name'];
+        if (!$where['name'] || !preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $where['name'])) {
+            $this->result = ErrorCode::$admin_enum['error'];
+            $this->result['msg'] = '名称不能包含特殊字符';
+            return response()->json($this->result);
+        }
         $where['update_time'] = Carbon::now();
         $res = DB::table('member')->where('id',$this->user['id'])->update($where);
         if ($res){
             $this->result['data'] = '';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }else{
             $this->result['status'] = 1;
             $this->result['msg'] = '请求失败';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
     }
 
     //修改电话
     public function update_mobile(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->post();
         $where['mobile'] = $params['mobile'];
+        if (!$where['mobile'] || strlen($where['mobile']) !=11){
+            $this->result = ErrorCode::$admin_enum['error'];
+            $this->result['msg'] = '号码不存在';
+            return response()->json($this->result);
+        }
         $where['update_time'] = Carbon::now();
         $res = DB::table('member')->where('id',$this->user['id'])->update($where);
         if ($res){
             $this->result['data'] = '';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }else{
             $this->result['status'] = 1;
             $this->result['msg'] = '请求失败';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
     }
 
@@ -179,7 +189,7 @@ class MemberController extends BaseController
      * */
     public function selectorder(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->input();
         require_once  base_path().'/vendor/tencentcloud-sdk-php/TCloudAutoLoader.php';
@@ -224,20 +234,20 @@ class MemberController extends BaseController
             $data['msg'] = '请求成功';
             $data['data']['total'] = $res['data']['totalNum'];
             $data['data']['list'] = $res['data']['deals'];
-            return response()->json($data);
+            return $this->return_result($data);
         }else{
             $data['status'] = 0;
             $data['msg'] = '请求成功';
             $data['data']['total'] = 0;
             $data['data']['list'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
     }
 
     //腾讯云代付
     public function pay_order(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->input();
         $user_discount = DB::table('member')->where('id',$this->user['id'])->select('tencent_discount','tencent_status','quota')->first();
@@ -245,7 +255,7 @@ class MemberController extends BaseController
         if ($user_discount['tencent_status'] != 1){
             $this->result["code"] = 1;
             $this->result["msg"] = "无权限支付订单";
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         require_once  base_path().'/vendor/tencentcloud-sdk-php/TCloudAutoLoader.php';
         //余额支付
@@ -254,14 +264,14 @@ class MemberController extends BaseController
         if ($price > $user_discount['quota']){
             $this->result["code"] = 1;
             $this->result["msg"] = "订单金额大于代付限额";
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $price = ($price*$this->user['discount'])/100;
         $donation_amount = $this->user['balance'] - $price;
         if($donation_amount < 0){
             $this->result["status"] = 1;
             $this->result["msg"] = "余额不足,请选择其他支付方式或联系客服充值！";
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         //引入腾讯云支付
         DB::beginTransaction();
@@ -319,14 +329,14 @@ class MemberController extends BaseController
             $data['status'] = 0;
             $data['msg'] = '支付成功';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         catch(\Exception $e){
             DB::rollback();
             $data['status'] = 1;
             $data['msg'] = '支付失败';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
     }
 
@@ -344,7 +354,7 @@ class MemberController extends BaseController
     //会员相册
     public function memberVipAlbum(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $id = $this->user['id'];
         $albumModel = new Album();
@@ -370,13 +380,13 @@ class MemberController extends BaseController
             $data['info'] = '';
             $this->result['data'] = $data;
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //上传相册
     public function memberAddAlbum(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $chart = request()->input('chart','');
         $data['chart'] = json_decode($chart,true);
@@ -387,13 +397,13 @@ class MemberController extends BaseController
             $this->result['status'] = 0;
             $this->result['msg'] = '上传失败';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //删除相册
     public function delAlbum(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $id = request()->input('id','');
         $albumModle = new Album();
@@ -402,19 +412,19 @@ class MemberController extends BaseController
             $this->result['status'] = 1;
             $this->result['msg'] = '删除失败';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //收藏列表
     public function collectList(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $status = $this->isActivity();
         if (!$status){
             $this->result['status'] = 1;
             $this->result['msg'] = '未知状态';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $id = $this->user['id'];
         $activityModel = new Activity();
@@ -422,20 +432,23 @@ class MemberController extends BaseController
         if (!$res){
             $this->result['data'] = [];
         }else{
+            foreach ($res as &$v){
+                $v['picture'] = $this->processingPictures($v['picture']);
+            }
             $this->result['data'] = $res;
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
     //点赞列表
     public function fabulousList(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $status = $this->isActivity();
         if (!$status){
             $this->result['status'] = 1;
             $this->result['msg'] = '未知状态';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $id = $this->user['id'];
         $activityModel = new Activity();
@@ -443,21 +456,24 @@ class MemberController extends BaseController
         if (!$res){
             $this->result['data'] = [];
         }else{
+            foreach ($res as &$v){
+                $v['picture'] = $this->processingPictures($v['picture']);
+            }
             $this->result['data'] = $res;
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //评论列表
     public function commentList(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $status = $this->isActivity();
         if (!$status){
             $this->result['status'] = 1;
             $this->result['msg'] = '未知状态';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $id = $this->user['id'];
         $commentModle = new Comment();
@@ -470,13 +486,13 @@ class MemberController extends BaseController
             }
             $this->result['data'] = $res;
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //我的活动
     public function myActivity(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $id = $this->user['id'];
         $data['status'] = request()->input('status','');
@@ -502,39 +518,42 @@ class MemberController extends BaseController
                 }else{
                     $v['status'] = '未知状态';
                 }
+                if (isset($v['picture'])){
+                    $v['picture'] = $this->processingPictures($v['picture']);
+                }
             }
             $this->result['data'] = $res;
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //我参加的活动
     public function myActivityInfo(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $activity_id = request()->input('activityId','');
         $activityModel = new Activity();
         $res = $activityModel->myActivityInfo($this->user['id'],$activity_id);
         $this->result['data'] = $res;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //会员类型列表
     public function getInidustryList(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $industryTypeModel = new IndustryType();
         $res = $industryTypeModel->getList();
         $this->result['data'] = $res;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //认证
     public function authentication(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         //提交前判断是否有提交过
         $id = $this->user['id'];
@@ -542,7 +561,7 @@ class MemberController extends BaseController
         if ($status){
             $this->result['status'] = 1;
             $this->result['msg'] = '请勿重复提交认证';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         //个人信息
         $member['name'] = request()->input('realname','');
@@ -551,7 +570,7 @@ class MemberController extends BaseController
             if ($v == ''){
                 $this->result['status'] = 1;
                 $this->result['msg'] = $this->fields[$k].'不能为空';
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }
         }
         //个人详情
@@ -562,7 +581,7 @@ class MemberController extends BaseController
             if ($v == ''){
                 $this->result['status'] = 1;
                 $this->result['msg'] = $this->fields[$k].'不能为空';
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }
         }
         $member_extend['wechat'] = request()->input('wechat','');
@@ -587,7 +606,7 @@ class MemberController extends BaseController
             if ($v == ''){
                 $this->result['status'] = 1;
                 $this->result['msg'] = $this->fields[$k].'不能为空';
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }
         }
         //选填
@@ -613,29 +632,29 @@ class MemberController extends BaseController
             $this->result['status'] = 1;
             $this->result['msg'] = '提交认证失败';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
 
     //修改密码
     public function passUpdate(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->post();
         if(!isset($params['password']) || trim($params['password']) == ''){
             $this->result['status'] = 1;
             $this->result['msg'] = 'password参数不存在';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $user["password"] = bcrypt($params['password']);
         $bool = DB::table('member')->where('id',$this->user['id'])->update($user);
         if($bool){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }else{
             $this->result['status'] = 1;
             $this->result['msg'] = '修改失败';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
     }
 
@@ -649,15 +668,15 @@ class MemberController extends BaseController
             if ($member_info['is_vip'] == 0){
                 $this->result['status'] = 203;
                 $this->result['msg'] = '账号尚未认证';
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }elseif ($member_info['is_vip'] == 1){
                 $this->result['status'] = 204;
                 $this->result['msg'] = '认证信息待审核';
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }elseif ($member_info['is_vip'] == 3){
                 $this->result['status'] = 205;
                 $this->result['msg'] = '认证未通过，请重新提交认证';
-                return response()->json($this->result);
+                return $this->return_result($this->result);
             }else{
                 return true;
             }
@@ -669,7 +688,7 @@ class MemberController extends BaseController
     public function pay_order_api(){
         global $scf_data;
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->post();
         $openid = $params['openid'];    //  openid
@@ -677,7 +696,7 @@ class MemberController extends BaseController
         if (strripos($total_fee,'.')){
             $data['status'] = 1;
             $data['msg'] = '充值金额为整数';
-            return response()->json($data);
+            return $this->return_result($data);
         }
 
         $con = Configs::first();
@@ -734,7 +753,7 @@ class MemberController extends BaseController
             $data['data']['return_code'] = $array['return_code'];
             $data['data']['return_msg'] = $array['return_msg'];
         }
-        return response()->json($data);
+        return $this->return_result($data);
     }
 
     //随机32位字符串

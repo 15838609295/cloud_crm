@@ -27,7 +27,7 @@ class BrowsingController extends BaseController {
         );
 	    $data = $articleModel->getArticleByCustome($params,'single');
         $this->returnData['data'] = $data ?: [];
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
 	}
 
 	/* 关于我们 */
@@ -42,7 +42,7 @@ class BrowsingController extends BaseController {
         );
         $data = $articleModel->getArticleByCustome($params,'single');
         $this->returnData['data'] = $data ?: [];
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
 	}
 	
 	/* 日志 */
@@ -72,7 +72,7 @@ class BrowsingController extends BaseController {
             $data[$month][] = $v;
         }
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
 	/* 加载外部新闻列表 */
@@ -95,7 +95,7 @@ class BrowsingController extends BaseController {
 //        $articleModel = new Articles();
 //        $res = $articleModel->getCustomArticlesWithFilter($searchFilter);
 //        $this->returnData['data'] = $res;
-//        return response()->json($this->returnData);
+//        return $this->return_result($this->returnData);
 //    }
 
     /* 查看新闻详情 */
@@ -106,7 +106,7 @@ class BrowsingController extends BaseController {
         $articleModel = new Articles();
         $data = $articleModel->getArticlesByID((int)$id);
         $this->returnData['data'] = $data ?: [];
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //新闻类型列表
@@ -125,8 +125,24 @@ class BrowsingController extends BaseController {
         ];
         $articlesTypeModel = new ArticlesType();
         $res = $articlesTypeModel->getList($fields);
+        if ($res['rows']){
+            $res['rows'] = $this->completionUrl($res['rows']);
+        }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
+    }
+
+    //处理图片路径
+    public function completionUrl($data){
+        foreach ($data as &$v){
+            if (isset($v['icon'])){
+                $v['icon'] = $this->processingPictures($v['icon']);
+            }
+            if (isset($v['children'])){
+                $v['children'] = $this->completionUrl($v['children']);
+            }
+        }
+        return $data;
     }
 
     //添加新闻类型
@@ -146,7 +162,7 @@ class BrowsingController extends BaseController {
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改新闻类型
@@ -159,6 +175,7 @@ class BrowsingController extends BaseController {
         $data['status'] = $request->input('status','');
         $data['icon'] = $request->input('icon','');
         $data['sort'] = $request->input('sort','');
+        $data['cid'] = $request->input('cid','');
         $data['type'] = $request->input('type','');
         $articlesTypeModel = new ArticlesType();
         $res = $articlesTypeModel->updateType($id,$data);
@@ -166,7 +183,7 @@ class BrowsingController extends BaseController {
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除新闻类型
@@ -183,7 +200,7 @@ class BrowsingController extends BaseController {
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改类型权重
@@ -199,7 +216,7 @@ class BrowsingController extends BaseController {
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改类型显示状态
@@ -215,7 +232,7 @@ class BrowsingController extends BaseController {
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //系统默认类型列表
@@ -229,7 +246,7 @@ class BrowsingController extends BaseController {
         $articlesTypeModel = new ArticlesType();
         $res = $articlesTypeModel->getTypeList($fields);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //服务热线列表
@@ -250,7 +267,7 @@ class BrowsingController extends BaseController {
         $serviceHotlineModel = new ServiceHotline();
         $res = $serviceHotlineModel->getList($data);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //新增服务热线
@@ -267,7 +284,7 @@ class BrowsingController extends BaseController {
         if (!$res){
             $this->returnData = ErrorCode::$admin_enum['addfail'];
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改服务热线
@@ -285,7 +302,7 @@ class BrowsingController extends BaseController {
         if (!$res){
             $this->returnData = ErrorCode::$admin_enum['modifyfail'];
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除服务热线
@@ -299,7 +316,7 @@ class BrowsingController extends BaseController {
         if (!$res){
             $this->returnData = ErrorCode::$admin_enum['delfail'];
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改状态
@@ -314,6 +331,6 @@ class BrowsingController extends BaseController {
         if (!$res){
             $this->returnData = ErrorCode::$admin_enum['modifyfail'];
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

@@ -9,8 +9,8 @@ use App\Models\Member\MemberBase;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Qcloud\Sms\SmsSingleSender;
-use Validator;
 use Illuminate\Support\Facades\DB;
+use Validator;
 
 class LoginController extends Controller
 {
@@ -89,7 +89,6 @@ class LoginController extends Controller
     }
 
 	public function login(Request $request) {
-
         $verify_arr = array(
             'user_name' => $request->username,
             'user_pass' => $request->password
@@ -122,7 +121,7 @@ class LoginController extends Controller
         // 需要发送短信的手机号码
         $phoneNumbers = [$mobile];
         //短信模版
-        $templateId = '296336';
+        $templateId = '';
         $memberModel = new MemberBase();
         if($request->post('type') == 1){    //1注册
             $res = $memberModel->getMemberByMobile($mobile);
@@ -140,7 +139,7 @@ class LoginController extends Controller
             }
         }
         // 签名
-        $smsSign = "网商天下";
+        $smsSign = "";
         // 指定模板ID单发短信
         $code = rand(1111,9999);
         $validate_res = DB::table('verification')->where('mobile',$mobile)->first();
@@ -225,7 +224,7 @@ class LoginController extends Controller
         $member_extend['realname'] = '';
         $member_extend['avatar']  = '';
         $member_extend['type']  = 0;
-        $member_extend['source']  = '';
+        $member_extend['source']  = '代理商注册';
         $member_extend['update_time']  = Carbon::now();
         $member_extend['recommend']  = 1;
         $member_extend['addperson']  = 'root';
@@ -233,7 +232,6 @@ class LoginController extends Controller
         $member_extend['company']  = '';
         $member_extend['wechat']  = '';
         $member_extend['qq']  = '';
-        $member_extend['source']  = '';
         $member_extend['project']  = '';
         $member_extend['remarks']  = '';
 

@@ -24,15 +24,15 @@ class ActivityController extends BaseController{
                 if ($member_info['is_vip'] == 0){
                     $this->result['status'] = 203;
                     $this->result['msg'] = '账号尚未认证';
-                    return response()->json($this->result);
+                    return $this->result;
                 }elseif ($member_info['is_vip'] == 1){
                     $this->result['status'] = 204;
                     $this->result['msg'] = '认证信息待审核';
-                    return response()->json($this->result);
+                    return $this->result;
                 }elseif ($member_info['is_vip'] == 3){
                     $this->result['status'] = 205;
                     $this->result['msg'] = '认证未通过，请重新提交认证';
-                    return response()->json($this->result);
+                    return $this->result;
                 }
             }
         }
@@ -42,7 +42,7 @@ class ActivityController extends BaseController{
     //活动报名列表
     public function get_activityList(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $page_no = request()->input('page',1);
         $page_size = request()->input('page_size',10);
@@ -51,7 +51,7 @@ class ActivityController extends BaseController{
             'pageSize' => $page_size,
             'sortName' => request()->input('sortName','id'),
             'sortOrder' => request()->input('sortOrder','desc'),
-            'status' => request()->input('status',''),
+            'status' => [1,2,3],
             'activity_type' => request()->input('activity_type',''),
             'start_time' => request()->input('activity_type',''),
             'end_time' => request()->input('activity_type',''),
@@ -60,73 +60,70 @@ class ActivityController extends BaseController{
         $activityModel = new Activity();
         $res = $activityModel->getActivityList($params);
         if ($res){
-            foreach ($res['rows'] as &$v){
-                if ($v['activity_status'] == 0){
-                    $v['statusText'] = '已取消';
-                }elseif ($v['activity_status'] == 1){
-                    $v['statusText'] = '在进行';
-                }elseif ($v['activity_status'] == 2){
-                    $v['statusText'] = '已结束';
+            $ids = [];
+            foreach ($res['rows'] as $v){
+                $ids[] = $v['id'];
+            }
+            $idsUserData = $activityModel->relation($this->user['id'],$ids);
+            foreach ($res['rows'] as $k=>&$v){
+                $v['sign_status'] = $idsUserData[$k]['sign_status'];
+                $v['fabulous_status'] = $idsUserData[$k]['fabulous_status'];
+                $v['collect_status'] = $idsUserData[$k]['collect_status'];
+                if (isset($v['picture'])){
+                    $v['picture'] = $this->processingPictures($v['picture']);
                 }
-                $contact = $activityModel->relation($this->user['id'],$v['id']);
-                $v['sign_status'] = $contact['sign_status'];
-                $v['fabulous_status'] = $contact['fabulous_status'];
-                $v['collect_status'] = $contact['collect_status'];
             }
             $this->result['data'] = $res;
         }else{
-            $this->result['status'] = 1;
-            $this->result['msg'] = '请求错误';
+            $this->result['data'] = [];
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //活动详情
     public function getInfo(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $id = request()->input('id','');
         $activityModel = new Activity();
         $res = $activityModel->getActivityInfo($id);
-        $contact = $activityModel->relation($this->user['id'],$id);
+        $contact = $activityModel->relation($this->user['id'],[$id]);
         if (!$res){
             $this->result['status'] = 1;
-            $this->result['mag'] = '请求失败';
+            $this->result['mag'] = '活动不存在';
         }else{
-            if ($res['activity_status'] == 0){
-                $res['statusText'] = '已取消';
-            }elseif ($res['activity_status'] == 1){
-                $res['statusText'] = '在进行';
-            }elseif ($res['activity_status'] == 2){
-                $res['statusText'] = '已结束';
-            }
             $res['start_time'] =  date('Y年m月d日',strtotime($res['start_time']));
             $res['end_time'] = date('Y年m月d日',strtotime($res['end_time']));
+            if (isset($res['picture'])){
+                $res['picture'] = $this->processingPictures($res['picture']);
+            }
             $data['info'] = $res;
-            $data['contact'] = $contact;
+            $data['contact'] = $contact[0];
             $this->result['data'] = $data;
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //报名活动
     public function signUp(){
-        global $scf_data;
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
+        global $scf_data;
         $activity_id = request()->input('activity_id','');
+        $member_name = request()->input('member_name','');
+        $mobile = request()->input('mobile','');
         $attendModel = new Attend();
         $activity_member = $attendModel->getMemberActivity($this->user['id'],$activity_id);
         if (!$activity_member){
             $this->result['status'] = 1;
             $this->result['msg'] = '活动已报名';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }elseif ($activity_member === -1){
             $this->result['status'] = 1;
             $this->result['msg'] = '活动人数已满';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $openid = request()->input('openid','');
         $activity_data = DB::table('activity')->where('id',$activity_id)->first();
@@ -185,8 +182,8 @@ class ActivityController extends BaseController{
                 $params = [
                     'activity_id' => $activity_id,
                     'member_id' => $this->user['id'],
-                    'member_name' => $this->user['name'],
-                    'mobile' => request()->input('mobile',''),
+                    'member_name' => $member_name,
+                    'mobile' => $mobile,
                     'status' => 0,
                     'openid' => request()->input('openid',''),
                     'money' => $activity_data['cost'],
@@ -201,18 +198,17 @@ class ActivityController extends BaseController{
                 $data['data']['return_code'] = $array['return_code'];
                 $data['data']['return_msg'] = $array['return_msg'];
             }
-            return response()->json($data);
+            return $this->return_result($data);
 
         }else{     //免费活动
             //判断活动报名截止时间
-            $stop_time = $activity_data['stop_time'];
             $new_time = Carbon::now()->toDateTimeString();
-            if ($new_time > $stop_time){
+            if ($new_time > $activity_data['stop_time']){
                 $data['status'] = 1;
                 $data['msg'] = '报名已截止';
                 $data['result'] = 1;   //免费活动
                 $data['data'] = '';
-                return response()->json($data);
+                return $this->return_result($data);
             }
             $status = '';
             if ($activity_data['audit_mode'] == 1){  //自动通过审核
@@ -223,8 +219,8 @@ class ActivityController extends BaseController{
             $params = [
                 'activity_id' => $activity_id,
                 'member_id' => $this->user['id'],
-                'member_name' => $this->user['name'],
-                'mobile' => $this->user['mobile'],
+                'member_name' => $member_name,
+                'mobile' => $mobile,
                 'openid' => request()->input('openid',''),
                 'out_trade_no' => '',
                 'status' => $status
@@ -241,14 +237,43 @@ class ActivityController extends BaseController{
                 $data['result'] = 1;   //免费活动
                 $data['data'] = '';
             }
-            return response()->json($data);
+            return $this->return_result($data);
         }
     }
+
+    //已报名用户列表
+    public function signUpPageList(){
+        if ($this->result['status'] > 0){
+            return $this->return_result($this->result);
+        }
+        $params = request()->input();
+        if (!$params['id']){
+            $this->result['status'] = 1;
+            $this->result['msg'] = 'id参数不存在';
+            return $this->return_result($this->result);
+        }
+        $data['id'] = $params['id'];
+        $pageNo = $params['pageNo'] ? $params['pageNo'] : 1;
+        $data['pageSize'] = $params['pageSize'] ? $params['pageSize'] : 20;
+        $data['start'] = ($pageNo -1) * $data['pageSize'];
+        $attendModel = new Attend();
+        $res = $attendModel->getAttendList($data);
+        if (isset($res['rows'])){
+            foreach ($res['rows'] as &$v){
+                if (isset($v['avatar'])){
+                    $v['avatar'] = $this->processingPictures($v['avatar']);
+                }
+            }
+        }
+        $this->result['data'] = $res;
+        return $this->return_result($this->result);
+     }
+
 
     //评论列表
     public function comment_list(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $id = request()->input('activityId','');
         $commentModel = new Comment();
@@ -258,18 +283,19 @@ class ActivityController extends BaseController{
         }else{
             foreach ($res as &$v){
                 if (strpos($v['avatar'],'https') != false){
-                    $v['avatar'] = 'https://'.$_SERVER['SERVER_NAME'].$v['avatar'];
+                    $v['avatar'] = $this->processingPictures($v['avatar']);
                 }
             }
             $this->result['data'] = $res;
+            unset($res);
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //用户评论
     public function member_comment(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params['content'] = request()->post('content','');
         $params['member_id'] = $this->user['id'];
@@ -282,7 +308,7 @@ class ActivityController extends BaseController{
         if ($time < $activity_info['start_time']){
             $this->result['status'] = 1;
             $this->result['msg'] = '活动尚未开始，不能评论';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $commentModel = new Comment();
         $res = $commentModel->addData($params);
@@ -290,13 +316,13 @@ class ActivityController extends BaseController{
             $this->result['status'] = 1;
             $this->result['msg'] = '请求失败';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //取消报名
     public function cancel_sign(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $activityId = request()->input('activityId');
         $activityModel = new Activity();
@@ -304,7 +330,7 @@ class ActivityController extends BaseController{
         if (!$activity_status || $activity_status['activity_status'] != 1){
             $this->result['status'] = 1;
             $this->result['msg'] = '活动结束，取消失败';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $res = $activityModel->cancelSignUp($this->user['id'],$activityId);
         if ($res == -1){
@@ -323,13 +349,13 @@ class ActivityController extends BaseController{
             $this->result['status'] = 1;
             $this->result['msg'] = '未知错误，请联系管理员';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //用户点赞
     public function spotFabulous(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $activity_id = request()->input('activityId','');
         $activityModel = new Activity();
@@ -338,13 +364,13 @@ class ActivityController extends BaseController{
             $this->result['stasus'] = 1;
             $this->result['msg'] = '点赞失败';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //取消点赞
     public function cancelFabulous(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $activity_id = request()->input('activityId','');
         $activityModel = new Activity();
@@ -353,13 +379,13 @@ class ActivityController extends BaseController{
             $this->result['stasus'] = 1;
             $this->result['msg'] = '取消赞失败';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //收藏活动
     public function memberCollect(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $activity_id = request()->input('activityId','');
         $activityModel = new Activity();
@@ -368,12 +394,12 @@ class ActivityController extends BaseController{
             $this->result['stasus'] = 1;
             $this->result['msg'] = '收藏失败';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
     //取消收藏
     public function memberCancelCollect(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $activity_id = request()->input('activityId','');
         $activityModel = new Activity();
@@ -382,13 +408,13 @@ class ActivityController extends BaseController{
             $this->result['stasus'] = 1;
             $this->result['msg'] = '取消收藏失败';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
     
     //用户留言
     public function memberAddProposal(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $data['content'] = request()->input('content','');
         $data['picture_list'] = request()->input('pictureList','');
@@ -401,13 +427,13 @@ class ActivityController extends BaseController{
             $this->result['status'] = 1;
             $this->result['msg'] = '留言失败';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //客户留言列表
     public function memberProposalList(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $page_no = request()->input('page',1);
         $page_size = 10;
@@ -425,16 +451,17 @@ class ActivityController extends BaseController{
                 }
             }
             $this->result['data'] = $res;
+            unset($res);
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //获取往期活动
     public function endActivity(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
-        $pageNo = request()->input('pageNo',1);
+        $pageNo = request()->input('page',1);
         $pageSize = request()->input('pageSize',20);
         $data = [
             'start' => ($pageNo -1)*$pageSize,
@@ -442,31 +469,32 @@ class ActivityController extends BaseController{
             'sortOrder' => 'desc',
             'pageSize' => $pageSize,
             'activity_type' => '',
-            'status' => 2,
+            'status' => 4,
             'start_time' => '',
             'end_time' => '',
             'searchKey' => ''
         ];
         $activityModel = new Activity();
         $res = $activityModel->getActivityList($data);
-        foreach ($res['rows'] as &$v){
-            $contact = $activityModel->relation($this->user['id'],$v['id']);
-            $v['sign_status'] = $contact['sign_status'];
-            $v['fabulous_status'] = $contact['fabulous_status'];
-            $v['collect_status'] = $contact['collect_status'];
+        if ($res){
+            $ids = [];
+            foreach ($res['rows'] as $v){
+                $ids[] = $v['id'];
+            }
+            $idsUserData = $activityModel->relation($this->user['id'],$ids);
+            foreach ($res['rows'] as $k=>&$v){
+                $v['sign_status'] = $idsUserData[$k]['sign_status'];
+                $v['fabulous_status'] = $idsUserData[$k]['fabulous_status'];
+                $v['collect_status'] = $idsUserData[$k]['collect_status'];
+                if (isset($v['picture'])){
+                    $v['picture'] = $this->processingPictures($v['picture']);
+                }
+            }
+            $this->result['data'] = $res;
+        }else{
+            $this->result['data'] = [];
         }
-        $this->result['data'] = $res;
-        return response()->json($this->result);
-    }
-
-    //随机32位字符串
-    private function nonce_str(){
-        $result = '';
-        $str = 'QWERTYUIOPASDFGHJKLZXVBNMqwertyuioplkjhgfdsamnbvcxz';
-        for ($i=0;$i<32;$i++){
-            $result .= $str[rand(0,48)];
-        }
-        return $result;
+        return $this->return_result($this->result);
     }
 
     //生成订单号

@@ -27,7 +27,13 @@ class WorkOrder extends Model
             ->leftJoin('work_order_type as wot','wo.type_id','=','wot.id')
             ->whereNull('wo.deleted_at');
         if(isset($fields['status']) && $fields['status']!= ''){
-            $res->where('wo.status',$fields['status']);
+            if ($fields['status'] == 0){
+                $res->where('wo.status',0);
+            }elseif ($fields['status'] == 1){
+                $res->whereIn('wo.status',[1,2]);
+            }elseif ($fields['status'] == 2){
+                $res->where('wo.status',3);
+            }
         }
         if ($fields['admin_id'] != 1){
             //查询此管理所负责的街道
@@ -294,16 +300,24 @@ class WorkOrder extends Model
     /* 添加工单 */
     public function workOrderInsert($data,$user){
         $streetModel = new Street();
-        $data['member_name'] = $user['name'];
-        $data['status'] = 1;
+        $data['member_name'] = DB::table('admin_users')->where('id',$user['id'])->value('name');
+        $data['status'] = 0;
+//        $data['status'] = 1;
         $data['member_phone'] = $user['mobile'];
         $data['member_id'] = $user['id'];
         $data['admin_id'] = $streetModel->getadminId($data['c_street_id']);
         $data['created_at'] = Carbon::now()->toDateTimeString();
-        $res = DB::table('work_order')->insert($data);
-        if(!$res){
+        $work_id = DB::table('work_order')->insertGetId($data);
+        if(!$work_id){
             return false;
         }
+        //发送通知
+//        $member_type = 1;
+        $admin_type = 4;
+//        $this->sendSns($member_type,$work_id);
+//        $this->sendSns($admin_type,$work_id);
+//        $this->sendWechatPush($member_type,$work_id);
+//        $this->sendWechatPush($admin_type,$work_id);
         return true;
     }
 
@@ -323,12 +337,14 @@ class WorkOrder extends Model
         }
         $data['rows'] = json_decode(json_encode($result),true);
         foreach ($data['rows'] as &$v){
-            if ($v['status'] == 1){
-                $v['status_txt'] = '待处理';
+            if ($v['status'] == 0){
+                $v['status_txt'] = '待签收';
+            }else if($v['status'] == 1){
+                $v['status_txt'] = '已签收，待处理';
             }elseif ($v['status'] == 3){
                 $v['status_txt'] = '已解决';
             }else{
-                $v['status_txt'] = '处理中';
+                $v['status_txt'] = '已处理，待确认';
             }
         }
         return $data;
@@ -358,12 +374,12 @@ class WorkOrder extends Model
                     case 0;
                         if ($log_res){
                             if ($log_res['status'] == 2 || $log_res['status'] == 3){
-                                if ($v['status'] == 1 || $v['status'] == 0){
+                                if ($v['status'] == 0){
                                     $list[] = $v;
                                 }
                             }
                         }else{
-                            if ($v['status'] == 1 || $v['status'] == 0){
+                            if ($v['status'] == 0){
                                 $list[] = $v;
                             }
                         }
@@ -371,11 +387,11 @@ class WorkOrder extends Model
                     case 1;
                         if ($log_res){
                             if ($log_res['status'] == 2 || $log_res['status'] == 3){
-                                if ($v['status'] ==  2){
+                                if ($v['status'] ==  1 || $v['status'] ==  2){
                                     $list[] = $v;
                                 }
                             }
-                        }else if ($v['status'] == 2){
+                        }else if ($v['status'] == 1 || $v['status'] ==  2){
                             $list[] = $v;
                         }
                         break;
@@ -405,7 +421,7 @@ class WorkOrder extends Model
         foreach ($data['rows'] as &$v){
             switch($v['status']) {
                 case 0:
-                    $v['status_txt'] = '待处理';
+                    $v['status_txt'] = '待签收';
                     break;
                 case 1;
                     $v['status_txt'] = '待处理';
@@ -444,38 +460,264 @@ class WorkOrder extends Model
         return true;
     }
 
-    //管理提处理工单
-    public function completeWorkOrder($fields,$id,$admin_id){
-        //判断此工单是否属于此管理员
-        $order_data = DB::table($this->table_name.' as wo')
-            ->select('wol.c_street_id')
-            ->leftJoin('work_order_log as wol','wo.log_id','=','wol.id')
-            ->where('wo.id',$id)
-            ->first();
-        if (!$order_data){
+//    //管理提处理工单
+//    public function completeWorkOrder($fields,$id,$admin_id){
+//        //判断此工单是否属于此管理员
+//        $order_data = DB::table($this->table_name.' as wo')
+//            ->select('wol.c_street_id')
+//            ->leftJoin('work_order_log as wol','wo.log_id','=','wol.id')
+//            ->where('wo.id',$id)
+//            ->first();
+//        if (!$order_data){
+//            return false;
+//        }
+//        $order_data = json_decode(json_encode($order_data),true);
+//        $streetModel = new Street();
+//        $this_admin_id = $streetModel->getadminId($order_data['c_street_id']);
+//        if ($this_admin_id != $admin_id){
+//            return -1;
+//        }
+//        $fields['end_time'] = Carbon::now()->toDateTimeString();
+//        $fields['status'] = 2;
+//        $res = DB::table($this->table_name)->where('id',$id)->update($fields);
+//        if (!$res){
+//            return false;
+//        }
+//        return true;
+//    }
+
+    //发送通知
+    public function sendSns($type,$id){
+        $con = Configs::first();
+        require_once  base_path().'/vendor/qcloudsms_php-master/src/index.php';
+        $workOrder_info = DB::table($this->table_name)->where('id',$id)->select('street_id','member_id','admin_id')->first();
+        if (!$workOrder_info){
             return false;
         }
-        $order_data = json_decode(json_encode($order_data),true);
+        $workOrder_info = json_decode(json_encode($workOrder_info),true);
+        $member_info = DB::table('member')->where('id',$workOrder_info['member_id'])->select('mobile')->first();
+        $member_info = json_decode(json_encode($member_info),true);
+        $admin_users = DB::table('admin_users')->where('id',$workOrder_info['admin_id'])->select('mobile')->first();
+        $admin_users = json_decode(json_encode($admin_users),true);
+
+        //获取工单负责人的信息
         $streetModel = new Street();
-        $this_admin_id = $streetModel->getadminId($order_data['c_street_id']);
-        if ($this_admin_id != $admin_id){
-            return -1;
+        $duty_id = $streetModel->getadminId($workOrder_info['street_id']);
+        $duty_mobile = [];
+        if ($duty_id){
+            $ids = explode(',',$duty_id);
+            foreach ($ids as $v){
+                $duty_admin_user = DB::table('admin_users')->where('id',$v)->select('mobile')->first();
+                $duty_admin_user = json_decode(json_encode($duty_admin_user),true);
+                $duty_mobile[] = $duty_admin_user['mobile'];
+            }
         }
-        $fields['end_time'] = Carbon::now()->toDateTimeString();
-        $fields['status'] = 2;
-        $res = DB::table($this->table_name)->where('id',$id)->update($fields);
-        if (!$res){
+
+        // 短信应用SDK AppID
+        $appid = $con->sms_appid; // 1400开头
+        // 短信应用SDK AppKey
+        $appkey = $con->sms_appkey;
+        switch ($type) {
+            case 1:                            //反馈成功
+                // 指定模板ID单发短信
+                $templateId = '424231';
+                // 需要发送短信的手机号码
+                $phoneNumbers = [$member_info['mobile']];
+                break;
+            case 2:                             //签收成功
+                // 指定模板ID单发短信
+                $templateId = '424234';
+                // 需要发送短信的手机号码
+                $phoneNumbers = [$member_info['mobile']];
+                break;
+            case 3:                               //已处理
+                // 指定模板ID单发短信
+                $templateId = '424237';
+                // 需要发送短信的手机号码
+                $phoneNumbers = [$member_info['mobile']];
+                break;
+            case 4:                             //待签收
+                // 指定模板ID单发短信
+                $templateId = '424243';
+                // 需要发送短信的手机号码
+                $phoneNumbers = [$admin_users['mobile']];
+                break;
+            case 5:                               //签收成功
+                // 指定模板ID单发短信
+                $templateId = '424247';
+                // 需要发送短信的手机号码
+                $phoneNumbers = [$admin_users['mobile']];
+                break;
+            case 6:                                //处理成功
+                // 指定模板ID单发短信
+                $templateId = '424248';
+                // 需要发送短信的手机号码
+                $phoneNumbers = [$admin_users['mobile']];
+                break;
+            case 7:                                //处理成功,给负责人发送短信
+                // 指定模板ID单发短信
+                $templateId = '424248';
+                // 需要发送短信的手机号码
+                $phoneNumbers = $duty_mobile;
+                break;
+            default:
+                $templateId = '';
+                $phoneNumbers = '';
+                break;
+        }
+
+        // 签名
+        $smsSign = "梅城街长制";
+        $ssender = new SmsSingleSender($appid, $appkey);
+        $code_info = [date('Y-m-d H:i:s',time())];
+        if ($type == 7){
+            if ($phoneNumbers){
+                foreach ($phoneNumbers as $mobile){
+                    $result = $ssender->sendWithParam("86", $mobile, $templateId,$code_info, $smsSign, "", "");  // 签名参数未提供或者为空时，会使用默认签名发送短信
+                }
+            }else{
+                $result = true;
+            }
+        }else{
+            $result = $ssender->sendWithParam("86", $phoneNumbers[0], $templateId,$code_info, $smsSign, "", "");  // 签名参数未提供或者为空时，会使用默认签名发送短信
+        }
+//        $result = $ssender->sendWithParam("86", $phoneNumbers[0], $templateId,$code_info, $smsSign, "", "");  // 签名参数未提供或者为空时，会使用默认签名发送短信
+        $rsp = json_decode($result,true);
+        if ($rsp['result'] == 0){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    /* 添加问题记录 */
+    public function workOrderLogInsert($data)
+    {
+        $data['created_at'] = Carbon::now();
+        $res_id = DB::table('work_order_log')->insertGetId($data);
+        if(!$res_id){
+            return false;
+        }
+        return $res_id;
+    }
+
+    /* 更新问题 */
+    public function workOrderUpdate($id,$data)
+    {
+        $res = DB::table($this->table_name)->where('id',$id)->update($data);
+        if(!$res){
             return false;
         }
         return true;
     }
 
+    /*
+     * $type 推送类型
+     * $id   工单id
+     * */
+    public function sendWechatPush($type,$id){
+        $content['type'] = $type;
+        $con = Configs::first();
+        $workOrder_info = DB::table($this->table_name)->where('id',$id)->select('member_id','accept_time','end_time','type_id','admin_id')->first();
+        if (!$workOrder_info){
+            return false;
+        }
+        $workOrder_info = json_decode(json_encode($workOrder_info),true);
+
+        $type_name = DB::table('work_order_type')->where('id',$workOrder_info['type_id'])->value('label');
+        $work_log = DB::table('work_order_log')->where('log_id',$workOrder_info['log_id'])->orderBy('id','desc')->first();
+        $work_log = json_decode(json_encode($work_log),true);
+        $admin_users = DB::table('admin_users')->where('id',$workOrder_info['admin_id'])->select('mobile','openid')->first();
+        $admin_users = json_decode(json_encode($admin_users),true);
+        $member_users = DB::table('member')->where('id',$workOrder_info['member_id'])->first();
+        $member_users = json_decode(json_encode($member_users),true);
+        $common = new Common();
+        $openid = '';
+        switch ($type) {
+            case 1:   //客户 - 反馈成功
+                //获取fromid
+                $openid = $member_users['openid'];
+                $content['content']     = $workOrder_info['description'];
+                $content['time']        = $workOrder_info['created_at'];
+                $content['member_name'] = $member_users['member_name'];
+                $content['form_id']     = $this->getFormId($openid);
+                break;
+            case 2:  //客户 - 受理通知
+                $openid = $member_users['openid'];
+                $content['status']      = '已受理';
+                $content['type_name']   = $workOrder_info['accept_time'];
+                $content['admin_name']  = $admin_users['name'];
+                $content['form_id']     = $this->getFormId($openid);
+                break;
+            case 3:   //客户 - 反馈结果
+                $openid = $member_users['openid'];
+                $content['time']     = $workOrder_info['created_at'];
+                $content['content']  = $workOrder_info['description'];
+                $content['status']   = '已处理';
+                $content['end_time'] = $workOrder_info['end_time'];
+                $content['remarks']  = $work_log['remarks'];
+                $content['form_id']  = $this->getFormId($openid);
+                break;
+            case 4:   //管理 - 工单待处理
+                $openid = $admin_users['openid'];
+                $content['content']    = $workOrder_info['description'];
+                $content['time']       = $workOrder_info['created_at'];
+                $content['type_name']  = $type_name;
+                $content['form_id']    = $this->getFormId($openid);
+                break;
+            case 5:   //管理 - 受理通知
+                $openid = $admin_users['openid'];
+                $content['member_name'] = $workOrder_info['accept_time'];
+                $content['created_at']  = $workOrder_info['description'];
+                $content['status']      = '已签收';
+                $content['form_id']     = $this->getFormId($openid);
+                break;
+            case 6:   //管理 - 反馈结果
+                $openid = $admin_users['openid'];
+                $content['member_name'] = $workOrder_info['end_time'];;
+                $content['content']     = $workOrder_info['accept_time'];
+                $content['status']      = '已处理';
+                $content['result']      = $workOrder_info['remarks'];;
+                $content['type_name']   = $type_name;
+                $content['form_id']     = $this->getFormId($openid);
+                break;
+        }
+        $common->WechatPush($openid,$content);
+        return true;
+    }
+
+    //获取form_id
+    public function getFormId($openid){
+        $member_info = DB::table('member')->where('openid',$openid)->select('id')->first();
+        $member_info = json_decode(json_encode($member_info),true);
+        $total = DB::table('form_id')->where('form_user','member_'.$member_info['id'])->where('is_used',0)->get();
+        $total = json_decode(json_encode($total),true);
+        if (count($total) < 1){
+            return false;
+        }
+        $formId = DB::table('form_id')->where('form_user','member_'.$member_info['id'])->where('is_used',0)->first();
+        $formId = json_decode(json_encode($formId),true);
+        if ($formId['form_id'] == ''){
+            $where['is_used'] = 1;
+            DB::table('form_id')->where('id',$formId['id'])->update($where);
+            $this->getFormId($openid);
+        } elseif ($formId['form_id'] == 'the formId is a mock one'){
+            $where['is_used'] = 1;
+            DB::table('form_id')->where('id',$formId['id'])->update($where);
+            $this->getFormId($openid);
+        }else{
+            $where['is_used'] = 1;
+            DB::table('form_id')->where('id',$formId['id'])->update($where);
+            return $formId['form_id'];
+        }
+    }
+
     //工单导出信息
     public function getWorkOrderListInfo($ids,$type = null){
         $res = DB::table($this->table_name.' as wo')
-            ->select('wo.id','wo.status','wot.label as type_name','wo.created_at','wo.accept_time','wo.end_time','wo.description','wo.pic_list','wo.address',
-                'st.name as street_son_name','s.name as street_father_name','m.name as member_name','m.mobile as member_mobile','au.name as admin_name',
-                'au.mobile as admin_mobile')
+            ->select('wo.id','wo.status','wot.label as type_name','wo.created_at','wo.accept_time','wo.end_time','wo.description','wo.address',
+                'st.name as street_son_name','s.name as street_father_name','m.name as member_name',
+                'm.mobile as member_mobile','au.name as admin_name', 'au.mobile as admin_mobile')
             ->leftJoin('member as m','wo.member_id','=','m.id')
             ->leftJoin('admin_users as au','wo.admin_id','=','au.id')
             ->leftJoin('work_order_type as wot','wo.type_id','=','wot.id')
@@ -489,6 +731,9 @@ class WorkOrder extends Model
         }
         foreach ($res as &$v){
             switch ($v['status']){
+                case 0:
+                    $v['status'] = '待签收';
+                    break;
                 case 1:
                     $v['status'] = '待处理';
                     break;
@@ -615,18 +860,18 @@ class WorkOrder extends Model
                 DB::rollback();
                 return false;
             }
-            $work_res = DB::table($this->table_name)->where('id',$fields['log_id'])->first();
-            $work_res = json_decode(json_encode($work_res),true);
-            if ($work_res['status'] != 2){  //管理提交反馈 修改工单状态
-                $where['status'] = 2;
-                $where['accept_time'] = Carbon::now()->toDateTimeString();
-                $where['update_time'] = Carbon::now()->toDateTimeString();
+//            $work_res = DB::table($this->table_name)->where('id',$fields['log_id'])->first();
+//            $work_res = json_decode(json_encode($work_res),true);
+//            if ($work_res['status'] != 2){  //管理提交反馈 修改工单状态
+                $where['status'] = 3;  //管理提交反馈 工单即结束
+//                $where['accept_time'] = Carbon::now()->toDateTimeString();
+                $where['end_time'] = Carbon::now()->toDateTimeString();
                 $work_order_res = DB::table($this->table_name)->where('id',$fields['log_id'])->update($where);
                 if (!$work_order_res){
                     DB::rollback();
                     return false;
                 }
-            }
+//            }
             DB::commit();
             return true;
         }

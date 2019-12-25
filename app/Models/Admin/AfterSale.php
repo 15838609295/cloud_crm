@@ -406,7 +406,7 @@ class AfterSale extends Model
     public function deservedBonus($list){
         $bonus = 0;
         foreach ($list as $v){
-            if ($v['after_time'] != 0){
+            if ($v['after_time'] != 0 && $v['after_money'] != 0 && $v['buy_length'] != 0){
                 $bonus = $bonus + ($v['after_money']/$v['buy_length']*$v['after_time']);
                 $bonus = $bonus + ($v['bonus_royalty']/$v['buy_length']*$v['after_time']);
             }

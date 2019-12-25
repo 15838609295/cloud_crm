@@ -39,7 +39,7 @@ class TencentController extends BaseController{
 
     public function __construct(Request $request){
         parent::__construct($request);
-        require_once  base_path().'/vendor/tencentcloud-sdk-php/TCloudAutoLoader.php';
+		 require_once  base_path().'/vendor/tencentcloud-sdk-php/TCloudAutoLoader.php';
     }
 
     //业务明细
@@ -47,6 +47,7 @@ class TencentController extends BaseController{
         if ($this->returnData['code'] > 0){
             return $this->returnData;
         }
+		 require_once  base_path().'/vendor/tencentcloud-sdk-php/TCloudAutoLoader.php';
         $con = Configs::first();
         $cred = new Credential($con->tencent_secretid, $con->tencent_secrekey);
         $httpProfile = new HttpProfile();
@@ -69,11 +70,11 @@ class TencentController extends BaseController{
             $data['msg'] = '请求成功';
             $data['data']['list'] = $res['AgentBillSet'];
             $data['data']['total'] = 0;
-            return response()->json($data);
+            return $this->return_result($data);
         }else{
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '请求失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
     }
 
@@ -82,12 +83,13 @@ class TencentController extends BaseController{
         if ($this->returnData['code'] > 0){
             return $this->returnData;
         }
+		 require_once  base_path().'/vendor/tencentcloud-sdk-php/TCloudAutoLoader.php';
         $con = Configs::first();
         if (!$con->tencent_secretid || !$con->tencent_secrekey){
             $data['code'] = 1;
             $data['msg'] = '腾讯云参数未配置';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         $cred = new Credential($con->tencent_secretid, $con->tencent_secrekey);
         $httpProfile = new HttpProfile();
@@ -153,11 +155,11 @@ class TencentController extends BaseController{
             $data['msg'] = '请求成功';
             $data['data']['list'] = $res['AgentClientSet'];
             $data['data']['total']= $res['TotalCount'];
-            return response()->json($data);
+            return $this->return_result($data);
         }else{
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '请求失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
     }
 
@@ -166,13 +168,14 @@ class TencentController extends BaseController{
         if ($this->returnData['code'] > 0){
             return $this->returnData;
         }
+		 require_once  base_path().'/vendor/tencentcloud-sdk-php/TCloudAutoLoader.php';
         // 实例化一个证书对象，入参需要传入腾讯云账户secretId，secretKey
         $con = Configs::first();
         if (!$con->tencent_secretid || !$con->tencent_secrekey){
             $data['code'] = 1;
             $data['msg'] = '腾讯云参数未配置';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         $cred = new Credential($con->tencent_secretid, $con->tencent_secrekey);
         $httpProfile = new HttpProfile();
@@ -195,11 +198,11 @@ class TencentController extends BaseController{
             $data['msg'] = '请求成功';
             $data['data']['list'] = $res['AgentClientSet'];
             $data['data']['total']= $res['TotalCount'];
-            return response()->json($data);
+            return $this->return_result($data);
         }else{
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '请求失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
 
     }
@@ -209,12 +212,13 @@ class TencentController extends BaseController{
         if ($this->returnData['code'] > 0){
             return $this->returnData;
         }
+		 require_once  base_path().'/vendor/tencentcloud-sdk-php/TCloudAutoLoader.php';
         $con = Configs::first();
         if (!$con->tencent_secretid || !$con->tencent_secrekey){
             $data['code'] = 1;
             $data['msg'] = '腾讯云参数未配置';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         try {
             $cred = new Credential($con->tencent_secretid, $con->tencent_secrekey);
@@ -242,12 +246,12 @@ class TencentController extends BaseController{
             $data['code'] = 1;
             $data['msg'] = '审核失败';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         $data['code'] = 0;
         $data['msg'] = '请求成功';
         $data['data'] = '';
-        return response()->json($data);
+        return $this->return_result($data);
     }
 
     //修改客户备注
@@ -307,18 +311,19 @@ class TencentController extends BaseController{
         if ($this->returnData['code'] > 0){
             return $this->returnData;
         }
+		 require_once  base_path().'/vendor/tencentcloud-sdk-php/TCloudAutoLoader.php';
         if($this->AU['id'] !=1){
             $data['code'] = 1;
             $data['msg'] = '无权限';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         $con = Configs::first();
         if (!$con->tencent_secretid || !$con->tencent_secrekey){
             $data['code'] = 1;
             $data['msg'] = '腾讯云参数未配置';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         $price = $request->input('total_price', 0);
         $owner_uin = $request->input('owner_uin', '');
@@ -379,7 +384,7 @@ class TencentController extends BaseController{
             $data['code'] = 0;
             $data['msg'] = '支付成功';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         catch(TencentCloudSDKException $e){
             Log::info('update achievement error:'.var_export(array('id'=>$this->user['id'],'data'=>$e->getMessage())));
@@ -387,7 +392,7 @@ class TencentController extends BaseController{
             $data['code'] = 1;
             $data['msg'] = $e->getMessage();
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         $where['status'] = 2;
         $where['status'] = '已支付';
@@ -395,7 +400,7 @@ class TencentController extends BaseController{
         $data['code'] = 0;
         $data['msg'] = '请求成功';
         $data['data'] = '';
-        return response()->json($data);
+        return $this->return_result($data);
 
     }
 
@@ -424,12 +429,13 @@ class TencentController extends BaseController{
         if ($this->returnData['code'] > 0){
             return $this->returnData;
         }
+		 require_once  base_path().'/vendor/tencentcloud-sdk-php/TCloudAutoLoader.php';
         $con = Configs::first();
         if (!$con->tencent_secretid || !$con->tencent_secrekey){
             $data['code'] = 1;
             $data['msg'] = '腾讯云参数未配置';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         $time = time();
         $nonce = rand(11111,99999);
@@ -495,11 +501,11 @@ class TencentController extends BaseController{
             $data['msg'] = '请求成功';
             $data['data']['total'] = $res['data']['totalNum'];
             $data['data']['list'] = $res['data']['deals'];
-            return response()->json($data);
+            return $this->return_result($data);
         }else{
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '请求失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
     }
 
@@ -535,7 +541,7 @@ class TencentController extends BaseController{
         $data["data"]['tencent_appid'] = $this->Codereplace($res['tencent_appid'],4);
         $data["data"]['tencent_secretid'] = $this->Codereplace($res['tencent_secretid'],8);
         $data["data"]['tencent_secrekey'] = $this->Codereplace($res['tencent_secrekey'],8);
-        return response()->json($data);
+        return $this->return_result($data);
     }
 
     //字符串打码
@@ -582,17 +588,17 @@ class TencentController extends BaseController{
         }
         if (empty($data)){
             $this->returnData['msg'] = "未做修改，更新失败";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $configModel = new Configs();
         $res = $configModel->configUpdate($id,$data);
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
             $this->returnData['msg'] = '更新失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "更新成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //获取数据库保存的订单
@@ -625,7 +631,7 @@ class TencentController extends BaseController{
         $result['code'] = 0;
         $result['msg'] = '请求成功';
         $result['data'] = $data;
-        return response()->json($result);
+        return $this->return_result($result);
     }
 
     //修改客户腾讯云代付折扣
@@ -639,11 +645,11 @@ class TencentController extends BaseController{
         $memberModel = new MemberBase();
         $res = $memberModel->memberUpdate($id,$data);
         if ($res){
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }else{
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '请求失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
     }
 
@@ -657,11 +663,11 @@ class TencentController extends BaseController{
         $memberModel = new MemberBase();
         $res = $memberModel->memberUpdate($id,$data);
         if ($res){
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }else{
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '请求失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
     }
 

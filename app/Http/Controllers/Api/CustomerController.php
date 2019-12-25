@@ -188,7 +188,7 @@ class CustomerController extends BaseController
 	}
 
 	//获取客户列表
-	public function getCustomerList(){
+    public function getCustomerList(){
         $params = request()->post();
 	//判断必传参数
 	if(!isset($params["admin_id"])||trim($params["admin_id"])==''){
@@ -504,15 +504,22 @@ class CustomerController extends BaseController
         $id = request()->post('id','');
         $workOrderModel = new WorkOrder();
         $res = $workOrderModel->acceptWorkOrder($id,$this->user['id']);
+        if (!$res){
+            $this->returnData['status'] = 1;
+            $this->returnData['msg'] = '签收失败';
+        }
         if ($res === -1){
             $this->returnData['status'] = 1;
             $this->returnData['msg'] = '该工单不属于您';
             return response()->json($this->returnData);
         }
-        if (!$res){
-            $this->returnData['status'] = 1;
-            $this->returnData['msg'] = '签收失败';
-        }
+        //签收反馈 发送通知
+//        $member_type = 2;
+//        $admin_type = 5;
+//        $workOrderModel->sendSns($member_type,$id);
+//        $workOrderModel->sendSns($admin_type,$id);
+//        $workOrderModel->sendWechatPush($member_type,$id);
+//        $workOrderModel->sendWechatPush($admin_type,$id);
         return response()->json($this->returnData);
     }
 
@@ -531,7 +538,14 @@ class CustomerController extends BaseController
         if (!$res){
             $this->returnData['status'] = 1;
             $this->returnData['msg'] = '提交失败';
+            return response()->json($this->returnData);
         }
+        //通知用户
+//        $member_type = 3;
+//        $type = 7;
+//        $workOrderModel->sendSns($type,$data['log_id']);
+//        $workOrderModel->sendSns($member_type,$data['log_id']);
+//        $workOrderModel->sendWechatPush($member_type,$data['log_id']);
         return response()->json($this->returnData);
     }
 
@@ -552,6 +566,16 @@ class CustomerController extends BaseController
             $this->returnData['status'] = 1;
             $this->returnData['msg'] = '该工单不属于您';
         }
+        //处理完成 发送通知
+//        $member_type = 3;
+//        $admin_type = 6;
+//        $workOrderModel->sendSns($member_type,$id);
+//        $workOrderModel->sendSns($admin_type,$id);
+//        //街道负责人发送通知
+//        $type = 7;
+//        $workOrderModel->sendSns($type,$id);
+//        $workOrderModel->sendWechatPush($member_type,$id);
+//        $workOrderModel->sendWechatPush($admin_type,$id);
         return response()->json($this->returnData);
     }
 }

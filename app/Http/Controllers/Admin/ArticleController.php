@@ -34,7 +34,7 @@ class ArticleController extends BaseController
         }
         if($request->post('typeid')===NULL || !in_array(strval($request->post('typeid')),array('1','2','3','4'))){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $page_no = $request->post('page_no', 1);
         $page_size = $request->post('page_size', 10);
@@ -54,35 +54,8 @@ class ArticleController extends BaseController
             $v['thumb'] = $this->processingPictures($v['thumb']);
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
-
-//    //获取插件新闻
-//    public function partDataList(Request $request){
-//        if ($this->returnData['code'] > 0){
-//            return $this->returnData;
-//        }
-//        $page_no = $request->post('page_no', 1);
-//        $page_size = $request->post('page_size', 10);
-//        $searchFilter = array(
-//            'sortName' => $request->post('sortName','id'),                                              //排序列名
-//            'sortOrder' => $request->post('sortOrder','desc'),                                          //排序（desc，asc）
-//            'pageNumber' => $page_no,                                                                                  //当前页码
-//            'pageSize' => $page_size,                                                                                  //一页显示的条数
-//            'start' => ($page_no-1) * $page_size,                                                                       //开始位置
-//            'searchKey' => trim($request->post('search','')),                                            //搜索关键词
-//            'typeid' => 1,
-//            'articles_type_id' => trim($request->post('articles_type_id','')),                         //文章类型
-//            'type' => 2                                                                                                //系统新闻 类别
-//        );
-//        $articleModel = new Articles();
-//        $res = $articleModel->getArticlesWithFilter($searchFilter);
-//        foreach ($res['rows'] as &$v){
-//            $v['thumb'] = $this->processingPictures($v['thumb']);
-//        }
-//        $this->returnData['data'] = $res;
-//        return response()->json($this->returnData);
-//    }
 
     /* 文章详情 */
     public function detail($id){
@@ -93,10 +66,16 @@ class ArticleController extends BaseController
         $data = $articleModel->getArticlesByID($id);
         if (!is_array($data)){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
+        }
+        if (isset($data['thumb'])){
+            $data['thumb'] = $this->processingPictures($data['thumb']);
+        }
+        if (isset($data['video_cover'])){
+            $data['video_cover'] = $this->processingPictures($data['video_cover']);
         }
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 文章增加 */
@@ -106,7 +85,7 @@ class ArticleController extends BaseController
         }
         if($request->post('typeid')===NULL || !in_array(strval($request->post('typeid')),array('1','3'))){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $article = [];
         foreach (array_keys($this->fields) as $field) {
@@ -118,10 +97,10 @@ class ArticleController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '添加失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '添加成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 文章修改 */
@@ -134,7 +113,7 @@ class ArticleController extends BaseController
         $data = $articleModel->getArticlesByID($id);
         if (!is_array($data)){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $article = [];
         foreach (array_keys($this->fields) as $field) {
@@ -149,10 +128,10 @@ class ArticleController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '修改失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '修改成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
 
@@ -163,27 +142,27 @@ class ArticleController extends BaseController
         }
         if (!isset($request->action) || !in_array(strval($request->action),['status'],true)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $id = $request->id;
         if($request->action=='status'){
             if($request->post('is_display')===NULL || !in_array(strval($request->post('is_display')),['0','1'])){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $articleModel = new Articles();
             $res = $articleModel->articleUpdate($id,['is_display'=>$request->post('is_display')]);
             if(!$res){
                 $this->returnData = ErrorCode::$admin_enum['fail'];
                 $this->returnData['msg'] = '操作失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $this->returnData['msg'] = '操作成功';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData = ErrorCode::$admin_enum['fail'];
         $this->returnData['msg'] = '未知操作';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 文章删除 */
@@ -196,10 +175,10 @@ class ArticleController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '删除失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '删除成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 获取更新日志3 所有内容 */
@@ -215,6 +194,6 @@ class ArticleController extends BaseController
         $articleModel = new Articles();
         $res = $articleModel->getArticlesContentWithFilter($searchFilter);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

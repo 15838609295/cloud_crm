@@ -30,6 +30,34 @@ class TestPaper extends Model
         return true;
     }
 
+    //根据条件获取信息
+    public function getFields($field, $filter = [], $one = true){
+        if (!$filter){
+            return false;
+        }
+        $db = DB::table($this->table)->where($filter)->select($field);
+        if ($one){
+            $data = $db->first();
+        }else{
+            $data = $db->get();
+        }
+        if (!$data){
+            return [];
+        }else{
+            $data = json_decode(json_encode($data),true);
+        }
+        return $data;
+    }
+
+    //获取某字段的值
+    public function getValues($field, $filter){
+        $data = DB::table($this->table)->where($filter)->value($field);
+        if (!$data){
+            return false;
+        }
+        return $data;
+    }
+
     //删除试卷
     public function delTestPaper($id){
        $res = DB::table($this->table)->delete($id);
@@ -53,13 +81,16 @@ class TestPaper extends Model
             }
             $data['answer'] = json_encode($answer);
         }
-        $item_bank = DB::table($this->table)->where('id',$id)->select('item_bank_list')->first();
-        $item_bank = json_decode(json_encode($item_bank),true);
-        $list = json_decode($item_bank['item_bank_list'],1);   //题目id集合
+        $item_bank = DB::table($this->table)->where('id',$id)->value('item_bank_list');
+        $list = json_decode($item_bank,1);   //题目id集合
+        if (!$list){
+            $k = 0;
+        }else{
+            $k = count($list);
+        }
         //添加到题库
         $data['created_at'] = Carbon::now()->toDateTimeString();
         $item_bannk_id = DB::table('item_bank')->insertGetId($data);
-        $k = count($list);
         $list[$k] = $item_bannk_id;
         $where['item_bank_list'] = json_encode($list);
         $where['updated_at'] =  Carbon::now()->toDateTimeString();
@@ -140,25 +171,28 @@ class TestPaper extends Model
         }
         $result['total'] = $res->count();
         $result['rows'] = $res->skip($data['start'])->take($data['pageSize'])->orderBy('id', 'desc')->get();
+        if (!$result['rows']){
+            return [];
+        }
         $result['rows'] = json_decode(json_encode($result['rows']),true);
         foreach ($result['rows'] as &$v){
             $v['single'] = 0;   //单选题数
             $v['many'] = 0;     //多选题数
             $v['fill'] = 0;     //填空题数
             $v['raction'] = 0;  //试卷总分
-            $item_bank_list = json_decode($v['item_bank_list'],1);
-            if (is_array($item_bank_list)){
-                foreach ($item_bank_list as $t){
-                    $item = DB::table('item_bank')->where('id',$t)->select('type','fraction')->first();
-                    $item = json_decode(json_encode($item),true);
-                    if ($item['type'] == 1){
+            $ids = json_decode($v['item_bank_list'],1);
+            if (is_array($ids)){
+                $items = DB::table('item_bank')->whereIn('id',$ids)->select('type','fraction')->get();
+                $items = json_decode(json_encode($items),true);
+                foreach ($items as $t){
+                    if ($t['type'] == 1){
                         $v['single'] =$v['single'] + 1;
-                    }elseif ($item['type'] == 2){
+                    }elseif ($t['type'] == 2){
                         $v['many'] = $v['many'] + 1;
-                    }elseif ($item['type'] == 3){
+                    }elseif ($t['type'] == 3){
                         $v['fill'] = $v['fill'] + 1;
                     }
-                    $v['raction'] = $v['raction'] + $item['fraction'];
+                    $v['raction'] = $v['raction'] + $t['fraction'];
                 }
             }
         }
@@ -167,67 +201,29 @@ class TestPaper extends Model
 
     //试卷题目列表
     public function getTestPaperSubjectList($data){
-        $res = DB::table($this->table)->where('id',$data['id'])->select('item_bank_list')->first();
-        $res = json_decode(json_encode($res),true);
-        $item_list = json_decode($res['item_bank_list'],1);
-        if (!$item_list){
+        $res = $this->getValues('item_bank_list',['id'=>$data['id']]);
+        if (!$res){
             return false;
         }
-        $result = [];
-        foreach ($item_list as $v){
-            $res = DB::table('item_bank')->where('id',$v)->select('id','name','type','fraction')->first();
-            $res = json_decode(json_encode($res),true);
-            if ($data['type'] != ''){
-                if ($data['type'] == $res['type']){
-                    if ($data['search'] != ''){
-                        if (strstr($res['name'],$data['search'])){
-                            if ($res['type'] == 1){
-                                $res['type_name'] = '单选题';
-                            }elseif($res['type'] == 2){
-                                $res['type_name'] = '多选题';
-                            }elseif($res['type'] == 3){
-                                $res['type_name'] = '填空题';
-                            }
-                            $result[] = $res;
-                        }
-                    }else{
-                        if ($res['type'] == 1){
-                            $res['type_name'] = '单选题';
-                        }elseif($res['type'] == 2){
-                            $res['type_name'] = '多选题';
-                        }elseif($res['type'] == 3){
-                            $res['type_name'] = '填空题';
-                        }
-                        $result[] = $res;
-                    }
-                }
-            }else{
-                if ($data['search'] != ''){
-                    if (strstr($res['name'],$data['search'])){
-                        if ($res['type'] == 1){
-                            $res['type_name'] = '单选题';
-                        }elseif($res['type'] == 2){
-                            $res['type_name'] = '多选题';
-                        }elseif($res['type'] == 3){
-                            $res['type_name'] = '填空题';
-                        }
-                        $result[] = $res;
-                    }
-                }else{
-                    if ($res['type'] == 1){
-                        $res['type_name'] = '单选题';
-                    }elseif($res['type'] == 2){
-                        $res['type_name'] = '多选题';
-                    }elseif($res['type'] == 3){
-                        $res['type_name'] = '填空题';
-                    }
-                    $result[] = $res;
-                }
+        $ids = json_decode($res,1);
+        $list = DB::table('item_bank')->whereIn('id',$ids)->select('id','name','type','fraction')->get();
+        $list = json_decode(json_encode($list),true);
+        foreach ($list as &$v){
+            switch ($v['type']){
+                case 1;
+                    $v['type_name'] = '单选题';
+                    break;
+                case 2:
+                    $v['type_name'] = '多选题';
+                    break;
+                case 3;
+                    $v['type_name'] = '填空题';
+                    break;
             }
         }
-        $total = count($result);
+        $total = count($list);
         $list_res['total'] = $total;
-        $list_res['rows'] = $result;
+        $list_res['rows'] = $list;
         return $list_res;
     }
 
@@ -284,25 +280,21 @@ class TestPaper extends Model
 
     //试卷列表无分页
     public function testPaperNoPage(){
-        $res = DB::table($this->table)->whereNotNull('item_bank_list')->get();
+        $res = DB::table($this->table)->select('id','name','item_bank_list')->whereNotNull('item_bank_list')->get();
         if (!$res){
-            return false;
+            return [];
         }
         $res = json_decode(json_encode($res),true);
-        $data = [];
-        foreach ($res as $k=>$r_v){
-            $data[$k]['name'] = $r_v['name'];
-            $data[$k]['id'] = $r_v['id'];
-            $data[$k]['type_id'] = $r_v['type_id'];
-            $data[$k]['fraction'] = 0;
-            $item_bank_list = json_decode($r_v['item_bank_list'],true);
-            foreach ($item_bank_list as $i_v){
-                $i_res = DB::table('item_bank')->where('id',$i_v)->select('fraction')->first();
-                $i_res = json_decode(json_encode($i_res),true);
-                $fraction = $i_res['fraction'];
-                $data[$k]['fraction'] += $fraction;
+        foreach ($res as $k=>&$v){
+            $ids = json_decode($v['item_bank_list'],true);
+            $list = DB::table('item_bank')->whereIn('id',$ids)->select('fraction')->get();
+            $list = json_decode(json_encode($list),true);
+            $v['fraction'] = 0;
+            foreach ($list as $l_v){
+                $v['fraction'] += $l_v['fraction'];
             }
+            unset($res[$k]['item_bank_list']);
         }
-        return $data;
+        return $res;
     }
 }

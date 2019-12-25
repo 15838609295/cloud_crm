@@ -2,13 +2,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Config\ErrorCode;
-use App\Models\Admin\Activity;
-use App\Models\Admin\AfterSale;
-use App\Models\Admin\AdminBonusLog;
-use App\Models\Admin\AdminUser;
 use App\Models\Admin\Configs;
-use App\Models\Admin\Salebonusrule;
-use App\Models\Articles;
 use App\Models\Member\MemberBase;
 use App\Models\NotifyBase;
 use App\Models\User\UserBase;
@@ -20,10 +14,9 @@ use Illuminate\Support\Facades\Log;
 use TencentCloud\Common\Credential;
 use TencentCloud\Common\Profile\ClientProfile;
 use TencentCloud\Common\Profile\HttpProfile;
-use TencentCloud\Mariadb\V20170312\Models\ParamConstraint;
 use TencentCloud\Partners\V20180321\Models\AuditApplyClientRequest;
-use TencentCloud\Partners\V20180321\Models\DescribeAgentAuditedClientsRequest;
 use TencentCloud\Partners\V20180321\Models\DescribeAgentClientsRequest;
+use TencentCloud\Partners\V20180321\Models\DescribeAgentPayDealsRequest;
 use TencentCloud\Partners\V20180321\PartnersClient;
 
 class CommonController extends Controller
@@ -31,257 +24,230 @@ class CommonController extends Controller
 
     public $result = array("status"=>0,'msg'=>'请求成功','data'=>"");
     //更新售后订单信息
-    public function updateAfterSale(Request $request)
-    {
-        $after_arr = AfterSale::from('after_sale as af')
-            ->select('af.*','au.branch_id')
-            ->leftjoin('admin_users as au','af.after_sale_id','=','au.id')
+    public function updateAfterSale(){
+        $after_arr = DB::table('after_sale as af')
+            ->select('af.*','s.rule_type','s.rule_type','s.type','s.after_first_bonus')
+            ->leftJoin('salebonusrule as s','af.sbr_id','=','s.id')
             ->where('af.after_status','=',0)
+            ->where('af.sbr_id','>',0)
+            ->where('s.rule_type',0)
             ->get();
+        $after_arr = json_decode(json_encode($after_arr),true);
 
+        $ins_data = [];
         foreach ($after_arr as $v) {
-            $data_upd = array();
-            $admin_upd = array();
-            $data_ins = array();
-
-            if ($v->after_time == 0) {
-                if (($v->after_time + 1) <= ($v->buy_length)) {
-                    $cur_time = Carbon::parse('-' . ($v->after_time + 1) . ' months')->toDateTimeString();
-                    if ($cur_time >= $v->buy_time) {
-                        //售后表更新
-                        $data_upd['after_time'] = $v->after_time + 1;
-                        $bool1 = AfterSale::from('after_sale')->where("id", "=", $v->id)->update($data_upd);
-                        //管理员表更新
-                        $adminuser = AdminUser::where('id', '=', $v->after_sale_id)->first();
-                        $admin_upd['bonus'] = $adminuser->bonus;   //提成
-                        $data_ins['money'] = 0;
-                        if((int)$v->sbr_id>0){    //没有提成规则不做计算
-                            $saleRuleModel = new Salebonusrule();
-                            $sbi = $saleRuleModel->getSaleRuleDetail($v->sbr_id);
-                            if ($sbi['rule_type'] != 0) {   //固定金额 跳出循环
-                                continue;
-                            }
-                            if ($sbi['type'] != 1) {   //不是提成 跳出循环
-                                continue;
-                            }
-                            if ($sbi['after_first_bonus'] == 0) {           //当售后首月为0时   总金额除以月数加钱
-                                $admin_upd['bonus'] = $admin_upd['bonus'] + (intval($v->after_money / $v->buy_length));
-                                $data_ins['money'] = (intval($v->after_money / $v->buy_length));
-                            } else {
-                                $admin_upd['bonus'] = $admin_upd['bonus'] + (intval($v->after_money * $sbi['after_first_bonus'])) / 100;
-                                $data_ins['money'] = (intval($v->after_money * $sbi['after_first_bonus'])) / 100;
-                            }
-                            AdminUser::where('id', '=', $v->after_sale_id)->update($admin_upd);
-                            //业绩流水表
-                            $data_ins['admin_users_id'] = $v->after_sale_id;
-                            $data_ins['type'] = 1;
-                            $data_ins['cur_bonus'] = $admin_upd['bonus'];
-                            $data_ins['member_name'] = $v->member_name;
-                            $data_ins['member_phone'] = $v->member_phone;
-                            $data_ins['goods_name'] = $v->goods_name;
-                            $data_ins['goods_money'] = $v->goods_money;
-                            $data_ins['order_number'] = $v->order_number;
-                            $data_ins['remarks'] = $v->remarks;
-                            //增加提交人名称和审核人名称
-                            $data_ins['submitter'] = $adminuser->name;
-                            $data_ins['auditor'] = 'root';
-                            $adminBonusModel = new AdminBonusLog();
-                            $adminBonusModel->adminBonusLogInsert($data_ins);
-                        }
-                    }
-                }
-            } else if (($v->after_time + 1) <= ($v->buy_length)) {
-                $cur_time = Carbon::parse('-' . ($v->after_time + 1) . ' months')->toDateTimeString();
-                if ($cur_time >= $v->buy_time) {
-
-                    //售后表更新
-                    $data_upd['after_time'] = $v->after_time + 1;
-                    $bool1 = AfterSale::from('after_sale')->where("id", "=", $v->id)->update($data_upd);
-
-                    //管理员表更新
-                    $adminuser = AdminUser::where('id', '=', $v->after_sale_id)->first();
-                    if ((int)$v->sbr_id > 0) {
-                        $saleRuleModel = new Salebonusrule();
-                        $sbi = $saleRuleModel->getSaleRuleDetail($v->sbr_id);
-                        if ($sbi['rule_type'] != 0){   //固定金额 跳出循环
-                            continue;
-                        }
-
-                        if ($sbi['type'] != 1) {   //不是提成 跳出循环
-                            continue;
-                        }
-
-                        if ($sbi['after_first_bonus'] !== 0) {       //如果售后首月提成为0时
-                            $one = (intval($v->after_money * $sbi['after_first_bonus'])) / 100;
-                        } else {
-                            $one = 0;
-                        }
-                        if ($one == 0) {
-                            $new_bonus = round($v->after_money / $v->buy_length);
-                        } else {
-                            $new_bonus = round(($v->after_money - $one) * 100 / ($v->buy_length - 1)) / 100;
-                        }
-                        $admin_upd['bonus'] = $adminuser->bonus + $new_bonus;
-                        AdminUser::where('id', '=', $v->after_sale_id)->update($admin_upd);
-
-                        //业绩流水表
-                        $data_ins['admin_users_id'] = $v->after_sale_id;
-                        $data_ins['type'] = 1;
-                        $data_ins['money'] = $new_bonus;
-                        $data_ins['cur_bonus'] = $admin_upd['bonus'];
-                        $data_ins['member_name'] = $v->member_name;
-                        $data_ins['member_phone'] = $v->member_phone;
-                        $data_ins['goods_name'] = $v->goods_name;
-                        $data_ins['goods_money'] = $v->goods_money;
-                        $data_ins['order_number'] = $v->order_number;
-                        $data_ins['remarks'] = $v->remarks;
-                        //增加提交人名称和审核人名称
-                        $data_ins['submitter'] = $adminuser->name;
-                        $data_ins['auditor'] = 'root';
-                        $adminBonusModel = new AdminBonusLog();
-                        $adminBonusModel->adminBonusLogInsert($data_ins);
-                    }
-                }
-            } else {
-                //售后表更新
-                $data_upd['after_status'] = 1;
-                AfterSale::from('after_sale')->where("id", "=", $v->id)->update($data_upd);
+            //如果是奖金记录 增加一个月份 跳过
+            if ($v['type'] == 0){
+                $data_upd['after_time'] = $v['after_time'] + 1;
+                $data_upd['updated_at'] = Carbon::now()->toDateTimeString();
+                $this->updateAfterSaleInfo($data_upd,$v['id']);
+                continue;
             }
+            $data_upd = [];
+            $admin_upd = [];
+            $data = [];
+            $addBonusMoney = 0;    //要增加的提成
 
-            unset($data_upd);
-            unset($admin_upd);
-            unset($data_ins);
+            //获取售后人员信息
+            $adminUser = DB::table('admin_users')->where('id',$v['after_sale_id'])->select('bonus','name')->first();
+            $adminUser = json_decode(json_encode($adminUser),true);
+            //计算时间
+            $cur_time = Carbon::parse('-' . ($v['after_time'] + 1) . ' months')->toDateTimeString();
+
+            if ($v['after_time'] == 0) {                                                                   //计算首次提成
+                if(($v['after_time'] + 1) <= $v['buy_length']){                                           //服务时间在购买时间内
+                    if ($cur_time >= $v['buy_time']){                                                     //到购买时间 发提成
+                        $data_upd['after_time'] = $v['after_time'] + 1;
+
+                        if ($v['after_first_bonus'] == 0) {           //当售后首月为0时   总金额除以月数加钱
+                            $addBonusMoney = intval($v['after_money'] / $v['buy_length']);
+                        } else {
+                            $addBonusMoney = (intval($v['after_money'] * $v['after_first_bonus'])) / 100;
+                        }
+                        $admin_upd['bonus'] =  $adminUser['bonus'] + $addBonusMoney;
+                        $data['admin_users_id'] = $v['after_sale_id'];
+                        $data['type'] = 1;
+                        $data['money'] = $addBonusMoney;
+                        $data['cur_bonus'] = $admin_upd['bonus'];
+                        $data['member_name'] = $v['member_name'];
+                        $data['member_phone'] = $v['member_phone'];
+                        $data['goods_name'] = $v['goods_name'];
+                        $data['goods_money'] = $v['goods_money'];
+                        $data['order_number'] = $v['order_number'];
+                        $data['remarks'] = $v['remarks'];
+                        $data['created_at'] = Carbon::now()->toDateTimeString();
+                        //增加提交人名称和审核人名称
+                        $data['submitter'] = $adminUser['name'];
+                        $data['auditor'] = 'root';
+                    }
+                }
+            }else if (($v['after_time'] + 1) <= $v['buy_length']) {                                     //服务时间在购买时间内 计算非首次提成
+                if ($cur_time >= $v['buy_time']){                                                         //到购买时间 发提成
+                    $data_upd['after_time'] = $v['after_time'] + 1;
+
+                    if ($v['after_first_bonus'] !== 0) {       //如果售后首月提成为0时
+                        $one = (intval($v['after_money'] * $v['after_first_bonus'])) / 100;
+                    } else {
+                        $one = 0;
+                    }
+                    if ($one == 0) {
+                        $addBonusMoney = round($v['after_money'] / $v['buy_length']);
+                    } else {
+                        $addBonusMoney = round(($v['after_money'] - $one) * 100 / ($v['buy_length'] - 1)) / 100;
+                    }
+                    $admin_upd['bonus'] = $adminUser['bonus'] + $addBonusMoney;
+                    $data['admin_users_id'] = $v['after_sale_id'];
+                    $data['type'] = 1;
+                    $data['money'] = $addBonusMoney;
+                    $data['cur_bonus'] = $admin_upd['bonus'];
+                    $data['member_name'] = $v['member_name'];
+                    $data['member_phone'] = $v['member_phone'];
+                    $data['goods_name'] = $v['goods_name'];
+                    $data['goods_money'] = $v['goods_money'];
+                    $data['order_number'] = $v['order_number'];
+                    $data['remarks'] = $v['remarks'];
+                    $data['created_at'] = Carbon::now()->toDateTimeString();
+                    //增加提交人名称和审核人名称
+                    $data['submitter'] = $adminUser['name'];
+                    $data['auditor'] = 'root';
+                }
+            }else {
+                $data = [];
+                $admin_upd = [];
+                $data_upd['after_status'] = 1;
+            }
+            //售后表更新
+            if (count($data_upd) > 0){
+                $data_upd['updated_at'] = Carbon::now()->toDateTimeString();
+                $this->updateAfterSaleInfo($data_upd,$v['id']);
+            }
+            //用户表提成更新
+            if (count($admin_upd) > 0){
+                $admin_upd['updated_at'] = Carbon::now()->toDateTimeString();
+                DB::table('admin_users')->where('id', $v['after_sale_id'])->update($admin_upd);
+            }
+            //增加资金记录
+            if (count($data) > 0){
+                array_push($ins_data,$data);
+            }
         }
+        //批量插入
+        DB::table('admin_bonus_log')->insert($ins_data);
+        return response()->json($this->result);
+    }
 
-        $data['code'] = 0;
-        $data['msg'] = '请求成功';
-        return response()->json($data);
-
+    //提成表修改
+    private function updateAfterSaleInfo($fields,$id){
+        $res = DB::table('after_sale')->where('id',$id)->update($fields);
+        if (!$res){
+            Log::info("admin_after_sale_update_error",array("id"=>$id,"update_info"=>$fields));
+        }
+        return true;
     }
 
     //更新售后奖金信息
     public function updateAfterSaleBonus(){
-        $after_arr = DB::table('bonus_sale')
-            ->where('after_status', '=', 0)
+        $after_arr = DB::table('bonus_sale as bs')
+            ->select('bs.*','s.rule_type','s.type','s.first_bonus')
+            ->leftJoin('salebonusrule as s','bs.sbr_id','=','s.id')
+            ->where('bs.after_status', '=', 0)
+            ->where('bs.sbr_id','>',0)
+            ->where('s.rule_type',0)
+            ->where('s.type',0)
             ->get();
         $after_arr = json_decode(json_encode($after_arr),true);
+
+        $ins_data = [];
         foreach ($after_arr as $v) {
-            $data_upd = array();
-            $admin_upd = array();
-            $data_ins = array();
-            if ($v['after_time'] == 0) {
-                if (($v['after_time'] + 1) <= ($v['buy_length'])) {
-                    $cur_time = Carbon::parse('-' . ($v['after_time'] + 1) . ' months')->toDateTimeString();
-                    if ($cur_time >= $v['buy_time']) {
-                        //售后表更新
+            $data_upd = [];
+            $admin_upd = [];
+            $data = [];
+
+            //管理员表更新
+            $adminUser = DB::table('admin_users')->where('id',$v['after_sale_id'])->select('sale_bonus','name')->first();
+            $adminUser = json_decode(json_encode($adminUser),true);
+            //计算时间
+            $cur_time = Carbon::parse('-' . ($v['after_time'] + 1) . ' months')->toDateTimeString();
+            $addMoney = 0;    //要增加的金额
+
+            if ($v['after_time'] == 0) {   //计算首次提成
+                if ( ($v['after_time'] + 1) <= $v['buy_length']){
+                    if ($cur_time >= $v['buy_time']){
                         $data_upd['after_time'] = $v['after_time'] + 1;
-                        $bool1 = DB::table('bonus_sale')->where("id",$v['id'])->update($data_upd);
-                        //管理员表更新
-                        $adminUser = AdminUser::where('id', '=', $v['after_sale_id'])->first();
-                        $adminUser = json_decode(json_encode($adminUser),true);
-                        $admin_upd['sale_bonus'] = $adminUser['sale_bonus'];   //提成
-                        $data_ins['money'] = 0;
-                        if((int)$v['sbr_id'] > 0){    //没有提成规则不做计算
-                            $saleRuleModel = new Salebonusrule();
-                            $sbi = $saleRuleModel->getSaleRuleDetail($v['sbr_id']);
 
-                            if ($sbi['rule_type'] != 0) {   //固定金额 跳出循环
-                                continue;
-                            }
-                            if ($sbi['type'] != 0) {   //不是奖金 跳出循环
-                                continue;
-                            }
-
-                            if ($sbi['first_bonus'] == 0) {           //当售后首月为0时   总金额除以月数加钱
-                                $admin_upd['sale_bonus'] = $admin_upd['sale_bonus'] + (intval($v['after_money'] / $v['buy_length']));
-                                $data_ins['money'] = (intval($v['after_money'] / $v['buy_length']));
-                            } else {
-                                $admin_upd['sale_bonus'] = $admin_upd['sale_bonus'] + (intval($v['after_money'] * $sbi['first_bonus'])) / 100;
-                                $data_ins['money'] = (intval($v['after_money'] * $sbi['first_bonus'])) / 100;
-                            }
-                            AdminUser::where('id', '=', $v['after_sale_id'])->update($admin_upd);
-                            //业绩流水表
-                            $data_ins['admin_users_id'] = $v['after_sale_id'];
-                            $data_ins['type'] = 4;
-                            $data_ins['cur_bonus'] = $admin_upd['sale_bonus'];
-                            $data_ins['member_name'] = $v['member_name'];
-                            $data_ins['member_phone'] = $v['member_phone'];
-                            $data_ins['goods_name'] = $v['goods_name'];
-                            $data_ins['goods_money'] = $v['goods_money'];
-                            $data_ins['order_number'] = $v['order_number'];
-                            $data_ins['remarks'] = $v['remarks'];
-                            //增加提交人名称和审核人名称
-                            $data_ins['submitter'] = $adminUser['name'];
-                            $data_ins['auditor'] = 'root';
-                            $adminBonusModel = new AdminBonusLog();
-                            $adminBonusModel->adminBonusLogInsert($data_ins);
+                        if ($v['first_bonus'] == 0) {           //当售后首月为0时   总金额除以月数加钱
+                            $addMoney = intval($v['after_money'] / $v['buy_length']);
+                        } else {
+                            $addMoney = (intval($v['after_money'] * $v['first_bonus'])) / 100;
                         }
+                        $admin_upd['sale_bonus'] = $adminUser['sale_bonus'] + $addMoney;
+                        $data['admin_users_id'] = $v['after_sale_id'];
+                        $data['type'] = 4;
+                        $data['money'] = $addMoney;
+                        $data['cur_bonus'] = $admin_upd['sale_bonus'];
+                        $data['member_name'] = $v['member_name'];
+                        $data['member_phone'] = $v['member_phone'];
+                        $data['goods_name'] = $v['goods_name'];
+                        $data['goods_money'] = $v['goods_money'];
+                        $data['order_number'] = $v['order_number'];
+                        $data['remarks'] = $v['remarks'];
+                        $data['created_at'] = Carbon::now()->toDateTimeString();
+                        //增加提交人名称和审核人名称
+                        $data['submitter'] = $adminUser['name'];
+                        $data['auditor'] = 'root';
                     }
                 }
-            } else if (($v['after_time'] + 1) <= ($v['buy_length'])) {
-                $cur_time = Carbon::parse('-' . ($v['after_time'] + 1) . ' months')->toDateTimeString();
-                if ($cur_time >= $v['buy_time']) {
-                    //售后表更新
+            }else if (($v['after_time'] + 1) <= $v['buy_length']) {
+                if ($cur_time >= $v['buy_time']){
                     $data_upd['after_time'] = $v['after_time'] + 1;
-                    $bool1 = DB::table('bonus_sale')->where("id", "=", $v['id'])->update($data_upd);
-
-                    //管理员表更新
-                    $adminUser = AdminUser::where('id', '=', $v['after_sale_id'])->first();
-                    $adminUser = json_decode(json_encode($adminUser),true);
-                    if ((int)$v['sbr_id'] > 0) {
-                        $saleRuleModel = new Salebonusrule();
-                        $sbi = $saleRuleModel->getSaleRuleDetail($v['sbr_id']);
-                        if ($sbi['rule_type'] != 0) {   //固定金额 跳出循环
-                            continue;
-                        }
-                        if ($sbi['type'] != 0) {   //不是奖金 跳出循环
-                            continue;
-                        }
-                        if ($sbi['first_bonus'] !== 0) {       //如果售后首月提成为0时
-                            $one = (intval($v['after_money'] * $sbi['first_bonus'])) / 100;
-                        } else {
-                            $one = 0;
-                        }
-                        if ($one == 0) {
-                            $new_bonus = round($v['after_money'] / $v['buy_length']);
-                        } else {
-                            $new_bonus = round(($v['after_money'] - $one) * 100 / ($v['buy_length'] - 1)) / 100;
-                        }
-                        $admin_upd['sale_bonus'] = ($adminUser['sale_bonus']) + $new_bonus;
-                        AdminUser::where('id', '=', $v['after_sale_id'])->update($admin_upd);
-
-                        //业绩流水表
-                        $data_ins['admin_users_id'] = $v['after_sale_id'];
-                        $data_ins['type'] = 4;
-                        $data_ins['money'] = $new_bonus;
-                        $data_ins['cur_bonus'] = $admin_upd['sale_bonus'];
-                        $data_ins['member_name'] = $v['member_name'];
-                        $data_ins['member_phone'] = $v['member_phone'];
-                        $data_ins['goods_name'] = $v['goods_name'];
-                        $data_ins['goods_money'] = $v['goods_money'];
-                        $data_ins['order_number'] = $v['order_number'];
-                        $data_ins['remarks'] = $v['remarks'];
-                        //增加提交人名称和审核人名称
-                        $data_ins['submitter'] = $adminUser['name'];
-                        $data_ins['auditor'] = 'root';
-                        $adminBonusModel = new AdminBonusLog();
-                        $adminBonusModel->adminBonusLogInsert($data_ins);
+                    if ($v['first_bonus'] !== 0) {       //如果售后首月提成为0时
+                        $one = (intval($v['after_money'] * $v['first_bonus'])) / 100;
+                    } else {
+                        $one = 0;
                     }
+                    if ($one == 0) {
+                        $addMoney = round($v['after_money'] / $v['buy_length']);
+                    } else {
+                        $addMoney = round(($v['after_money'] - $one) * 100 / ($v['buy_length'] - 1)) / 100;
+                    }
+                    $admin_upd['sale_bonus'] = $adminUser['sale_bonus'] + $addMoney;
+                    $data['admin_users_id'] = $v['after_sale_id'];
+                    $data['type'] = 4;
+                    $data['money'] = $addMoney;
+                    $data['cur_bonus'] = $admin_upd['sale_bonus'];
+                    $data['member_name'] = $v['member_name'];
+                    $data['member_phone'] = $v['member_phone'];
+                    $data['goods_name'] = $v['goods_name'];
+                    $data['goods_money'] = $v['goods_money'];
+                    $data['order_number'] = $v['order_number'];
+                    $data['remarks'] = $v['remarks'];
+                    $data['created_at'] = Carbon::now()->toDateTimeString();
+                    //增加提交人名称和审核人名称
+                    $data['submitter'] = $adminUser['name'];
+                    $data['auditor'] = 'root';
                 }
             } else {
                 //售后表更新
+                $data = [];
                 $data_upd['after_status'] = 1;
-                DB::table('bonus_sale')->where("id", "=", $v['id'])->update($data_upd);
+                $admin_upd = [];
+            }
+            if (count($admin_upd) > 0){    //有计算奖金
+                $admin_upd['updated_at'] = Carbon::now()->toDateTimeString();
+                DB::table('admin_users')->where('id',$v['after_sale_id'])->update($admin_upd);
+            }
+            if(count($data_upd) > 0){
+                DB::table('bonus_sale')->where("id",$v['id'])->update($data_upd);
+                $data_upd['updated_at'] = Carbon::now()->toDateTimeString();
+            }
+            if (count($data) > 0){
+                array_push($ins_data,$data);
             }
 
-            unset($data_upd);
-            unset($admin_upd);
-            unset($data_ins);
         }
-        $data['code'] = 0;
-        $data['msg'] = '请求成功';
-        return response()->json($data);
-
+        //批量插入
+        DB::table('admin_bonus_log')->insert($ins_data);
+        return response()->json($this->result);
     }
 
     public function getTitle()
@@ -293,25 +259,24 @@ class CommonController extends Controller
         header('Access-Control-Allow-Headers:x-requested-with,content-type');
         /*--- end 跨域测试用---*/
         $returnData = ErrorCode::$admin_enum["success"];
-        $data = \Illuminate\Support\Facades\DB::table("configs")->where('id', 1)->select("title", "qy_redirect", "shortcut", "shortcut_name", "shortcut_url", "qywxLogin", "agent_url", "seo_title","env",'avatar_status')->first();
-        $data = json_decode(json_encode($data),true);
-        $agreement = Articles::where('typeid',6)->first();
-        if ($agreement){
-            $agreement = json_decode(json_encode($agreement),true);
-            $data['agreementTitle'] = $agreement['title'];
-            $data['agreementContent'] =$agreement['content'];
-        }else{
+        $configModel = new Configs();
+        $data = $configModel->getFields(["title", "qy_redirect", "shortcut", "shortcut_name", "shortcut_url", "qywxLogin", "agent_url","seo_title","env",'avatar_status','plugin_open_type as pluginOpenType']);
+        $agreementData = DB::table('articles')->whereIn('typeid',[6,7])->select('typeid','title','content')->get();
+        if (!$agreementData){
             $data['agreementTitle'] = '';
             $data['agreementContent'] ='';
-        }
-        $privacy = Articles::where('typeid',7)->first();
-        if ($privacy){
-            $privacy = json_decode(json_encode($privacy),true);
-            $data['privacyTitle'] = $privacy['title'];
-            $data['privacyContent'] =$privacy['content'];
-        }else{
             $data['privacyTitle'] = '';
             $data['privacyContent'] = '';
+        }
+        $agreementData = json_decode(json_encode($agreementData),true);
+        foreach ($agreementData as $v){
+            if ($v['typeid'] == 6){
+                $data['agreementTitle'] = $v['title'];
+                $data['agreementContent'] =$v['content'];
+            }else{
+                $data['privacyTitle'] = $v['title'];
+                $data['privacyContent'] =$v['content'];
+            }
         }
         $returnData['data'] = $data;
         return response()->json($returnData);
@@ -333,115 +298,85 @@ class CommonController extends Controller
 
     //缓存腾讯云当天的客户订单
     public function cache_tencent_order(){
-        $con = Configs::first();
-
-        //清空当前数据库的记录
+        //清空表数据
         DB::table("tencent_order")->truncate();
         DB::table("tencent_order_price")->truncate();
-
-        //准备数组保存当天的订单
-        $orders = array();
-        $orders_price = array();
-
-        $time = time();
-        $nonce = rand(11111, 99999);
-        $beginToday = mktime(0, 0, 0, date('m'), date('d'), date('Y'));
-        $endToday = mktime(0, 0, 0, date('m'), date('d') + 1, date('Y')) - 1;
-        $start_time = date("Y-m-d H:i:s", $beginToday);
-        $end_time = date("Y-m-d H:i:s", $endToday);
-        $page_no = 0;
-        $page_size = 50;
-        $str = [
-            "Action" => "QueryClientDeals",
-            "Nonce" => $nonce,
-            "Region" => '',
-            "SecretId" => $con->tencent_secretid,
-            "Timestamp" => $time,
-            "creatTimeRangeEnd" => $end_time,
-            "creatTimeRangeStart" => $start_time,
-            "order" => 0,
-            "page" => $page_no,
-            "payerMode" => 1,
-            "rows" => $page_size,
+        require_once  base_path().'/vendor/tencentcloud-sdk-php/TCloudAutoLoader.php';
+        $con = Configs::first();
+        $cred = new Credential($con->tencent_secretid, $con->tencent_secrekey);
+        $start_time = date('Y-m-d 00:00:00',time());
+        $end_time = date('Y-m-d 23:59:59',time());
+        $params = [
+            "CreatTimeRangeStart" => $start_time,
+            "CreatTimeRangeEnd" => $end_time,
+            "Offset" => 0,
+            "Limit" => 200,
         ];
-        $url_str = http_build_query($str);
-        //解决http_build_query()函数转义空格和冒号问题
-        $replace_one = str_replace("+", " ", $url_str);
-        $replace_two = str_replace("%3A", ":", $replace_one);
-        $new_str = 'GETpartners.api.qcloud.com/v2/index.php?' . $replace_two;
-        $secretKey = $con->tencent_secrekey;
-        $srcStr = $new_str;
-        $signStr = base64_encode(hash_hmac('sha1', $srcStr, $secretKey, true));
-        $signStr = urlencode($signStr);
-        $url = "https://partners.api.qcloud.com/v2/index.php?Action=QueryClientDeals&Nonce=".$nonce."&Region=&SecretId=".$con->tencent_secretid."&Timestamp=".$time."&creatTimeRangeEnd=".$end_time."&creatTimeRangeStart=".$start_time."&order=0&page=".$page_no."&payerMode=1&rows=".$page_size."&Signature=".$signStr;
-        $req = file_get_contents($url);
-        $one_res = json_decode($req, true);
-        $total = $one_res['data']['totalNum'];
-        $cycle_times = ceil($total / 30);
-        if ($cycle_times > 0) {
-            for ($i = 0; $i < $cycle_times; $i++) {
-                $time = time();
-                $nonce = rand(11111, 99999);
-                $beginToday = mktime(0, 0, 0, date('m'), date('d'), date('Y'));
-                $endToday = mktime(0, 0, 0, date('m'), date('d') + 1, date('Y')) - 1;
-                $start_time = date("Y-m-d H:i:s", $beginToday);
-                $end_time = date("Y-m-d H:i:s", $endToday);
-                $page_no = $i;
-                $page_size = 50;
-                $str = [
-                    "Action" => "QueryClientDeals",
-                    "Nonce" => $nonce,
-                    "Region" => '',
-                    "SecretId" => $con->tencent_secretid,
-                    "Timestamp" => $time,
-                    "creatTimeRangeEnd" => $end_time,
-                    "creatTimeRangeStart" => $start_time,
-                    "order" => 0,
-                    "page" => $page_no,
-                    "payerMode" => 1,
-                    "rows" => $page_size,
-                ];
-                $url_str = http_build_query($str);
-                //解决http_build_query()函数转义空格和冒号问题
-                $replace_one = str_replace("+", " ", $url_str);
-                $replace_two = str_replace("%3A", ":", $replace_one);
-                $new_str = 'GETpartners.api.qcloud.com/v2/index.php?' . $replace_two;
-                $secretKey = $con->tencent_secrekey;
-                $srcStr = $new_str;
-                $signStr = base64_encode(hash_hmac('sha1', $srcStr, $secretKey, true));
-                $signStr = urlencode($signStr);
-                $url = "https://partners.api.qcloud.com/v2/index.php?Action=QueryClientDeals&Nonce=".$nonce."&Region=&SecretId=".$con->tencent_secretid."&Timestamp=".$time."&creatTimeRangeEnd=".$end_time."&creatTimeRangeStart=".$start_time."&order=0&page=".$page_no."&payerMode=1&rows=".$page_size."&Signature=".$signStr;
-                $req = file_get_contents($url);
-                $res = json_decode($req, true);
-                $id_number = $i * 30;
-                foreach ($res['data']['deals'] as $k => $v) {
-                    //价格详情
-                    $orders_price[$k + $id_number] = $v['goodsPrice'];
-                    //去除价格字段
-                    unset($v['goodsPrice']);
-                    $orders[$k + $id_number] = $v;
-                }
-            }
+        $httpProfile = new HttpProfile();
+        $httpProfile->setEndpoint("partners.tencentcloudapi.com");
 
-            $orders_res = DB::table('tencent_order')->insert($orders);
-            $orders_price_res = DB::table('tencent_order_price')->insert($orders_price);
-            if ($orders_res && $orders_price_res) {
-                $result['code'] = 0;
-                $result['msg'] = '请求成功';
-                $result['data']['total'] = $total;
-                $result['data']['list'] = $one_res['data']['deals'];
-                return response()->json($result);
-            } else {
-                $result['code'] = 0;
-                $result['msg'] = '请求失败';
-                $result['data'] = '';
-                return response()->json($result);
+        $clientProfile = new ClientProfile();
+        $clientProfile->setHttpProfile($httpProfile);
+        $client = new PartnersClient($cred, "", $clientProfile);
+        $req = new DescribeAgentPayDealsRequest();
+
+        $req->fromJsonString(json_encode($params));
+
+        $resp = $client->DescribeAgentPayDeals($req);
+        $res = $resp->toJsonString();
+        $res = json_decode($res,true);
+        $orders = [];
+        $orders_price = [];
+        if (isset($res['AgentPayDealSet'])){
+            foreach ($res['AgentPayDealSet'] as $k=>$v){
+                $orders[$k]['dealId'] = $v['DealId'];
+                $orders[$k]['dealName'] = $v['DealName'];
+                $orders[$k]['goodsCategoryId'] = $v['GoodsCategoryId'];
+                $orders[$k]['ownerUin'] = $v['OwnerUin'];
+                $orders[$k]['appId'] = $v['AppId'];
+                $orders[$k]['goodsNum'] = $v['GoodsNum'];
+                $orders[$k]['creater'] = $v['Creater'];
+                $orders[$k]['creatTime'] = $v['CreatTime'];
+                $orders[$k]['payer'] =  $v['Payer'];
+                if (isset($v['BillId'])){
+                    $orders[$k]['billId'] = $v['BillId'];
+                }else{
+                    $orders[$k]['billId'] = '';
+                }
+                if (isset($v['VoucherDecline'])){
+                    $orders[$k]['voucherDecline'] = $v['VoucherDecline'];
+                }else{
+                    $orders[$k]['voucherDecline'] = '';
+                }
+                $orders[$k]['payEndTime'] = $v['PayEndTime'];
+                $orders[$k]['status'] = $v['Status'];
+                $orders[$k]['goodsName'] = $v['GoodsName'];
+                $orders[$k]['actionType'] = $v['ActionType'];
+                $orders[$k]['payerMode'] = $v['PayerMode'];
+                $orders[$k]['clientRemark'] = $v['ClientRemark'];
+                $orders[$k]['clientType'] = $v['ClientType'];
+                $orders[$k]['projectType'] = $v['ProjectType'];
+                $orders[$k]['dealStatus'] = $v['DealStatus'];
+                $orders[$k]['bigDealId'] = $v['BigDealId'];
+                $orders[$k]['voucherDecline']    = '';
+                $orders[$k]['flag']  = '';
+                //价格详情
+                $orders_price[$k]['realTotalCost'] = $v['GoodsPrice']['RealTotalCost'];
             }
-        } else {
+        }else{
             $result['code'] = 0;
             $result['msg'] = '请求成功';
-            $result['data']['total'] = 0;
-            $result['data']['list'] = '';
+            return response()->json($result);
+        }
+        $orders_res = DB::table('tencent_order')->insert($orders);
+        $orders_price_res = DB::table('tencent_order_price')->insert($orders_price);
+        if ($orders_res && $orders_price_res) {
+            $result['code'] = 0;
+            $result['msg'] = '请求成功';
+            return response()->json($result);
+        } else {
+            $result['code'] = 1;
+            $result['msg'] = '添加失败';
             return response()->json($result);
         }
     }
@@ -505,15 +440,6 @@ class CommonController extends Controller
 
     public function uploadzipfile()
     {
-//        if ($this->AU['id'] !== 1) {
-//            $this->returnData = ErrorCode::$admin_enum['params_error'];
-//            $this->returnData['msg'] = '该用户没有上传权限';
-//            return response()->json($this->returnData);
-//        } else {
-//            $this->returnData['code'] = 0;
-//            $this->returnData['msg'] = '该用户可以上传文件';
-//            return response()->json($this->returnData);
-//        }
         $data['code'] = 0;
         $data['msg'] = '该用户可以上传文件';
         return response()->json($data);
@@ -523,20 +449,44 @@ class CommonController extends Controller
     public function updateActivityStatus()
     {
         $activity_arr = DB::table('activity')
-            ->where('activity_status', '=', 1)
+            ->select('id','activity_status','start_time','end_time','stop_time')
+            ->whereIn('activity_status',[1,2,3])
             ->get();
         $activity_arr = json_decode(json_encode($activity_arr), true);
+        if (!$activity_arr){
+            return response()->json($this->result);
+        }
+        $now_time = Carbon::now()->toDateTimeString();
         foreach ($activity_arr as $v) {
-            $now_time = Carbon::now()->toDateTimeString();
-            if ($v['end_time'] < $now_time) {
-                $where['activity_status'] = 2;
+            $where['activity_status'] = '';
+            switch ($v['activity_status']){
+                case 1;                  //报名中
+                    if ($v['stop_time'] < $now_time){
+                        $where['activity_status'] = 2;
+                    }
+                    break;
+                case 2;                 //报名截止
+                    if ($v['start_time'] < $now_time){
+                        $where['activity_status'] = 3;
+                    }
+                    break;
+                case 3;                 //活动进行中
+                    if ($v['end_time'] < $now_time){
+                        $where['activity_status'] = 4;
+                    }
+                    break;
+                default;
+                    $where['activity_status'] = '';
+                   break;
+            }
+            if ($where['activity_status'] != ''){
                 DB::table('activity')->where('id', $v['id'])->update($where);
             }
         }
-        $data['code'] = 0;
-        $data['msg'] = '请求成功';
-        return response()->json($data);
+        return response()->json($this->result);
     }
+
+    //丢单/下次联系小于当前时间，客户重新分配
     public function customerUpdateInfo(){
         $res =  DB::table('customer')
             ->where(function ($query) {
@@ -544,6 +494,9 @@ class CommonController extends Controller
                     ->Orwhere('progress','丢单');
             })
             ->where('cust_state','!=',1)
+            ->where('recommend','!=',1)
+           ->skip(0)
+            ->take(100)
             ->get();
         $res = json_decode(json_encode($res),true);
         $where['recommend'] = 1;
@@ -557,14 +510,23 @@ class CommonController extends Controller
 
     //删除过期form_id
     public function timingUpdateFormId(){
+        $exceedTime = date("Y-m-d 00:00:00",strtotime("-5 day"));
         $res =  DB::table('form_id')
-            ->where('is_used',1)
-            ->where('create_time','<',date("Y-m-d",strtotime("-5 day"))." 0:0:0")
+            ->where('create_time','<',$exceedTime)
+            ->select('id')
             ->get();
+
         $res = json_decode(json_encode($res),true);
-        foreach ($res as $v){
-            DB::table('form_id')->delete($v['id']);
+        if (!$res){
+            $data['code'] = 0;
+            $data['msg'] = '请求成功';
+            return response()->json($data);
         }
+        $ids = [];
+        foreach ($res as $v){
+            $ids[] = $v['id'];
+        }
+        DB::table('form_id')->whereIn('id',$ids)->delete();
         $data['code'] = 0;
         $data['msg'] = '请求成功';
         return response()->json($data);
@@ -722,9 +684,7 @@ class CommonController extends Controller
         }else{
             DB::table('operate_log')->where('log_id',$res->log_id)->update($data);
         }
-        $data['code'] = 0;
-        $data['msg'] = '请求成功';
-        return response()->json($data);
+        return response()->json($this->result);
     }
 
     //记录平台部门运营数据
@@ -800,9 +760,7 @@ class CommonController extends Controller
                 DB::table('operate_log')->where('log_id',$res->log_id)->update($data);
             }
         }
-        $data['code'] = 0;
-        $data['msg'] = '请求成功';
-        return response()->json($data);
+        return response()->json($this->result);
     }
 
     //记录平台个人运营数据
@@ -887,64 +845,11 @@ class CommonController extends Controller
                 DB::table('operate_log')->where('log_id',$res->log_id)->update($data);
             }
         }
-        $result['code'] = 0;
-        $result['msg'] = '请求成功';
-        return response()->json($result);
-    }
-
-    //补充以前销售业绩
-    public function supplement(){
-        $total_month = (int)(date('m'));
-        $users_res = DB::table('admin_users as au')
-            ->select('au.id')
-            ->leftJoin('admin_users_extend as aue','au.id','=','aue.admin_id')
-            ->where('au.status',0)
-            ->where('au.ach_status',0)
-            ->where('aue.job_status',1)
-            ->get();
-        $users_res = json_decode(json_encode($users_res),true);
-        foreach ($users_res as $v){
-            for($i = 1;$i<$total_month;$i++){
-                if ($i < 10){
-                    $count_month = '0'.$i;
-                }else{
-                    $count_month = $i;
-                }
-                $month = date('Y').'-'.$count_month;
-                $start_time = date("Y-$count_month-01 00:00:00");
-                $end_time = date("Y-$count_month-t 23:59:59");
-                //本月业绩
-                $ach_res = DB::table('achievement')->select(DB::raw('sum(goods_money) AS total_money'))
-                    ->whereBetween('created_at',[$start_time,$end_time])
-                    ->where('admin_users_id',$v['id'])
-                    ->where('status',1)
-                    ->where('ach_state',0)
-                    ->get();
-                $ach_res = json_decode(json_encode($ach_res),true);
-                $money = 0;
-                foreach ($ach_res as $a_v){
-                    $money = $money + $a_v['total_money'];
-                }
-                $data['bonus_number'] = $money;
-                $data['month'] = $month;
-                $data['type'] = 3;
-                $data['id'] = $v['id'];
-                $res = DB::table('operate_log')->where('month',$month)->where('type',3)->where('id',$v['id'])->first();
-                if (!$res){
-                    DB::table('operate_log')->insert($data);
-                }else{
-                    DB::table('operate_log')->where('log_id',$res->log_id)->update($data);
-                }
-            }
-        }
-        $data['code'] = 0;
-        $data['msg'] = '请求成功';
-        return response()->json($data);
+        return response()->json($this->result);
     }
 
     /* 添加客户 */
-    public function create(Request $request)
-    {
+    public function create(Request $request){
         $customer['qq'] = $request->post('qq','');
         $customer['remarks'] = $request->post('remarks','');
         $customer['name'] = $request->post('name','');
@@ -980,6 +885,7 @@ class CommonController extends Controller
         return response()->json($data);
     }
 
+    //云函数创建数据库
     public function createDatabase(){
         global $scf_data;
         $host = $scf_data['system']['database']['hostname'];

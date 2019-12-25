@@ -16,10 +16,9 @@ class ExamineeGroup extends Model
         if (!$type){
             $member = DB::table($this->table)->where('group_type',0)->get();
             $admin = DB::table($this->table)->where('group_type',1)->get();
-            $all = DB::table($this->table)->where('id',1)->get();
+            $all = [['created_at' => "2019-10-09 15:10:13", 'group_type' => 1, 'id' => 0, 'name' =>  "全部分组"]];
             $member = json_decode(json_encode($member),1);
             $admin = json_decode(json_encode($admin),1);
-            $all = json_decode(json_encode($all),1);
             $res['member'] = $member;
             $res['admin'] = $admin;
             $res['all'] = $all;
@@ -100,5 +99,33 @@ class ExamineeGroup extends Model
         $res = json_decode(json_encode($res),true);
         $name = $res['name'];
         return $name;
+    }
+
+    //in查询
+    public function getInArray($field,$inArray){
+        if (!is_array($inArray)){
+            return false;
+        }
+        $data = DB::table($this->table)->whereIn($inArray[0],$inArray[1])->select($field)->get();
+        if (!$data){
+            return [];
+        }else{
+            $data = json_decode(json_encode($data),true);
+        }
+        return $data;
+    }
+
+    //获取全部分组 返回id
+    public function getAllGrpouIds(){
+        $data = DB::table($this->table)->select('id')->get();
+        if (!$data){
+            return false;
+        }
+        $data = json_decode(json_encode($data),true);
+        $ids = [];
+        foreach ($data as $v){
+            $ids[] = $v['id'];
+        }
+        return json_encode($ids);
     }
 }

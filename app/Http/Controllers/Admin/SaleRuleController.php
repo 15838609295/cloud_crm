@@ -42,7 +42,7 @@ class SaleRuleController extends BaseController
         $salebonusRuleModel = new Salebonusrule();
         $data = $salebonusRuleModel->getSaleBonusRuleListWithFilter($searchFilter);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 获取全部规则列表 */
@@ -58,7 +58,7 @@ class SaleRuleController extends BaseController
             $res = [];
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 获取提成规则详情 */
@@ -70,10 +70,10 @@ class SaleRuleController extends BaseController
         $data = $saleRuleModel->getSaleRuleDetail((int)$id);
         if (!is_array($data)){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 规则添加 */
@@ -90,7 +90,7 @@ class SaleRuleController extends BaseController
         if (!preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $saleRule['rule_name'])) {
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '提成名称不能包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
 
         $saleRuleModel = new Salebonusrule();
@@ -98,10 +98,10 @@ class SaleRuleController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '添加失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '添加成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 规则编辑 */
@@ -119,17 +119,17 @@ class SaleRuleController extends BaseController
         $data = $saleRuleModel->getSaleRuleDetail((int)$id);
         if (!is_array($data)){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $saleRuleModel = new Salebonusrule();
         $res = $saleRuleModel->saleRuleUpdate((int)$id, $saleRule);
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '修改失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '修改成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //提成规则状态修改
@@ -145,7 +145,7 @@ class SaleRuleController extends BaseController
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 规则删除 */
@@ -158,9 +158,9 @@ class SaleRuleController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '删除失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '删除成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

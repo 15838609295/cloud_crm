@@ -26,7 +26,6 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(GateContract $gate)
     {
-        global $scf_data;
         if (!empty($_SERVER['SCRIPT_NAME']) && strtolower($_SERVER['SCRIPT_NAME']) === 'artisan') {
             return false;
         }
@@ -37,29 +36,17 @@ class AuthServiceProvider extends ServiceProvider
         });
         $this->registerPolicies($gate);
 
-        if ($scf_data["IS_SCF"] != true){
-            $url = $_SERVER['REQUEST_URI'];
-            if (!in_array($url,['/public/admin/install/index',
-                '/public/admin/install/testing',
-                '/public/admin/install/checkDir',
-                '/public/admin/install/mkDatabase',
-                '/public/admin/install/formatDataBase',
-                '/public/admin/test',
-            ])){
-                $permissions = \App\Models\Admin\Permission::with('roles')->get();
-                foreach ($permissions as $permission) {
-                    $gate->define($permission->name, function ($user) use ($permission) {
-                        return $user->hasPermission($permission);
-                    });
-                }
-            }
-        }else{
+        try{
             $permissions = \App\Models\Admin\Permission::with('roles')->get();
+
             foreach ($permissions as $permission) {
                 $gate->define($permission->name, function ($user) use ($permission) {
                     return $user->hasPermission($permission);
                 });
             }
+        }
+        catch (\Exception $e){
+            var_dump($e->getMessage());
         }
     }
 

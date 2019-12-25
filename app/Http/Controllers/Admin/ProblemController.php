@@ -29,7 +29,7 @@ class ProblemController extends BaseController
         $problemModel = new Problem();
         $data = $problemModel->getProblemListWithFilter($this->AU['id'],$searchFilter);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 	
 	//处理问题
@@ -41,7 +41,7 @@ class ProblemController extends BaseController
         if(empty($id)){
             $this->returnData = ErrorCode::$admin_enum["params_error"];
             $this->returnData["msg"] = "参数id不存在";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $data['remarks'] = $request->post("remarks", "");
         $data['state'] = 1;
@@ -50,10 +50,10 @@ class ProblemController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum["error"];
             $this->returnData['msg'] = '处理失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '处理成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
 	}
 	
 	//创建问题
@@ -69,9 +69,9 @@ class ProblemController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum["error"];
             $this->returnData['msg'] = '添加失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '处理成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
 	}
 }

@@ -64,7 +64,8 @@ class BaseController extends Controller
         }
         if(!strstr($url,"https")){
             if ($scf_data['IS_SCF'] == true) {
-                $url = 'https://' . $scf_data['host'] .$url;
+	        $host = 'https://'.$scf_data['system']['bucketConfig']['bucket'].'.cos.'.$scf_data['system']['bucketConfig']['region'].'.myqcloud.com';
+                $url = $host.$url;
             }else{
                 $url = 'https://'.$_SERVER['SERVER_NAME'].$url;
             }

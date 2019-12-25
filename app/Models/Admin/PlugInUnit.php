@@ -446,12 +446,12 @@ class PlugInUnit extends Model
 
     //修改导航栏状态
     public function updateNavigationStatus($type,$id,$display){
+        $configsModel = new Configs();
         if ($type == 1){   //客户小程序
-            $res = DB::table($this->con)->select('agent_tarbar_list')->where('id',1)->first();
-            $res = json_decode(json_encode($res),true);
-            $data = json_decode($res['agent_tarbar_list'],true);
+            $res = $configsModel->getValue('agent_tarbar_list');
+            $res = json_decode($res,true);
             $number = 0;
-            foreach ($data as $k=>&$v){
+            foreach ($res as $k=>&$v){
                 if ($v['display'] == 1){
                     $number += 1;
                 }
@@ -459,24 +459,23 @@ class PlugInUnit extends Model
                     $v['display'] = $display;
                 }
             }
-            if ($display == 1 && $number >= 5){
+            if ($display == 1 && $number >= 5){  //最大显示限制
                 return -1;
             }
-            if ($display == 0 && $number <= 1){
+            if ($display == 0 && $number <= 1){  //最小显示限制
                 return -2;
             }
-            $where['agent_tarbar_list'] = json_encode($data);
-            $add_res = DB::table($this->con)->where('id',1)->update($where);
+            $where['agent_tarbar_list'] = json_encode($res);
+            $add_res = $configsModel->toUpdate($where);
             if ($add_res){
                 return true;
             }
             return false;
         }else{
-            $res = DB::table($this->con)->select('admin_tarbar_list')->where('id',1)->first();
-            $res = json_decode(json_encode($res),true);
-            $data = json_decode($res['admin_tarbar_list'],true);
+            $res = $configsModel->getValue('admin_tarbar_list');
+            $res = json_decode($res,true);
             $number = 0;
-            foreach ($data as $k=>&$v){
+            foreach ($res as $k=>&$v){
                 if ($v['display'] == 1){
                     $number += 1;
                 }
@@ -487,8 +486,11 @@ class PlugInUnit extends Model
             if ($display == 1 && $number >= 5){
                 return -1;
             }
-            $where['admin_tarbar_list'] = json_encode($data);
-            $add_res = DB::table($this->con)->where('id',1)->update($where);
+            if ($display == 0 && $number <= 1){  //最小显示限制
+                return -2;
+            }
+            $where['admin_tarbar_list'] = json_encode($res);
+            $add_res = $configsModel->toUpdate($where);
             if ($add_res){
                 return true;
             }
@@ -547,36 +549,4 @@ class PlugInUnit extends Model
         $res = json_decode(json_encode($res),true);
         return $res;
     }
-
-    //获取客户小程序配置信息
-    public function getAgentWechatConfigs(){
-        $res = DB::table($this->con)->where('id',1)->select('agent_wechat_configs')->first();
-        $res = json_decode(json_encode($res),true);
-        if (!$res['agent_wechat_configs']){
-            return false;
-        }
-        $data = json_decode($res['agent_wechat_configs'],true);
-        return $data;
-    }
-
-    //修改客户小程序配置
-    public function updateAgentWechatConfigs($fields){
-        $res = DB::table($this->con)->where('id',1)->select('agent_wechat_configs')->first();
-        if ($res){
-            $res = json_decode(json_encode($res),true);
-            $data = json_decode($res['agent_wechat_configs'],true);
-            foreach ($fields as $k=>$v){
-                $data[$k] = $v;
-            }
-            $list['agent_wechat_configs'] = json_encode($data);
-        }else{
-            $list['agent_wechat_configs'] = json_encode($fields);
-        }
-        $update_res = DB::table($this->con)->where('id',1)->update($list);
-        if (!$update_res){
-            return false;
-        }
-        return true;
-    }
-
 }

@@ -339,7 +339,7 @@ class CustomerBase extends Model
     public function getCustomerListWithFilter($fields)
     {
         $res = DB::table($this->table_name . ' as c')
-            ->select('c.*', 'au.name as admin_name')
+            ->select('c.*','au.name as admin_name')
             ->leftJoin('admin_users as au', 'au.id', '=', 'c.recommend');
         if ($fields['admin_id'] != '') {
             $adminUserModel = new UserBase();
@@ -603,8 +603,9 @@ class CustomerBase extends Model
     {
         $data = DB::table($this->table_name)
             ->where('recommend','=',$id)
-            ->where('contact_next_time','<',substr(Carbon::now()->toDateTimeString(),0,10).' 00:00:00')
+            ->where('contact_next_time','<',date('Y-m-d 00:00:00',time()))
             ->where('contact_next_time', '!=', "0000-00-00 00:00:00")
+            ->where('cust_state', '!=', "1")
             ->count();
         return $data;
     }

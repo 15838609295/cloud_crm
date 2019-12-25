@@ -101,12 +101,12 @@ class NewsController extends BaseController
 	    return response()->json($this->returnData);
     }
 
-	/**
-	* 加载跟多日志
-	*
-	* @return \Illuminate\Http\Response
-	*/	
-	public function loadLog(){
+    /**
+    * 加载跟多日志
+    *
+    * @return \Illuminate\Http\Response
+    */	
+    public function loadLog(){
         if ($this->returnData['code'] > 0){
             return response()->json($this->returnData);
         }

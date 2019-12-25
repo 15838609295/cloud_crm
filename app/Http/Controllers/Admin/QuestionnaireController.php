@@ -42,7 +42,7 @@ class QuestionnaireController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '请求失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //问卷列表
@@ -66,7 +66,7 @@ class QuestionnaireController extends BaseController
         $res = $questionnaireModel->getList($searchFilter);
 
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除用户提交的问卷答卷
@@ -81,7 +81,7 @@ class QuestionnaireController extends BaseController
             $this->returnData['msg'] = '请求失败';
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //答卷列表
@@ -107,7 +107,7 @@ class QuestionnaireController extends BaseController
             $this->returnData['msg'] = '请求失败';
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //用户提交的答卷详情
@@ -122,7 +122,7 @@ class QuestionnaireController extends BaseController
             $this->returnData['msg'] = '请求失败';
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //问卷详情导出
@@ -135,7 +135,7 @@ class QuestionnaireController extends BaseController
         if (!$res){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '无数据可下载';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $txt = $res['que_name'].'-'.$res['member_name'].'答卷';
         unset($res['que_name']);
@@ -206,7 +206,7 @@ class QuestionnaireController extends BaseController
             $this->returnData['msg'] = '请求失败';
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //问答分页
@@ -231,7 +231,7 @@ class QuestionnaireController extends BaseController
             $this->returnData['msg'] = '请求失败';
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //统计导出信息
@@ -251,7 +251,7 @@ class QuestionnaireController extends BaseController
         if ($res['total'] < 1){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '无数据可下载';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $arr = [['问题','选择结果/回答','此选择人数','回答总人数','百分比']];
         foreach ($res['rows'] as $v){
@@ -312,7 +312,7 @@ class QuestionnaireController extends BaseController
             if (!$base64_excel){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $files = json_decode($base64_excel,true);
             $temp_file = tempnam(sys_get_temp_dir(),"php");  //临时文件
@@ -324,7 +324,7 @@ class QuestionnaireController extends BaseController
             if (!$url){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '上传文件失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             //下载
             $path = urldecode($url['ObjectURL']);
@@ -374,7 +374,7 @@ class QuestionnaireController extends BaseController
         if (file_exists($file_path)){
             unlink($file_path);
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //导出excel模板
@@ -398,7 +398,7 @@ class QuestionnaireController extends BaseController
         }
         $this->returnData = ErrorCode::$admin_enum['not_exist'];
         $this->returnData['msg'] = '文件不存在';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
 

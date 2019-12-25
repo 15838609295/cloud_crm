@@ -23,19 +23,15 @@ class Attend extends Model
     }
 
     public function getActivityNumber($id){
-        $number = 0;
-        $res = DB::table($this->table)->where('activity_id',$id)->where('status',2)->get();
-        if ($res){
-            $number = count($res);
-        }
+        $number = DB::table($this->table)->where('activity_id',$id)->where('status',2)->count();
         return $number;
     }
 
     //报名列表
     public function getActivityList($data){
         $res = DB::table($this->table.' as a')
-            ->select('a.id','a.activity_id','a.member_id','a.member_name','m.mobile','a.status','a.created_at','a.money')
-            ->leftJoin('member as m','a.member_id','=','m.id')
+            ->select('a.id','a.activity_id','a.member_id','a.member_name','a.mobile','a.status','a.created_at','a.money','me.avatar')
+            ->leftJoin('member_extend as me','a.member_id','=','me.member_id')
             ->where('a.activity_id',$data['activity_id']);
         $list['total'] = $res->count();
         $result = $res->skip($data['start'])->take($data['pageSize'])->orderBy('a.'.$data['sortName'], $data['sortOrder'])->get();
@@ -162,8 +158,8 @@ class Attend extends Model
     }
 
     //获取活动全部人员
-    public function getAttendAll($data){
-        $res = DB::table($this->table)->where('activity_id',$data['id'])->get();
+    public function getAttendAll($id){
+        $res = DB::table($this->table)->where('activity_id',$id)->get();
         if ($res){
             $res = json_decode(json_encode($res),true);
             return $res;
@@ -197,13 +193,51 @@ class Attend extends Model
         }
         //获取报名人数
         $count = DB::table($this->table)->where('activity_id',$activity_id)->where('status',2)->count();
-        $limit_number = DB::table('activity')->where('id',$activity_id)->select('limit_number')->first();
-        $limit_number = json_decode(json_encode($limit_number),true);
-        if ($count >= $limit_number['limit_number']){
-            $a = -1;
-            return $a;
+        $limit_number = DB::table('activity')->where('id',$activity_id)->value('limit_number');
+        if ($count >= (int)$limit_number){
+            return -1;
         }
         return true;
+    }
+
+    //根据条件获取信息
+    public function getFirlds($field, $filter, $one = true){
+        if (!$filter){
+            return false;
+        }
+        $db = DB::table($this->table)->where($filter)->select($field);
+        if ($one){
+            $data = $db->first();
+        }else{
+            $data = $db->get();
+        }
+        if (!$data){
+            return [];
+        }else{
+            $data = json_decode(json_encode($data),true);
+        }
+        return $data;
+    }
+
+    //获取活动报名人员列表
+    public function getAttendList($fields){
+        $db = DB::table($this->table.' as a')
+            ->select('m.name','me.avatar','a.created_at')
+            ->leftJoin('member as m','a.member_id','=','m.id')
+            ->leftJoin('member_extend as me','a.member_id','=','me.member_id')
+            ->where('a.activity_id',$fields['id'])
+            ->where('a.status',2);
+        $data['total'] = $db->count();
+        $data['rows'] = $db->skip($fields['start'])
+            ->take($fields['pageSize'])
+            ->orderBy('a.id','desc')
+            ->get();
+        $data['rows'] = json_decode(json_encode($data['rows']),true);
+        if (!$data['rows']){
+            $data['rows'] = [];
+            $data['total'] = 0;
+        }
+        return $data;
     }
 
     //获取form_id

@@ -23,29 +23,36 @@ class PlugInController extends BaseController
         }
         $type = $request->post('type',1);
         if ($type == 1){
-            $ids = ['164','165','166','167','168','175','176','177','178','179','213','214','215','221'];
+            $cid = 174;
+            //模块表
+            $modularModel = new Modular();
+            $list = $modularModel->getList();
         }else{
-            $ids = ['184','185'];
+            $list = [];
+            $cid = 183;
         }
-        //模块表
-        $modularModel = new Modular();
-        $list = $modularModel->getList();
-
-        $res = DB::table('permissions')->whereIn('id',$ids)->get();
+        $data = DB::table('permissions')->where('cid',$cid)->select('id')->get();
+        $data = json_decode(json_encode($data),true);
+        $ids = [];
+        foreach ($data as $v){
+            $ids[] = $v['id'];
+        }
+        $res = DB::table('permissions')->whereIn('id',$ids)->select('id','label','display','icon','is_limit','sort','show_mode','new_name')->get();
+        $res = json_decode(json_encode($res),true);
         if (!$res){
             $this->returnData['code'] = 0;
             $this->returnData['msg'] = '无插件';
             $this->returnData['data'] = [];
         }else{
-            $res = json_decode(json_encode($res),true);
-            if ($type == 1){
-                if ($list){
-                    $res = array_merge($res,$list);
+            $res = array_merge($res,$list);
+            foreach ($res as &$v){
+                if (isset($v['icon'])){
+                    $v['icon'] = $this->processingPictures($v['icon']);
                 }
             }
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改插件信息
@@ -79,7 +86,7 @@ class PlugInController extends BaseController
                 $this->returnData = ErrorCode::$admin_enum['modifyfail'];
             }
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //首页模块列表
@@ -96,7 +103,7 @@ class PlugInController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改首页模块信息
@@ -111,7 +118,7 @@ class PlugInController extends BaseController
         if (!$res){
             $this->returnData = ErrorCode::$admin_enum['modifyfail'];
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //获取插件根据排序和状态
@@ -211,7 +218,7 @@ class PlugInController extends BaseController
             }
             $this->returnData['data'] = array_values($res);
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //小程序名称和色调
@@ -227,7 +234,7 @@ class PlugInController extends BaseController
         }
         $res = json_decode(json_encode($res),true);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改小程序名称和色调
@@ -249,20 +256,20 @@ class PlugInController extends BaseController
             if ($data['wxapplet_name'] == '' || $data['wxapplet_color']== ''){
                 $this->returnData['code'] = 1;
                 $this->returnData['msg'] = '参数缺失';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
         }else{
             if ($data['wechat_name'] == '' || $data['wechat_color']== ''){
                 $this->returnData['code'] = 1;
                 $this->returnData['msg'] = '参数缺失';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
         }
         $res = DB::table('configs')->where('id',1)->update($data);
         if (!$res){
             $this->returnData = ErrorCode::$admin_enum['modifyfail'];
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //移动模块位置
@@ -278,7 +285,7 @@ class PlugInController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '移动失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //移动插件位置
@@ -296,7 +303,7 @@ class PlugInController extends BaseController
                 if (!$res){
                     $this->returnData['code'] = 1;
                     $this->returnData['msg'] = '移动失败';
-                    return response()->json($this->returnData);
+                    return $this->return_result($this->returnData);
                 }
             }else{
                 $where['sort'] = $v['sort'];
@@ -305,17 +312,17 @@ class PlugInController extends BaseController
                 if (!$res){
                     $this->returnData['code'] = 1;
                     $this->returnData['msg'] = '移动失败';
-                    return response()->json($this->returnData);
+                    return $this->return_result($this->returnData);
                 }
             }
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //导航栏移动位置
     public function updateNavigationOrder(Request $request){
         if ($this->returnData['code'] > 0){
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $navigation = $request->post('navigation','');
         $type = $request->post('type','');
@@ -326,7 +333,7 @@ class PlugInController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '移动失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //轮播图管理
@@ -349,7 +356,7 @@ class PlugInController extends BaseController
             }
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加轮播图
@@ -363,8 +370,9 @@ class PlugInController extends BaseController
         $data['status'] = $request->input('status','');
         $con = Configs::first();
         if ($con->env != "CLOUD"){
-            $size = getimagesize('https://'.$_SERVER['HTTP_HOST'].$data['url']);
-            $data['size'] = $size[0].'*'.$size[1];
+            $data['size'] = '0*0';
+//            $size = getimagesize('https://'.$_SERVER['HTTP_HOST'].$data['url']);
+//            $data['size'] = $size[0].'*'.$size[1];
         }else{
             $data['size'] = '0*0';
         }
@@ -373,7 +381,7 @@ class PlugInController extends BaseController
         if (!$res){
             $this->returnData = ErrorCode::$admin_enum['addfail'];
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //轮播详情
@@ -389,7 +397,7 @@ class PlugInController extends BaseController
         }else{
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改轮播信息
@@ -423,7 +431,7 @@ class PlugInController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '最多显示5张轮播图';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //轮播图删除
@@ -436,7 +444,7 @@ class PlugInController extends BaseController
         if (!$res){
             $this->returnData = ErrorCode::$admin_enum['delfail'];
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //底部导航栏列表
@@ -450,8 +458,18 @@ class PlugInController extends BaseController
         $data['start'] = ($pageNo -1)*$data['pageSize'];
         $plugUnitModel = new PlugInUnit();
         $res = $plugUnitModel->getNavigationList($data,1);
+        if (isset($res['rows'])){
+            foreach ($res['rows'] as &$v){
+                if (isset($v['iconPath'])){
+                    $v['iconPath'] = $this->processingPictures($v['iconPath']);
+                }
+                if (isset($v['selectedIconPath'])){
+                    $v['selectedIconPath'] = $this->processingPictures($v['selectedIconPath']);
+                }
+            }
+        }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加底部导航栏
@@ -472,7 +490,7 @@ class PlugInController extends BaseController
         if (!$res){
             $this->returnData = ErrorCode::$admin_enum['addfail'];
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改导航栏信息
@@ -501,7 +519,7 @@ class PlugInController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '导航栏必须要显示一个';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改导航栏状态
@@ -523,7 +541,7 @@ class PlugInController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '导航栏必须要显示一个';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除底部导航栏
@@ -541,7 +559,7 @@ class PlugInController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '不能删除唯一显示的导航栏';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //获取路径
@@ -553,7 +571,7 @@ class PlugInController extends BaseController
         $plugUnitModel = new PlugInUnit();
         $res = $plugUnitModel->getWxAppPageList($type);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //用户小程序配置
@@ -561,21 +579,35 @@ class PlugInController extends BaseController
         if ($this->returnData['code'] > 0){
             return $this->returnData;
         }
-        $plugUnitModel = new PlugInUnit();
-        $res = $plugUnitModel->getAgentWechatConfigs();
+        $configsModel = new Configs();
+        $res = $configsModel->getValue('agent_wechat_configs');
+        $res = json_decode($res,true);
         if (!$res){
             $data= [
                 'album' => [
                     'status' => 0,
                     'bgImage' => ''
+                ],
+                'workOrder' => [
+                    'status' => 0,
+                    'bgImage' => ''
                 ]
             ];
         }else{
-            $res['album']['bgImageUrl'] = $this->processingPictures($res['album']['bgImage']);
+            if (isset($res['album'])){
+                $res['album']['bgImageUrl'] = $this->processingPictures($res['album']['bgImage']);
+            }else{
+                $res['album'] = ['status' => 0,'bgImage' => ''];
+            }
+            if (isset($res['workOrder'])){
+                $res['workOrder']['bgImageUrl'] = $this->processingPictures($res['workOrder']['bgImage']);
+            }else{
+                $res['workOrder'] = ['status' => 0,'bgImage' => ''];
+            }
             $data= $res;
         }
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改用户小程序配置
@@ -583,17 +615,16 @@ class PlugInController extends BaseController
         if ($this->returnData['code'] > 0){
             return $this->returnData;
         }
-        $data['album'] = $request->post('album','');
-        $plugUnitModel = new PlugInUnit();
-        $res = $plugUnitModel->updateAgentWechatConfigs($data);
+        $list['album'] = $request->post('album','');
+        $list['workOrder'] = $request->post('workOrder','');
+        $configsModel = new Configs();
+        $data['agent_wechat_configs'] = json_encode($list);
+        $res = $configsModel->toUpdate($data);
         if (!$res){
             $this->returnData = ErrorCode::$admin_enum['modifyfail'];
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
-
-
-
 
 
 

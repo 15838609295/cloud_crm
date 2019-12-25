@@ -17,7 +17,7 @@ class GoodsController extends BaseController
     //商品列表
     public function goodsList(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->post();
         $pageNumber = isset($params['pageNumber']) && $params['pageNumber']!='' ? $params['pageNumber'] : 1;                     //当前页码
@@ -33,14 +33,10 @@ class GoodsController extends BaseController
         $total = $rows;
         $data['total'] = $total->count();
         $res = $rows->get();
-        if(!$res){
-            $this->result['data'] = $data;
-            return response()->json($this->result);
-        }
         $res = json_decode(json_encode($res),true);
         if(!is_array($res) || count($res)<1){
             $this->result['data'] = $data;
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         //获取商品类型
         $goodsTypeModel = new GoodsType();
@@ -70,6 +66,9 @@ class GoodsController extends BaseController
                 $result[$k]['dlprice'] = $price_info[0]['salePrice'];
             }
             $result[$k]['goods_type'] = $newType[$v['goods_type']];
+            if (isset($v['goods_pic'])){
+                $result[$k]['goods_pic'] = $this->processingPictures($v['goods_pic']);
+            }
         }
         //根据字段last_name对数组$data进行降序排列
         $last_names = array_column($result,'dlprice');
@@ -86,19 +85,19 @@ class GoodsController extends BaseController
         $pagedata = array_slice($result,$start,$pageSize);
         $data['rows'] = $pagedata;
         $this->result['data'] = $data;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //商品详情
     public function goodsDetail(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $params = request()->post();
         if(!isset($params['id']) || $params['id']==''){
             $this->result['status'] = 1;
             $this->result['msg'] = 'id不能为空';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         if (is_array($this->user) && $this->user['discount'] == 0){
             $this->user['discount'] = 100;
@@ -109,7 +108,7 @@ class GoodsController extends BaseController
         if(!$res){
             $this->result['status'] = 1;
             $this->result['msg'] = '该商品不存在';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         //获取商品类型
         $goodsTypeModel = new GoodsType();
@@ -135,31 +134,35 @@ class GoodsController extends BaseController
                 }
 
             }
+            if (isset($v['image'])){
+                $v['image'] = $this->processingPictures($v['image']);
+            }
+        }
+        if (isset($res['goods_pic'])){
+            $res['goods_pic'] = $this->processingPictures($res['goods_pic']);
+        }
+        if (isset($res['pic_list'])){
+            $res['pic_list'] = $this->processingPictures($res['pic_list']);
         }
         $res['goods_version'] = $goods_version;
         $this->result['data'] = $res;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //商品类型列表
     public function typeList(){
-        global $scf_data;
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $goodsTypeModel = new GoodsType();
         $res = $goodsTypeModel->goodsTypeList();
         if (!$res){
             $this->result['status'] = 1;
             $this->result['msg'] = '类型列表不存在';
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $this->result['data'] = $res;
-        if ($scf_data['IS_SCF'] === true){
-            $this->result['banner'] = 'https://'.$scf_data['host'].'/release/crm-api/2.png';
-        }else{
-            $this->result['banner'] = 'https://'.$_SERVER['SERVER_NAME'].'/uploads/banners/2.png';
-        }
-        return response()->json($this->result);
+        $this->result['banner'] = $this->processingPictures('/uploads/banners/2.png');
+        return $this->return_result($this->result);
     }
 }

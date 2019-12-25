@@ -59,46 +59,87 @@ class Exam extends Model
         return $res;
     }
 
+    //根据条件获取字段
+    public function getFields($field, $filter, $one = true){
+        if (!$filter){
+            return false;
+        }
+        $db = DB::table($this->table)->where($filter)->select($field);
+        if ($one){
+            $data = $db->first();
+        }else{
+            $data = $db->get();
+        }
+        if (!$data){
+            return [];
+        }else{
+            $data = json_decode(json_encode($data),true);
+        }
+        return $data;
+    }
+
+    //获取某字段的值
+    public function getValue($field, $filter){
+        $data = DB::table($this->table)->where($filter)->value($field);
+        if (!$data){
+            return false;
+        }
+        return $data;
+    }
+
     //创建考试
     public function addExamData($data,$test_paper_id,$amdin_name){
-        $test_paper_data = DB::table('test_paper')->where('id',$test_paper_id)->first();
-        $test_paper_data = json_decode(json_encode($test_paper_data),true);
-        $item_bank_ids = json_decode($test_paper_data['item_bank_list'],1);
-        if (!$item_bank_ids){
+        $testPaperModel = new TestPaper();
+        $item_data = $testPaperModel->getFields(['name','item_bank_list','type_id'],['id'=>$test_paper_id]);
+        if (!$item_data){
             return -1;
         }
-        $exam_subject = [];
-        $subject_number = 0;
-        foreach ($item_bank_ids as $v){
-            $item_bank = DB::table('item_bank')->where('id',$v)->select('id','name','annex','type','must','option','answer','fraction','remarks')->first();
-            $item_bank = json_decode(json_encode($item_bank),true);
-            $exam_subject[] = $item_bank;
-            $subject_number +=1;
+        $ids = json_decode($item_data['item_bank_list'],true);
+        $item_list = DB::table('item_bank')->whereIn('id',$ids)->select('id','name','annex','type','must','option','answer','fraction','remarks')->get();
+        $item_list = json_decode(json_encode($item_list),true);
+        $total_score = 0;
+        $subject_number = count($item_list);
+        foreach ($item_list as $v){
+            if ($v['type'] != 3){
+                $v['option'] = json_decode($v['option'],true);
+                if (!is_array($v['option']) || count($v['option']) <= 0){
+                    return -2;
+                }
+                if ($v['fraction'] <= 0){
+                    return -3;
+                }
+                if (strlen($v['answer']) <= 0){
+                    return -4;
+                }
+            }
+            $total_score += $v['fraction'];
         }
-        $ids = explode(',',$data['examineeId']);
-        foreach ($ids as &$v){
-            $v = (int)$v;
+        if ($data['examineeId'] == 0){  //全部分组
+            $examineeGrpouModel = new ExamineeGroup();
+            $examinee_id = $examineeGrpouModel->getAllGrpouIds();
+        }else{
+            $examinee_id = json_encode(explode(',',$data['examineeId']));
         }
         $exam_data['name'] = $data['name'];
         $exam_data['start_time'] = $data['startTime'];
         $exam_data['end_time'] = $data['endTime'];
         $exam_data['qualified_score'] = $data['qualifiedScore'];
-        $exam_data['total_score'] = $data['totalScore'];
+        $exam_data['total_score'] = $total_score;
         $exam_data['cover'] = $data['cover'];
         $exam_data['explain'] = $data['explain'];
         $exam_data['limit_time'] = $data['limitTime'];
         $exam_data['number'] = $data['number'];
-        $exam_data['examinee_id'] = json_encode($ids);
+        $exam_data['examinee_id'] = $examinee_id;
         $exam_data['is_ranking'] = $data['isRanking'];
         $exam_data['is_copy'] = $data['isCopy'];
         $exam_data['is_sort'] = $data['isSort'];
         $exam_data['notice'] = $data['notice'];
-        $exam_data['subject_list'] = json_encode($exam_subject);
-        $exam_data['type_id'] = $test_paper_data['type_id'];
+        $exam_data['subject_list'] = json_encode($item_list);
+        $exam_data['type_id'] = $item_data['type_id'];
         $exam_data['found'] = $amdin_name;
         $exam_data['created_at'] = Carbon::now()->toDateTimeString();
         $exam_data['subject_number'] = $subject_number;
-        $exam_data['test_paper_name'] = $test_paper_data['name'];
+        $exam_data['test_paper_name'] = $item_data['name'];
         $res = DB::table($this->table)->insert($exam_data);
         if (!$res){
             return false;
@@ -196,47 +237,49 @@ class Exam extends Model
             return $res;
         }
         $res = json_decode(json_encode($res),true);
-        $exam_id = $res['exam_id'];
         $answer = json_decode($res['answer'],true);
-        $exam_res = DB::table('exam')->where('id',$exam_id)->select('subject_list')->first();
-        $exam_res = json_decode(json_encode($exam_res),true);
-        $subject_list = json_decode($exam_res['subject_list'],true);
+        $subject_list = $this->getValue('subject_list',['id'=>$res['exam_id']]);
+        $subject_list = json_decode($subject_list,true);
         foreach ($subject_list as &$v){
-            $v['option'] = json_decode($v['option'],1);
             if ($v['type'] != 3){
-                $v['answer'] = implode(',',json_decode($v['answer'],1));
+                $v['option'] = json_decode($v['option'],1);
+                $v['correct_answer'] = implode(',',json_decode($v['answer'],1));
+                $v['answer'] = json_decode($v['answer'],1);
+            }else{
+                $v['correct_answer'] = $v['answer'];
             }
             if (!$answer){
                 $v['status'] = 0;
-                $v['user_answer'] = '';
+                if ($v['type'] != 3){
+                    $v['user_answer'] = [];
+                }else{
+                    $v['user_answer'] = '';
+                }
+
             }else{
-                foreach ($answer as $a_v){
-                    if ($v['id'] == $a_v['key'] && $v['answer'] == $a_v['answer']){ //正确
-                        $v['status'] = 1;
-                        if ($v['type'] != 3){
-                            $v['answer'] = explode(',',$v['answer']);
-                            $a_v['answer'] = explode(',',$a_v['answer']);
-                            foreach ($v['answer'] as &$v_a){
-                                $v_a = (int)$v_a;
+                foreach ($answer as &$a_v){
+                    if ($v['id'] == (int)$a_v['key']){
+                        if  ($v['correct_answer'] == $a_v['answer']) {  //正确
+                            $v['status'] = 1;
+                            $v['user_answer'] = $v['answer'];
+                        }else{                                            //错误
+                            $v['status'] = 0;
+                            if ($v['type'] != 3){
+                                $a_v['answer'] = explode(',',$a_v['answer']);
+                                foreach ($a_v['answer'] as &$a_v_a){
+                                    $a_v_a = (int)$a_v_a;
+                                }
                             }
-                            foreach ($a_v['answer'] as &$a_v_a){
-                                $a_v_a = (int)$a_v_a;
-                            }
+                            $v['user_answer'] = $a_v['answer'];
                         }
-                        $v['user_answer'] = $a_v['answer'];
-                    }elseif ($v['id'] == $a_v['key'] && $v['answer'] != $a_v['answer']){   //错误
-                        $v['status'] = 0;
-                        if ($v['type'] != 3){
-                            $v['answer'] = explode(',',$v['answer']);
-                            $a_v['answer'] = explode(',',$a_v['answer']);
-                            foreach ($v['answer'] as &$v_a){
-                                $v_a = (int)$v_a;
-                            }
-                            foreach ($a_v['answer'] as &$a_v_a){
-                                $a_v_a = (int)$a_v_a;
-                            }
-                        }
-                        $v['user_answer'] = $a_v['answer'];
+                    }
+                }
+                if (!isset($v['user_answer'])){               //没有回答
+                    $v['status'] = 0;
+                    if ($v['type'] != 3){
+                        $v['user_answer'] = [];
+                    }else{
+                        $v['user_answer'] = '';
                     }
                 }
             }
@@ -390,7 +433,6 @@ class Exam extends Model
                 $v['status'] = 3;
                 $v['status_txt'] = '已结束';
             }
-            $v['cover'] = 'https://'.$_SERVER['SERVER_NAME'].$v['cover'];
         }
         return $res;
     }
@@ -441,8 +483,8 @@ class Exam extends Model
     //考前创建答卷
     public function addStartExamResult($data){
         //查询用户是否已考过
-        $user_res = DB::table('exam_results')->where('uid',$data['uid'])->where('exam_id',$data['exam_id'])->first();
-        if (!$user_res){ //没有考试过
+        $id = DB::table('exam_results')->where('uid',$data['uid'])->where('exam_id',$data['exam_id'])->value('id');
+        if (!$id){ //没有考试过
             $data['start_time'] = Carbon::now()->toDateTimeString();
             $data['created_at'] = Carbon::now()->toDateTimeString();
             $res = DB::table('exam_results')->insert($data);
@@ -453,7 +495,7 @@ class Exam extends Model
         }else{
             //已经考试过，修改开始考试时间
             $where['start_time'] = Carbon::now()->toDateTimeString();
-            $res = DB::table('exam_results')->where('uid',$data['uid'])->where('exam_id',$data['exam_id'])->update($where);
+            $res = DB::table('exam_results')->where('id',$id)->update($where);
             if (!$res){
                 return false;
             }
@@ -467,66 +509,68 @@ class Exam extends Model
         $exam_result['end_time'] = Carbon::now()->toDateTimeString();
         $answer = json_decode($data['answer'],1);
         //获取题目计算得分
-        $exam_res = DB::table($this->table)->where('id',$data['id'])->select('subject_list','qualified_score','number','total_score','is_ranking')->first();
-        $exam_res = json_decode(json_encode($exam_res),true);
+        $exam_res = $this->getFields(['subject_list','qualified_score','number','total_score','is_ranking'],['id'=>$data['id']]);
         $subject_list = json_decode($exam_res['subject_list'],1);
-        $fraction = 0;
-        foreach ($subject_list as $v){
+        $fraction = 0;                            //本次分数
+        foreach ($subject_list as $k=>$v){
             if ($v['type'] != 3){
                 $v['answer'] = implode(',',json_decode($v['answer'],1));
             }
             foreach ($answer as $a_v){
                 if ($a_v['key'] == $v['id']){ //计算相同的题
                     //处理用户提交的答案
-                    if ($v['answer'] == $a_v['answer']){
+                    $a_v_answer = preg_replace('# #','',$a_v['answer']);
+                    if ($v['answer'] == $a_v_answer){
                         $fraction = $fraction + $v['fraction'];
                     }
                 }
             }
         }
-        if ($fraction > $exam_res['qualified_score']){ //及格
-            $exam_result['status'] = 1;
+        if ($fraction > $exam_res['qualified_score']){
+            $exam_result['status'] = 1;    //及格
+        }else{
+            $exam_result['status'] = 0;   //不及格
         }
-        $new_branch = $fraction;          //本次考试分数
-        $exam_result['lately_results'] = $fraction; //最新考试分数
-        $exam_result['answer'] = $data['answer'];
         //找到用户的答卷
         $user_res = DB::table('exam_results')->where('exam_id',$data['id'])->where('uid',$data['uid'])->first();
         $user_res = json_decode(json_encode($user_res),1);
-
+        //计算用时
         $end_time = strtotime($exam_result['end_time']);
         $start_time = strtotime($user_res['start_time']);
         $use_time = $end_time -$start_time;
         $use_time = date('i.s',$use_time);
-        $exam_result['use_time'] = $use_time;
-        if ($user_res['number'] == 0){ //考试次数
+
+        $exam_result['use_time'] = $use_time;                 //考试用时
+        $exam_result['start_time'] = $user_res['start_time'];//考试开始时间
+        $exam_result['lately_results'] = $fraction;           //最新考试分数
+        $exam_result['answer'] = $data['answer'];             //用户答案
+        if ($user_res['number'] == 0){
+            //考试次数  没考过
             $exam_result['number'] = 1;
+            $exam_result['branch'] = $fraction;
+            $result = DB::table('exam_results')->where('id',$user_res['id'])->update($exam_result);
+            if (!$result){
+                return false;
+            }
+            $exam_result['highest'] = $fraction;
         }else{
             $exam_result['number'] = $user_res['number']+1;
-        }
-        //修改信息
-        if ($user_res['branch'] != 0){  //用户考过 比较分数来判断是否修改
-            if ($new_branch > $user_res['branch']){  //本次考试分数大于上次考试分数 则修改分数
-                $exam_result['branch'] = $new_branch;
-                $result = DB::table('exam_results')->where('exam_id',$data['id'])->where('uid',$data['uid'])->update($exam_result);
+            //用户考过
+            if ($fraction > $user_res['branch']){  //本次考试分数大于上次考试分数 则修改分数
+                $exam_result['branch'] = $fraction;
+                $result = DB::table('exam_results')->where('id',$user_res['id'])->update($exam_result);
                 if (!$result){
                     return false;
                 }
                 $exam_result['highest'] = $exam_result['branch'];
-            }else{ //本次考试小于记录分数 显示记录分数
+            }else{                                  //本次考试小于记录分数 显示记录分数
                 $update['number'] = $user_res['number']+1;
-                DB::table('exam_results')->where('exam_id',$data['id'])->where('uid',$data['uid'])->update($update);
+                $update['lately_results'] = $fraction;
+                DB::table('exam_results')->where('id',$user_res['id'])->update($update);
                 $exam_result['highest'] = $user_res['branch'];
             }
-        }else{  //用户没考过  修改
-            $exam_result['branch'] = $new_branch;
-            $result = DB::table('exam_results')->where('exam_id',$data['id'])->where('uid',$data['uid'])->update($exam_result);
-            if (!$result){
-                return false;
-            }
-            $exam_result['highest'] = $new_branch;
         }
-
+        unset($exam_result['answer']);
         $exam_result['total_branch'] = $exam_res['total_score'];
         //是否需要获取排名信息
         if ($exam_res['is_ranking'] == 1){
@@ -564,15 +608,12 @@ class Exam extends Model
         }
         //剩余考试次数
         $exam_result['again'] = $exam_res['number'] - $exam_result['number'];
-        unset($exam_result['answer']);
         $new_time = explode('.',$exam_result['use_time']);
-        $exam_result['use_time'] = '';
-        if ($new_time[0] && $new_time[1]){
+        if (isset($new_time[0]) && isset($new_time[1])){
             $exam_result['use_time'] = $new_time[0].'分'.$new_time[1].'秒';
         }else{
             $exam_result['use_time'] = $new_time[0].'分0秒';
         }
-        //$exam_result['use_time'] = $new_time[0].'分'.$new_time[1].'秒';
         return $exam_result;
     }
 
@@ -591,12 +632,12 @@ class Exam extends Model
             $res['number'] = 0;
         }
         //计算剩余时间
-        $start_time = DB::table('exam_results')->where('uid',$data['uid'])->where('exam_id',$data['id'])->select('start_time')->first();
-        $start_time = json_decode(json_encode($start_time),1);
-        $end_time = strtotime($start_time['start_time']) + ($problem_list['limit_time'] * 60);
-        $surplus_time = $end_time- $time;
+        $start_time = DB::table('exam_results')->where('uid',$data['uid'])->where('exam_id',$data['id'])->value('start_time');
+        $start_time = strtotime($start_time);
+        $end_time = $start_time + ($problem_list['limit_time'] * 60);
+        $surplus_time = $end_time - $time;
         if ($surplus_time > 0){
-            $res['surplus_time'] = $surplus_time;
+            $res['surplus_time'] = date('i分s秒',$surplus_time);
         }
         return $res;
     }
@@ -637,16 +678,12 @@ class Exam extends Model
             }
         }
         foreach ($data as &$v){
-            $use_time = $v['use_time'];
-            $new_time = explode('.',$use_time);
-            $v['use_time'] = '';
-            if ($new_time[0] && $new_time[1]){
+            $new_time = explode('.',$v['use_time']);
+            if (isset($new_time[0]) && isset($new_time[1])){
                 $v['use_time'] = $new_time[0].'分'.$new_time[1].'秒';
             }else{
                 $v['use_time'] = $new_time[0].'分0秒';
             }
-            //$v['use_time'] = (int)$new_time[0].'分'.(int)$new_time[1].'秒';
-
         }
         return $data;
     }
@@ -866,39 +903,52 @@ class Exam extends Model
         $exam_res = json_decode(json_encode($exam_res),1);
         $subject_list = json_decode($exam_res['subject_list'],1);
         foreach ($subject_list as &$v){
-            if ($v['option']){
-                $v['option'] = json_decode($v['option'],true);
-            }else{
-                $v['option'] = [];
-                $v['option'][0]['value'] = '';
-                $v['option'][0]['number'] = '';
-            }
             if ($v['type'] != 3){
+                $v['option'] = json_decode($v['option'],true);
                 if ($data['type'] == 1){  //列表
-                    foreach ($v['option'] as $k=>$v_o_v){
-                        $v['option'][$k]['number'] = 0;
+                    if (is_array($v['option'])){
+                        foreach ($v['option'] as $k=>$v_o_v){
+                            $v['option'][$k]['number'] = 0;
+                        }
+                    }else{
+                        return -2;
+                        $v['option'][0]['label'] = 'A';
+                        $v['option'][0]['value'] = '';
+                        $v['option'][0]['number'] = 0;
                     }
+
                 }else if ($data['type'] == 2){ //饼状图
                     $exam_data = [];
-                    foreach ($v['option'] as $v_o_v){
+                    if(is_array($v['option'])){
+                        foreach ($v['option'] as $v_o_v){
+                            $exam_data[] = [
+                                'value' => 0,
+                                'name' => $v_o_v['value'],
+                            ];
+                        }
+                    }else{
                         $exam_data[] = [
                             'value' => 0,
-                            'name' => $v_o_v['value'],
+                            'name' => '',
                         ];
                     }
+
                     $v['chartData'] = [
                         'title' => $v['name'],
                         'data' => $exam_data
                     ];
                 }
-            }elseif($v['type'] == 3){
+            }else if($v['type'] == 3){
+                $v['option'] = [];
+                $v['option'][0]['value'] = '';
+                $v['option'][0]['number'] = 0;
                 if ($data['type'] == 1){  //列表
                     if (!$v['option']){
                         $v['option']['value'] = '';
-                        $v['option']['number'] = '';
+                        $v['option']['number'] = 0;
                     }else{
                         foreach ($v['option'] as &$v_o_n){
-                            $v_o_n['number'] = '';
+                            $v_o_n['number'] = 0;
                         }
                     }
                 }
@@ -963,7 +1013,7 @@ class Exam extends Model
                 if ($s_v['type'] != 3){
                     foreach ($s_v['option'] as &$s_v_o){
                         if ($total_result != 0){
-                            $s_v_o['choice'] = ((sprintf($s_v_o['number']/$total_result))*100).'%';
+                            $s_v_o['choice'] = sprintf('%.2f',($s_v_o['number']/$total_result)*100).'%';
                         }else{
                             $s_v_o['choice'] = '0%';
                         }
@@ -1012,18 +1062,19 @@ class Exam extends Model
 
     //考试结果
     public function examResult($data){
-        $res = DB::table('exam_results')->where('exam_id',$data['id'])->where('uid',$data['uid'])->first();
+        $where[] = ['exam_id','=',$data['id']];
+        $where[] = ['uid','=',$data['uid']];
+        $res = DB::table('exam_results')->where($where)->select('branch','use_time','number','start_time','end_time','status','lately_results')->first();
+        $res = json_decode(json_encode($res),true);
         if (!$res){
             return false;
         }
         //获取考试信息
         $exam_res = DB::table($this->table)->where('id',$data['id'])->select('number','total_score','is_ranking')->first();
         $exam_res = json_decode(json_encode($exam_res),true);
-        $res = json_decode(json_encode($res),true);
-        $res['use_time'] = sprintf("%.2f",$res['use_time']);;
         $new_time = explode('.',$res['use_time']);
         $res['use_time'] = '';
-        if ($new_time[0] && $new_time[1]){
+        if (isset($new_time[0]) && isset($new_time[1])){
             $res['use_time'] = $new_time[0].'分'.$new_time[1].'秒';
         }else{
             $res['use_time'] = $new_time[0].'分0秒';

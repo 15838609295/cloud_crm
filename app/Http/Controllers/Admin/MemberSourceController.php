@@ -28,7 +28,7 @@ class MemberSourceController extends BaseController
         $memberSourceModel = new MemberSource();
         $data = $memberSourceModel->getMemberSourceWithFilter($searchFilter);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //来源增加
@@ -41,23 +41,23 @@ class MemberSourceController extends BaseController
         if(empty($data["source_name"])){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = "来源名称不能为空";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $memberSourceModel = new MemberSource();
         $info = $memberSourceModel->getMemberSourceByName($data["source_name"]);
         if($info){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = "名称已存在";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $res = $memberSourceModel->memberSourceInsert($data);
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = "添加失败";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "添加成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 详情 */
@@ -68,7 +68,7 @@ class MemberSourceController extends BaseController
         $memberSourceModel = new MemberSource();
         $data = $memberSourceModel->getMemberSourceByID($id);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //来源更新
@@ -82,22 +82,22 @@ class MemberSourceController extends BaseController
         if(empty($data["source_name"])){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = "来源名称不能为空";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $res = $memberSourceModel->getMemberSourceByName($data["source_name"],$id);
         if($res){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = "名称已存在";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $res = $memberSourceModel->memberSourceUpdate($id,$data);
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = "更新失败";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "更新成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //来源删除
@@ -110,9 +110,9 @@ class MemberSourceController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = "删除失败";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "删除成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

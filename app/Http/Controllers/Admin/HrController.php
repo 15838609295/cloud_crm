@@ -93,7 +93,7 @@ class HrController extends BaseController
         $adminUserModel = new AdminUser();
         $res = $adminUserModel->getAdminUserListFromHr($searchFilter);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     public function getInfo($id){
@@ -101,12 +101,12 @@ class HrController extends BaseController
             return $this->returnData;
         }
         if(!$id){
-            return response()->json(ErrorCode::$admin_enum['params_error']);
+            return $this->return_result(ErrorCode::$admin_enum['params_error']);
         }
         $adminUserModel = new AdminUser();
         $res = $adminUserModel->getAdminUserDetail($id);
         if (!$res) {
-            return response()->json(ErrorCode::$admin_enum['not_exist']);
+            return $this->return_result(ErrorCode::$admin_enum['not_exist']);
         }
         $res["wechat_pic"] = $res["real_avatar"];
         $data['uid'] = $id;
@@ -119,13 +119,34 @@ class HrController extends BaseController
         if ($res['wechat_pic']){
             $res['wechat_pic'] = $this->processingPictures($res['wechat_pic']);
         }
-        if ($res['identity_card_pic']){
+        if (isset($res['identity_card_pic'])){
             $res['identity_card_pic'] = json_decode($res['identity_card_pic'],true);
             foreach ($res['identity_card_pic'] as &$v){
                 $v = $this->processingPictures($v);
             }
         }else{
             $res['identity_card_pic'] = [];
+        }
+        if (isset($res['other_pic'])){
+            $res['other_pic'] = json_decode($res['other_pic'],true);
+            foreach ($res['other_pic'] as &$v){
+                $v = $this->processingPictures($v);
+            }
+            $res['other_pic'] = json_encode($res['other_pic']);
+        }
+        if (isset($res['examination_pic'])){
+            $res['examination_pic'] = json_decode($res['examination_pic'],true);
+            foreach ($res['examination_pic'] as &$v){
+                $v = $this->processingPictures($v);
+            }
+            $res['examination_pic'] = json_encode($res['examination_pic']);
+        }
+        if (isset($res['certificate_pic'])){
+            $res['certificate_pic'] = json_decode($res['certificate_pic'],true);
+            foreach ($res['certificate_pic'] as &$v){
+                $v = $this->processingPictures($v);
+            }
+            $res['certificate_pic'] = json_encode($res['certificate_pic']);
         }
         if ($res['form_pic']){
             $res['form_pic'] = json_decode($res['form_pic'],true);
@@ -137,7 +158,7 @@ class HrController extends BaseController
         }
         $data['user_data'] = $res;
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     public function update(Request $request,$id){
@@ -147,7 +168,7 @@ class HrController extends BaseController
         if((int)$id===1){
             $this->returnData = 0;
             $this->returnData['msg'] = "无权编辑该用户";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $res = $request->input();
         foreach ($res as $key=>$value){
@@ -166,10 +187,10 @@ class HrController extends BaseController
         if(!$res && !$extend_res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = "更新资料失败";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "更新资料成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 暂不用，后面再处理 */
@@ -193,10 +214,10 @@ class HrController extends BaseController
         if(!$id && !$extend_res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = "插入资料失败";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "插入资料成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     public function del($id){
@@ -208,9 +229,9 @@ class HrController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = "删除资料失败";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "删除资料成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

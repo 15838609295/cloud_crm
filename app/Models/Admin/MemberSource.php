@@ -60,7 +60,7 @@ class MemberSource extends Model
     /* 获取用户来源列表 */
     public function getMemberSourceList()
     {
-        $res = DB::table($this->table_name)->orderBy("order", "desc")->get();
+        $res = DB::table($this->table_name)->select('id','source_name')->orderBy("order", "desc")->get();
         if(!$res){
             return false;
         }

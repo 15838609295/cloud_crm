@@ -13,7 +13,7 @@ class QuestionnaireController extends BaseController{
 
     public function get_data_list(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $page_no = request()->post('page_no',1);
         $page_size = request()->post('page_size',10);
@@ -31,12 +31,12 @@ class QuestionnaireController extends BaseController{
         $questionnaireModel = new Questionnaire();
         $res = $questionnaireModel->getList($params);
         $this->result['data'] = $res;
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     public function get_info($id){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $questionnaireModel = new Questionnaire();
         $res = $questionnaireModel->getQuestInfo($id);
@@ -46,12 +46,12 @@ class QuestionnaireController extends BaseController{
             $this->result['status'] = 1;
             $this->result['msg'] = '活动不存在';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     public function get_submit(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $parmas = [
             'questionnaire_id' => request()->post('id',''),
@@ -68,7 +68,7 @@ class QuestionnaireController extends BaseController{
             $this->result['status'] = 1;
             $this->result['msg'] = '提交失败';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 }
 ?>

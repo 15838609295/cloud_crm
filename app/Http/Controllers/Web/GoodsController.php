@@ -28,28 +28,31 @@ class GoodsController extends BaseController
         $pageSize = $request->post("pageSize");   //一页显示的条数
         $start = ($pageNumber-1)*$pageSize;   //开始位置
         $search = $request->post("search",'');  //搜索条件
-        $rows = Goods::from('goods as g')
-            ->select('g.*','gt.name as goods_type_txt')
-            ->leftJoin('goods_type as gt','g.goods_type','=','gt.id')
-            ->where('status', '=', 0)
-            ->where('is_del',0);
+        $db = DB::table('goods as g')
+            ->select('g.id','g.goods_name','g.price','g.goods_version','g.goods_pic','g.pic_list','g.goods_top','g.price_type','t.name as goods_type_txt')
+            ->leftJoin('goods_type as t','g.goods_type','=','t.id')
+            ->where('g.status',0)
+            ->where('g.is_del',0);
 
         if(trim($search)){
-            $rows->where(function ($query) use ($search) {
-                $query->where('goods_name', 'LIKE', '%' . $search . '%');
+            $db->where(function ($query) use ($search) {
+                $query->where('g.goods_name', 'LIKE', '%' . $search . '%');
             });
         }
-        $data['data']['total'] = $rows->count();
-        $data['data']['rows'] = $rows->skip($start)->take($pageSize)
+        $total = $db->count();
+        $rows = $db->skip($start)->take($pageSize)
             ->orderBy($sortName, $sortOrder)
             ->get();
+        $rows = json_decode($rows,true);
+        if (!$rows){
+            return response()->json($this->returnData);
+        }
         //过滤等级为0的用户
         if ($this->discount == 0){
             $this->discount = 100;
         }
         //更改对应客户等级的价格
-        $data['data']['rows'] = json_decode($data['data']['rows'],true);
-        foreach($data['data']['rows'] as &$v){
+        foreach($rows as &$v){
             $goods_data = json_decode($v['goods_version'],true);
             $price_info = $goods_data[0]['subitem'];
             $v['price'] = $price_info[0]['salePrice'];
@@ -58,10 +61,16 @@ class GoodsController extends BaseController
             }else{
                 $v['dlprice'] = $v['price'];
             }
+            if (isset($v['goods_pic'])){
+                $v['goods_pic'] = $this->processingPictures($v['goods_pic']);
+            }
+            if (isset($v['pic_list'])){
+                $v['pic_list'] = $this->processingPictures($v['pic_list']);
+            }
         }
-        $data['code'] = 0;
-        $data['msg'] = '请求成功';
-        return response()->json($data);
+        $data = ['total' => $total, 'rows' => $rows];
+        $this->returnData['data'] = $data;
+        return response()->json($this->returnData);
     }
 
     /**
@@ -128,7 +137,17 @@ class GoodsController extends BaseController
                }
            }
 	    }
-
+        if (isset($goods['goods_pic'])){
+            $goods['goods_pic'] = $this->processingPictures($goods['goods_pic']);
+        }
+        if (isset($goods['pic_list'])){
+            $goods['pic_list'] = $this->processingPictures($goods['pic_list']);
+        }
+        foreach ($arr as &$v){
+            if (isset($v['image'])){
+                $v['image'] = $this->processingPictures($v['image']);
+            }
+        }
         $data['code'] = 0;
         $data['msg'] = '请求成功';
         $data['data']['goods_version'] = $arr;

@@ -36,7 +36,7 @@ class AchievementController extends BaseController
     /* 业绩订单列表 */
     public function dataList(Request $request){
         if ($this->returnData['code'] > 0){
-            return $this->returnData;
+            return $this->return_result($this->returnData);
         }
         $page_no = $request->post('page_no', 1);
         $page_size = $request->post('page_size', 10);
@@ -61,7 +61,7 @@ class AchievementController extends BaseController
 //        $res['total_money'] = $achievementModel->getAchievementTotalMoney($res['rows']);
         $res['total_month'] = $achievementModel->getTotalMoneyBydate(['user_list' => [$this->AU['id']],'date' => date('Y-m')]); //个人当月业绩
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 个人业绩订单列表 */
@@ -92,13 +92,13 @@ class AchievementController extends BaseController
         $res['total_money'] = $achievementModel->getAchievementTotalMoney($res['rows']);
         $res['total_month'] = $achievementModel->getTotalMoneyBydate(['user_list' => [$this->AU['id']],'date' => date('Y-m')]); //个人当月业绩
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 业绩订单详情 */
     public function detail($id){
         if ($this->returnData['code'] > 0){
-            return $this->returnData;
+            return $this->return_result($this->returnData);
         }
         $adminUserModel = new UserBase();
         $user_list = $adminUserModel->getAdminSubuser($this->AU['id']);
@@ -107,11 +107,11 @@ class AchievementController extends BaseController
         if(!is_array($data) || count($data)<1){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
             $this->returnData['msg'] = '数据不存在';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if(!in_array($data['admin_users_id'],$user_list)){
             $this->returnData = ErrorCode::$admin_enum['auth_fail'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $data['sale_proof'] = trim($data['sale_proof'],',');
         $data['sale_proof'] = array_values(explode(',',$data['sale_proof']));
@@ -140,7 +140,7 @@ class AchievementController extends BaseController
         $data['position'] = $member_info['position'];
         $data['source'] = $member_info['source'];
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 业绩修改 */
@@ -161,21 +161,21 @@ class AchievementController extends BaseController
         $data = $achievementModel->getAchievementById($id);
         if(!is_array($data)){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if($this->AU['id']>1 && $this->AU['id'] != $data['admin_users_id']){
             $this->returnData = ErrorCode::$admin_enum['auth_fail'];
             $this->returnData['msg'] = '无权限编辑该订单';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $res = $achievementModel->achievementUpdate($id,$achievement);
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '修改失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '修改成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 更新数据 */
@@ -185,7 +185,7 @@ class AchievementController extends BaseController
         }
         if (!isset($request->action) || !in_array(strval($request->action),['status','refuse','refund'],true)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $id = $request->id;
         switch ($request->action){
@@ -196,17 +196,17 @@ class AchievementController extends BaseController
                     $this->returnData = ErrorCode::$admin_enum['fail'];
                     $this->returnData['msg'] = '处理失败';
                 }
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             case 'refuse':
                 $data = $this->_refuseAchievement($request);
-                return response()->json($data);
+                return $this->return_result($data);
             case 'refund':
                 $data = $this->_refundAchievement($id);
-                return response()->json($data);
+                return $this->return_result($data);
             default:
                 $this->returnData = ErrorCode::$admin_enum['fail'];
                 $this->returnData['msg'] = '未知操作';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
         }
     }
 
@@ -221,11 +221,11 @@ class AchievementController extends BaseController
         $a_res['verify'] = $this->AU['name'];
         if(!is_array($a_res)){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if(!in_array($request->after_type,[0,1,2])){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $rule_type = 0;   //提成规则
         $order_bonus = 0;  //订单提成
@@ -242,14 +242,14 @@ class AchievementController extends BaseController
             if(!is_array($saleRuleDetail)){
                 $this->returnData = ErrorCode::$admin_enum['not_exist'];
                 $this->returnData['msg'] = '提成规则不存在';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
         }
         if($request->after_type==0 && $saleRuleDetail['rule_type']==0){
             if($saleRuleDetail['cost'] > 100){
                 $this->returnData = ErrorCode::$admin_enum['error'];
                 $this->returnData['msg'] = '提成规则错误';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             //售前提成
             $data_upd['order_bonus'] = $saleRuleModel->calculatSaleRuleBouns($request->sbr_id,$a_res['goods_money'])['pre_bonus'];
@@ -297,13 +297,13 @@ class AchievementController extends BaseController
         if(!$result){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '同意失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $a_res['bonus_money'] = $bonus_money;
         $a_res['after_money'] = $after_money;
         $a_res['rule_type'] = $rule_type;
         $r_data = $this->_afterVerifyRecord($a_res,$request);
-        return response()->json($r_data);
+        return $this->return_result($r_data);
     }
 
     private function _afterVerifyRecord($data,$request){
@@ -473,13 +473,13 @@ class AchievementController extends BaseController
         }
         if (!isset($request->action) || !in_array(strval($request->action),['data'],true)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if($request->action=='data'){
             if(trim($request->get('list',''))==''){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '勾选列表不能为空';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $list = explode(',',trim($request->get('list','')));
             $achievementModel = new Achievement();
@@ -557,7 +557,7 @@ class AchievementController extends BaseController
         }
         $this->returnData = ErrorCode::$admin_enum['fail'];
         $this->returnData['msg'] = '操作失败';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 业绩录入 */
@@ -586,10 +586,10 @@ class AchievementController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = "录入失败";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "录入成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 业绩转移 */
@@ -601,13 +601,13 @@ class AchievementController extends BaseController
         if($touid==null){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '转移管理员不能为空';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $list = $request->input("exchange_list");
         if($list==null || $list=="0"){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '转移订单不能为空';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $list = explode(',',$list);
         foreach ($list as $k=>$v){
@@ -621,7 +621,7 @@ class AchievementController extends BaseController
         if(!is_array($result)){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '无权转移';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $data_list = [];
         foreach ($result as $key=>$value){
@@ -631,10 +631,10 @@ class AchievementController extends BaseController
         if(!$bool){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '修改失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '修改成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
     
     /* 业绩订单删除 */
@@ -647,9 +647,9 @@ class AchievementController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '删除失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '删除成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

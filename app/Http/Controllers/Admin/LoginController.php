@@ -70,9 +70,17 @@ class LoginController extends Controller
     }
 
     public function qyWexin(Request $request){
+        //登陆之前去检测站点状态
+        $con = Configs::first();
+        $site_status = $con->site_status;
         $verify_arr = array(
             'code' => $request->code,
         );
+        if ($site_status == 0){
+            $data['code'] = 1;
+            $data['msg'] = '站点正在维护中，请等待片刻再尝试登陆';
+            return response()->json($data);
+        }
         $validator = Validator::make($verify_arr,['code' => 'required'],["code.required" => "code不能为空"]);//验证参数
         if ($validator->fails()) {
             $this->returnData['code'] = 103;

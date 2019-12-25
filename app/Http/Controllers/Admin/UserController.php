@@ -65,7 +65,7 @@ class UserController extends BaseController
         $adminUserModel = new UserBase();
         $data = $adminUserModel->getAdminUserListWithFilter($searchFilter);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //管理员导出
@@ -77,7 +77,7 @@ class UserController extends BaseController
         $res = $streetModel->getAdminStreetInfo();
         if (!$res){
             $this->returnData['data'] = [];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
 
         $arr[] = ['管理员','电话','邮箱','入职时间','街道信息'];
@@ -138,31 +138,33 @@ class UserController extends BaseController
         $fields = ['id','name'];
         $data = $adminUserModel->getAdminUserList($fields);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     public function adminAllList(){
         if ($this->returnData['code'] > 0){
             return $this->returnData;
         }
-        $incumbency = DB::table('admin_users')
-            ->select('id','name')
-            ->where('status','=',0)
-            ->get();
-        $quit = DB::table('admin_users')
-            ->select('id','name')
-            ->where('status','=',1)
-            ->get();
-        $incumbency = json_decode(json_encode($incumbency),true);
-        $quit = json_decode(json_encode($quit),true);
-
+        $userModel = new UserBase();
+        $adminUserAll = $userModel->getFields(['id','name','status'],[['name','!=', '']], false);
+        $incumbency = [];
+        $quit = [];
+        foreach ($adminUserAll as $k=>$v){
+            if ($v['status'] == 0){
+                unset($v['status']);
+                $incumbency[] = $v;
+            }else{
+                unset($v['status']);
+                $quit[] = $v;
+            }
+        }
         $data['label'] = '在职人员';
         $data['personnel'] =$incumbency;
         $data1['label'] = '离职人员';
         $data1['personnel'] =$quit;
 
         $this->returnData['data'] = array('list'=>array($data,$data1));
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
   
     /* 管理员基础信息 */
@@ -176,7 +178,7 @@ class UserController extends BaseController
         $userModel = new UserBase();
         $data = $userModel->getAdminBasic($this->AU['id']);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //修改管理员基本信息
@@ -194,7 +196,7 @@ class UserController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 管理员详情 */
@@ -207,10 +209,10 @@ class UserController extends BaseController
         if(!is_array($data) || count($data)<1){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
             $this->returnData['msg'] = '该数据不存在';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //管理员添加
@@ -235,7 +237,7 @@ class UserController extends BaseController
         $res = $adminUserModel->validAdminUserRepeat(['mobile'=>$user['mobile'],'email'=>$user['email']]);
         if($res['is_repeat']==1){
             $this->returnData = $res['returnData'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $data = array(
             'role_id' => $request->post('role_id'),
@@ -245,7 +247,7 @@ class UserController extends BaseController
         if(!$user_id){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '添加失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         //异步增加企业微信账号
         if($request->input('set_qy_wechat')==1){
@@ -298,7 +300,7 @@ class UserController extends BaseController
             }
         }
         $this->returnData['msg'] = '添加成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
 	//管理员修改
@@ -309,7 +311,7 @@ class UserController extends BaseController
         $id = $request->id;
         if($this->AU['id']!=1 && $this->AU['id']!=$id){
             $this->returnData = ErrorCode::$admin_enum['auth_fail'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $user = [];
         foreach (array_keys($this->fields) as $field) {
@@ -327,7 +329,7 @@ class UserController extends BaseController
         $res = $adminUserModel->validAdminUserRepeat(['mobile'=>$user['mobile'],'email'=>$user['email']],$id);
         if($res['is_repeat']==1){
             $this->returnData = $res['returnData'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $data = array(
             'role_id' => (int)$request->post('role_id'),
@@ -337,7 +339,7 @@ class UserController extends BaseController
         if(!$result){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '修改失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         //异步修改企业微信账号
         $companyModel = new Company();
@@ -354,7 +356,7 @@ class UserController extends BaseController
             'email' => $request->input('email')
         );
 
-        if($user['power']!='' && count($user['power'])>0){
+        if($user['power']!='' && strlen($user['power'])>0){
             $arr['isleader'] =1;
         }
         $emailarr = array(
@@ -376,7 +378,7 @@ class UserController extends BaseController
             $common->setQyEmail($emailarr,2);
         }
         $this->returnData['msg'] = '修改成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 管理员删除 */
@@ -387,7 +389,7 @@ class UserController extends BaseController
         if ($id == 1){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = 'root账号不能删除';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
 
         $adminUserModel = new UserBase();
@@ -395,10 +397,10 @@ class UserController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '删除失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '删除成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
     
     /* 管理员操作 */
@@ -408,37 +410,37 @@ class UserController extends BaseController
         }
         if (!isset($request->action) || !in_array($request->action,['synchronize','update_status'],true)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $id = $request->id;
         if($this->AU['id']!=1 && $this->AU['id']!=$id){
             $this->returnData = ErrorCode::$admin_enum['auth_fail'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         switch ($request->action){
             case 'synchronize':                                                                                         //同步企业账号
                 $res = $this->_buildUserQYAccount($request);
-                return response()->json($res);
+                return $this->return_result($res);
                 break;
             case 'update_status':                                                                                       //更改管理员状态(启用/禁用)
                 $res = $this->_updateStatus($request);
                 if($res['code']>0){
-                    return response()->json($res);
+                    return $this->return_result($res);
                 }
                 break;
             default:
                 $this->returnData = ErrorCode::$admin_enum['request_error'];
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
         }
         $adminUserModel = new UserBase();
         $result = $adminUserModel->adminUserUpdate($id,$res['data']);
         if(!$result){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '操作失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '操作成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
 	}
 
     /* 管理员操作 */
@@ -448,45 +450,45 @@ class UserController extends BaseController
         }
         if (!isset($request->action) || !in_array($request->action,['update_avatar','update_workstatus','update_basic'],true)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $id = $request->id;
         if($this->AU['id']!=1 && $this->AU['id']!=$id){
             $this->returnData = ErrorCode::$admin_enum['auth_fail'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         switch ($request->action){
             case 'update_avatar':                                                                                       //修改头像
                 $res = $this->_updateUserAvatar($request);
                 if($res['code']>0){
-                    return response()->json($res);
+                    return $this->return_result($res);
                 }
                 break;
             case 'update_workstatus':                                                                                   //更改工作状态
                 $res = $this->_updateWorkStatus($request);
                 if($res['code']>0){
-                    return response()->json($res);
+                    return $this->return_result($res);
                 }
                 break;
             case 'update_basic':                                                                                        //修改基础信息
                 $res = $this->_updateUserBaseInfo($request,$id);
                 if($res['code']>0){
-                    return response()->json($res);
+                    return $this->return_result($res);
                 }
                 break;
             default:
                 $this->returnData = ErrorCode::$admin_enum['request_error'];
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
         }
         $adminUserModel = new UserBase();
         $result = $adminUserModel->adminUserUpdate($id,$res['data']);
         if(!$result){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '操作失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '操作成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
 	}
 
     //业绩和用户转移
@@ -498,20 +500,20 @@ class UserController extends BaseController
         if($touid==null){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '转移管理员不能为空';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $id = $request->input("uid");
         if($id==null){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '参数错误';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $adminUserModel = new UserBase();
         $user_list = $adminUserModel->getAdminSubuser($this->AU["id"]);
         if(!in_array($id,$user_list)){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '无权转移';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         DB::beginTransaction();
         $membersModel = new CustomerBase();
@@ -522,11 +524,11 @@ class UserController extends BaseController
             DB::rollback();
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '转移失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         DB::commit();
         $this->returnData['msg'] = '转移成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     private function _buildUserQYAccount($request){
@@ -639,11 +641,11 @@ class UserController extends BaseController
             $data['code'] = 0;
             $data['msg'] = '请求成功';
             $data['data']['token'] = $session_id;
-            return response()->json($data);
+            return $this->return_result($data);
         }else{
             $data['code'] = 1;
             $data['msg'] = '此用户不存在';
-            return response()->json($data);
+            return $this->return_result($data);
         }
     }
 
@@ -707,16 +709,16 @@ class UserController extends BaseController
         //奖金总额 已获得的奖金 + 未获得的奖金
         $result['expect_bonus'] = sprintf("%.2f",$not_bonus + $already_bonus);
         foreach ($list['rows'] as &$v){
-            if (!$v['member_phone']){
+            if (!isset($v['member_phone'])){
                 $v['member_phone'] = $v['admin_mobile'];
             }
-            if (!$v['member_name']){
+            if (!isset($v['member_name'])){
                 $v['member_name'] = $v['admin_name'];
             }
         }
         $result['list'] = $list;
         $this->returnData['data'] = $result;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
 
     }
 
@@ -756,7 +758,7 @@ class UserController extends BaseController
         $data['list'] = $list;
         $data['total_money'] = sprintf("%.2f",$data['total_money']);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //奖金删除
@@ -770,7 +772,7 @@ class UserController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //提现申请
@@ -788,28 +790,28 @@ class UserController extends BaseController
             $data['code'] = 1;
             $data['msg'] = '提现金额小于规定金额';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }elseif ($res == 2 || $res == 3){
             $data['code'] = 1;
             $data['msg'] = '提现金额大于规定金额';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }elseif ($res == 4 ){
             $data['code'] = 1;
             $data['msg'] = '今天提现次数已用尽';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }elseif ($res == 5){
             $data['code'] = 1;
             $data['msg'] = '当月提现次数已用尽';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         if ($admin->sale_bonus < $money){
             $data['code'] = 1;
             $data['msg'] = '提现金额不能大于奖金金额';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
         $data_ins['admin_users_id'] = $this->AU['id'];
         $data_ins['order_number'] = $this->getOrderSn();
@@ -835,16 +837,16 @@ class UserController extends BaseController
                 $data['code'] = 1;
                 $data['msg'] = '提现申请提交失败';
                 $data['data'] = '';
-                return response()->json($data);
+                return $this->return_result($data);
             }
         } catch(\Illuminate\Database\QueryException $ex) {
             DB::rollback();
             $data['code'] = 1;
             $data['msg'] = '提现申请提交失败';
             $data['data'] = '';
-            return response()->json($data);
+            return $this->return_result($data);
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //获取订单号
@@ -880,6 +882,6 @@ class UserController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '操作失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

@@ -135,9 +135,11 @@ $arr = [
         "sql1" => "INSERT INTO `admin_permissions` VALUES (228,'admin.helpline','服务热线','服务热线',44,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');",
         "sql2" => "ALTER TABLE configs DROP COLUMN tencent_wechat_appid;",
         "sql3" => "ALTER TABLE configs DROP COLUMN tencent_wechat_secret;",
-        "sql4" => "alter table configs add `agent_wechat_configs` text COMMENT '员工小程序配置';",
-        "sql5" => "DROP TABLE IF EXISTS `service_hotline`;",
-        "sql6" => "CREATE TABLE `service_hotline` (
+        "sql4" => "ALTER TABLE configs DROP COLUMN wechat_appid;",
+        "sql5" => "ALTER TABLE configs DROP COLUMN wechat_secret;",
+        "sql6" => "alter table configs add `agent_wechat_configs` text COMMENT '客户小程序配置';",
+        "sql7" => "DROP TABLE IF EXISTS `service_hotline`;",
+        "sql8" => "CREATE TABLE `service_hotline` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) DEFAULT NULL COMMENT '名称',
   `user_name` varchar(255) DEFAULT NULL COMMENT '负责人名称',
@@ -147,6 +149,30 @@ $arr = [
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='服务热线表';",
+    ],
+    //2019-11-25
+    [
+        "sql1" => "INSERT INTO `admin_permissions` VALUES (229,'admin.pluginCenter','插件中心','插件中心',0,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16');",
+        "sql2" => "alter table admin_permissions add `show_mode` tinyint(3) NOT NULL DEFAULT '0' COMMENT '是否在左导航栏显示 0：否 1：是';",
+        "sql3" => "alter table permissions add `show_mode` tinyint(3) NOT NULL DEFAULT '0' COMMENT '是否在左导航栏显示 0：否 1：是';",
+    ],
+    //2019-12-6
+    [
+        "sql1" => "INSERT INTO `admin_permissions` VALUES (230,'admin.pluginCenter.index','插件中心首页','插件中心首页',229,'',1,0,'2019-07-25 11:28:21','2019-07-30 13:41:16',0);",
+        "sql2" => "alter table item_bank modify `option` text COMMENT '选项json存储';",
+        "sql3" => "alter table exam modify `total_score` int(5) NOT NULL DEFAULT '0' COMMENT '总分';",
+        "sql4" => "alter table exam modify `qualified_score` int(5) NOT NULL DEFAULT '0' COMMENT '合格分数';",
+        "sql5" => "alter table exam_results modify `branch` int(5) NOT NULL DEFAULT '0' COMMENT '分数';",
+        "sql6" => "alter table exam_results modify `lately_results` int(5) NOT NULL DEFAULT '0' COMMENT '上次考试分数';",
+        "sql7" => "alter table configs add `plugin_open_type` tinyint(3) NOT NULL DEFAULT '0' COMMENT '插件开启状态 0：关闭 1：开启';",
+    ],
+    //2019-12-12
+    [
+        "sql1" => "alter table activity modify `picture` varchar(300) DEFAULT NULL COMMENT '图片显示'",
+        "sql2" => "alter table member_vip change `updayed_at` `updated_at` timestamp NULL DEFAULT NULL",
+	"sql3" => "alter table achievement modify `sale_proof` varchar(500) DEFAULT NULL COMMENT '销售凭证'",
+	"sql4" => "alter table admin_users modify  `wechat_pic` varchar(120) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '企业微信头像'",		
+	"sql5" => "alter table goods modify `goods_pic` varchar(500) DEFAULT NULL COMMENT '缩略图'",
     ]
 ];
 

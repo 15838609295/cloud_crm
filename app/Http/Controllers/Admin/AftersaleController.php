@@ -53,7 +53,7 @@ class AftersaleController extends BaseController
         $list = $afterSaleModel->getAfterSaleList($searchFilter);
         $list['rows'] = $afterSaleModel->buildAfterSaleListFields($list['rows'],trim($request->post('surplus_time','')));
         $this->returnData['data'] = $list;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 售后订单详情 */
@@ -66,10 +66,10 @@ class AftersaleController extends BaseController
         $data = $afterSaleModel->getAfterSaleOrderByID((int)$id);
         if (!$data){
             $this->returnData = ErrorCode::$admin_enum['not_exist'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 添加售后订单 */
@@ -87,10 +87,10 @@ class AftersaleController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '添加失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '添加成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 售后修改 */
@@ -131,7 +131,7 @@ class AftersaleController extends BaseController
         }
         if (!isset($request->action) || !in_array(strval($request->action),['prohibit','open'],true)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $id = $request->id;
         //更新订单状态
@@ -141,24 +141,24 @@ class AftersaleController extends BaseController
             if(!$flag){
                 $this->returnData = ErrorCode::$admin_enum['fail'];
                 $this->returnData['msg'] = '禁用失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $this->returnData['msg'] = '禁用成功';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }elseif ($request->action == 'open'){
             $afterSaleModel = new AfterSale();
             $flag = $afterSaleModel->afterSaleUpdateByFields($id,['after_status'=>0]);
             if(!$flag){
                 $this->returnData = ErrorCode::$admin_enum['fail'];
                 $this->returnData['msg'] = '开启失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $this->returnData['msg'] = '开启成功';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData = ErrorCode::$admin_enum['fail'];
         $this->returnData['msg'] = '未知操作';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //售后转移
@@ -170,13 +170,13 @@ class AftersaleController extends BaseController
         if($touid==null){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '接受人ID不能为空';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $list = $request->post("exchange_list");
         if($list==null || $list=="0"){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '转移订单不能为空';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $list = json_decode($list,1);
         foreach ($list as $k=>$v){
@@ -190,7 +190,7 @@ class AftersaleController extends BaseController
         if(!is_array($result)){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '无权转移';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $data_list = [];
         foreach ($result as $key=>$value){
@@ -200,10 +200,10 @@ class AftersaleController extends BaseController
         if(!$bool){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = "修改失败";
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = "修改成功";
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除售后订单
@@ -216,9 +216,9 @@ class AftersaleController extends BaseController
         if(!$res){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '删除失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['msg'] = '删除成功';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

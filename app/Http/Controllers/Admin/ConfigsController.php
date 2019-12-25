@@ -24,16 +24,15 @@ class ConfigsController extends BaseController
         }
     	$laravel = app();
     	$configModel = new Configs();
-    	$con = $configModel->getConfigByID();
-//        $data = Tools::curl("https://crmweb.netbcloud.com/admin/configs/other", "");
+    	$env = $configModel->getValue('env');
         $data = Tools::curl("https://crm.netbcloud.com/admin/configs/other", "");
         $data = json_decode($data,1);
         $pach = public_path().'/version.txt';
         $edition = file_get_contents($pach);  //获取版本信息
         $data['data'][0]['con_value'] = 'V'.$edition;
-    	$arr[] = array('con_name'=>'程序版本','con_value'=>'云运维管理系统 '.$con['version']);
+    	$arr[] = array('con_name'=>'程序版本','con_value'=>'云运维管理系统 ');
     	$arr[] = $data["data"][0];unset($data["data"][0]);
-    	if ($con['env'] != 'CLOUD'){
+    	if ($env != 'CLOUD'){
             $arr[] = array('con_name'=>'服务器IP地址','con_value'=>$_SERVER['SERVER_ADDR']);
             $arr[] = array('con_name'=>'服务器域名','con_value'=>$_SERVER['SERVER_NAME']);
             $arr[] = array('con_name'=>'服务器端口','con_value'=>$_SERVER['SERVER_PORT']);
@@ -48,7 +47,7 @@ class ConfigsController extends BaseController
     	$arr[] = array('con_name'=>'数据库版本','con_value'=>'Mysql 5.7');
         $arr = array_merge($arr, $data["data"]);
         $this->returnData['data'] = $arr;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 用户菜单 */
@@ -65,10 +64,10 @@ class ConfigsController extends BaseController
             $res = [];
 //            $this->returnData = ErrorCode::$admin_enum['fail'];
 //            $this->returnData['data'] = ['menu'=>[],'function_men'=>[]];
-//            return response()->json($this->returnData);
+//            return $this->return_result($this->returnData);
         }
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //获取功能插件
@@ -84,7 +83,7 @@ class ConfigsController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '访问错误';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     public function update_function_menut($id,Request$request){
@@ -105,7 +104,7 @@ class ConfigsController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //客户功能配置列表
@@ -113,13 +112,13 @@ class ConfigsController extends BaseController
         if ($this->returnData['code'] > 0){
             return $this->returnData;
         }
-        $page_no = $request->input('pageNo',1);
+        $page = $request->input('page',1);
         $page_size = $request->input('pageSize',30);
-        $start = ($page_no - 1)*$page_size;
+        $start = ($page - 1)*$page_size;
         $id = $request->input('cid','');
         $search = $request->input('search','');
 
-        $res = DB::table('admin_permissions')->select('id','name','label','cid','display','description');
+        $res = DB::table('admin_permissions')->select('id','name','label','cid','display','description','show_mode as showMode');
         if ($id != ''){
             $res->where('cid',(int)$id);
         }
@@ -135,7 +134,7 @@ class ConfigsController extends BaseController
         $result = json_decode(json_encode($result),true);
         $data['rows'] = $result;
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //权限详情
@@ -151,7 +150,7 @@ class ConfigsController extends BaseController
             $res = json_decode(json_encode($res),true);
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //编辑
@@ -178,7 +177,7 @@ class ConfigsController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除
@@ -193,7 +192,7 @@ class ConfigsController extends BaseController
         }else{  //删除客户权限
             DB::table('permissions')->delete($id);
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加
@@ -214,7 +213,7 @@ class ConfigsController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //客户开启/关闭
@@ -279,23 +278,62 @@ class ConfigsController extends BaseController
                 }
             }
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
-    //修改体统版本
+    //修改导航栏/插件显示
+    public function updateMode(Request $request){
+        if ($this->returnData['code'] > 0){
+            return $this->return_result($this->returnData);
+        }
+        $id = $request->post('id','');
+        $data['updated_at'] = Carbon::now()->toDateTimeString();
+        $data['show_mode'] = $request->post('showMode','');
+        $target_info = DB::table('admin_permissions')->where('id',$id)->first();
+        $target_info = json_decode(json_encode($target_info),true);
+        if ($target_info['cid'] == 0){
+            $son_res = DB::table('admin_permissions')->where('cid',$id)->select('id')->get();
+            if ($son_res){
+                $son_res = json_decode(json_encode($son_res),true);
+                foreach ($son_res as $v){
+                    $admin_res = DB::table('admin_permissions')->where('id',$v['id'])->update($data);
+                    if (!$admin_res){
+                        $this->returnData = ErrorCode::$admin_enum['modifyfail'];
+                        return $this->return_result($this->returnData);
+                    }
+                    $this_res = DB::table('permissions')->where('id',$v['id'])->first();
+                    if ($this_res){
+                        DB::table('permissions')->where('id',$v['id'])->update($data);
+                    }
+                }
+            }
+        }
+        $res = DB::table('admin_permissions')->where('id',$id)->update($data);
+        if (!$res){
+            $this->returnData = ErrorCode::$admin_enum['modifyfail'];
+            return $this->return_result($this->returnData);
+        }
+        $f_res = DB::table('permissions')->where('id',$id)->first();
+        if ($f_res){
+            DB::table('permissions')->where('id',$id)->update($data);
+        }
+        return $this->return_result($this->returnData);
+    }
+
+    //修改系统版本
     public function updateSever(Request $request){
-        $env = $request->input('env','');
-        if (!$env){
+        $data['env'] = $request->input('env','');
+        $data['plugin_open_type'] = $request->input('pluginOpenType','');
+        if (!$data){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '参数缺失';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
-        $data['env'] = $env;
         $res = DB::table('configs')->where('id',1)->update($data);
         if (!$res){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

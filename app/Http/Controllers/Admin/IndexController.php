@@ -59,13 +59,11 @@ class IndexController extends BaseController
         $data['customer_over'] = $customerModel->getCustomerOverCount($this->AU['id']);
         //总业绩
         $data['achievement_money'] = $achievementModel->getAchievementMoney($this->AU['id']);
-        $con = Configs::first();
-        $data['member_wechat_qr'] = $this->processingPictures($con->member_wechat_qr);
-        $data['wxapplet_name'] = $con->wxapplet_name;
-        $data['admin_wechat_qr'] = $this->processingPictures($con->admin_wechat_qr);
-        $data['wechat_name'] = $con->wechat_name;
+        $configsModel = new Configs();
+        $member_wechat_qr = $configsModel->getValue('member_wechat_qr');
+        $data['member_wechat_qr'] = $this->processingPictures($member_wechat_qr);
 		$this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
 	}
 
 	/* 首页待沟通客户列表 */
@@ -91,7 +89,7 @@ class IndexController extends BaseController
             $data['tabletile'] = '七天内未联系客户';
         }
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 获取用户团队列表 */
@@ -101,7 +99,7 @@ class IndexController extends BaseController
         }
         if($request->post('branch_id')===NULL){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $page_no = $request->post('page_no') ? $request->post('page_no') : 1;
         $page_size = $request->post('page_size') ? $request->post('page_size') : 20;
@@ -117,12 +115,12 @@ class IndexController extends BaseController
         $verify = $branchModel->isBranchUser($searchFilter['branch_id'],$this->AU['id']);
         if(!$verify){
             $this->returnData = ErrorCode::$admin_enum['not_branch_user'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $columns = ['au.id','au.name','au.wechat_pic'];
         $member_list = $branchModel->getBranchUserList($searchFilter,$columns);
         $this->returnData['data'] = $member_list;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     public function userBranchList(Request $request){
@@ -140,12 +138,15 @@ class IndexController extends BaseController
             $columns = ['au.id', 'au.name', 'au.wechat_pic', "ub.branch_id"];
             $branchData = $branchModel->getBranchUserLists($branchId, $columns);//echo "<pre>dddd";print_r($branchData);die("2");
             foreach ($branchData as $b){
+                if (isset($b['wechat_pic'])){
+                    $b['wechat_pic'] = $this->processingPictures($b['wechat_pic']);
+                }
                 $dataList[$b["branch_id"]]["userList"][] = $b;
             }
             $this->returnData['data'] = array_values($dataList);
         }else{
             $this->returnData['data'] = [];
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

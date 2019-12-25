@@ -16,6 +16,9 @@ class ArticlesType extends Model
         $data['total'] = $res->count();
         $result = $res->skip($fields['start'])->take($fields['pageSize'])->orderBy($fields['sortName'], $fields['sortOrder'])->get();
         $result = json_decode(json_encode($result),true);
+        if (!$result){
+            return [];
+        }
         foreach ($result as &$v){
             $v['grade'] = 1;
             $res = $this->arrangement($v['id'],$v['grade'],1);
@@ -114,17 +117,24 @@ class ArticlesType extends Model
     public function updateType($id,$data){
         $old_res = DB::table($this->table)->where('id',$id)->first();
         $old_res = json_decode(json_encode($old_res),true);
-        if ($old_res['type'] != $data['type']){
-            if ($data['type'] == 1){  //删除插件表
+        if ($old_res['type'] != $data['type']){  //改变类型值
+            if ($data['type'] == 1){  //删除
                 $where['type_id'] = $id;
                 DB::table('modular')->where($where)->delete();
-            }else{                    //添加插件表
+            }else{                    //创建
+                $m_data['icon'] = $data['icon'];
                 $m_data['type_id'] = $id;
                 $m_data['display'] = $data['status'];
                 $m_data['created_at'] = Carbon::now()->toDateTimeString();
                 DB::table('modular')->insert($m_data);
             }
+        }else if($old_res['type'] == 2){   //修改 专题
+            $m_data['icon'] = $data['icon'];
+            $m_data['display'] = $data['status'];
+            $m_data['updated_at'] = Carbon::now()->toDateTimeString();
+            DB::table('modular')->where('type_id',$id)->update($m_data);
         }
+        $data['created_at'] = Carbon::now()->toDateTimeString();
         $res = DB::table($this->table)->where('id',$id)->update($data);
         if (!$res){
             return false;

@@ -79,12 +79,12 @@ class MemberVipController extends BaseController
         if (!$data['name'] || !preg_match("/^[\x{4e00}-\x{9fa5}A-Za-z0-9]+$/u", $data['name'])){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '类型名称不能为空或包含特殊字符';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if (mb_strlen($data['name']) > 20){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '类型名称长度不能超出20个字';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $industryTypeModel = new IndustryType();
         $res = $industryTypeModel->addInfo($data);
@@ -96,7 +96,7 @@ class MemberVipController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '类型添加数量已达到上限';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除会员行业类型
@@ -107,7 +107,7 @@ class MemberVipController extends BaseController
         if (!$id){
             $this->returnData = ErrorCode::$admin_enum['error'];
             $this->returnData['msg'] = '参数缺失';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $industryTypeModel = new IndustryType();
         $res = $industryTypeModel->delInfo($id);
@@ -115,7 +115,7 @@ class MemberVipController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //会员类型修改
@@ -131,7 +131,7 @@ class MemberVipController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //会员类型列表
@@ -142,7 +142,7 @@ class MemberVipController extends BaseController
         $industryTypeModel = new IndustryType();
         $res = $industryTypeModel->getList();
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //获取公司列表
@@ -153,7 +153,7 @@ class MemberVipController extends BaseController
         $memberVipModel = new MemberVip();
         $res = $memberVipModel->getEnterprise();
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //会员列表
@@ -176,7 +176,7 @@ class MemberVipController extends BaseController
         $memberVipModel = new MemberVip();
         $res = $memberVipModel->getList($searchFilter);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //会员详情
@@ -199,7 +199,7 @@ class MemberVipController extends BaseController
             }
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //添加会员
@@ -233,22 +233,22 @@ class MemberVipController extends BaseController
         if (in_array($achievement['mobile'],$mobiles)){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '手机号已存在';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if (in_array($achievement['email'],$emails)){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '邮箱已存在';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if (in_array($achievement['wechat'],$wechats)){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '微信号已存在';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         if (in_array($achievement['id_number'],$id_numbers)){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '身份证号已存在';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $member = [];
         foreach ($this->member as $k=>$v){
@@ -256,14 +256,14 @@ class MemberVipController extends BaseController
                 if ($achievement[$k] == ''){
                     $this->returnData['code'] = 1;
                     $this->returnData['msg'] = $v.'不能为空';
-                    return response()->json($this->returnData);
+                    return $this->return_result($this->returnData);
                 }
                 $member[$k] = $achievement[$k];
             }
             if ($achievement['status'] == ''){
                 $this->returnData['code'] = 1;
                 $this->returnData['msg'] = '会员状态不能为空';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $member['is_vip'] = $achievement['status'];
         }
@@ -273,16 +273,17 @@ class MemberVipController extends BaseController
                 if ($achievement[$k] == ''){
                     $this->returnData['code'] = 1;
                     $this->returnData['msg'] = $v.'不能为空';
-                    return response()->json($this->returnData);
+                    return $this->return_result($this->returnData);
                 }
                 $member_extend[$k] = $achievement[$k];
             }
             if ($achievement['name'] == ''){
                 $this->returnData['code'] = 1;
                 $this->returnData['msg'] = '用户名不能为空';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $member_extend['realname'] = $achievement['name'];
+            $member_extend['company'] = $request->post('enterprise_name','');
         }
         $member_vip = [];
         foreach ($this->member_vip as $k=>$v){
@@ -294,7 +295,7 @@ class MemberVipController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '添加失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //会员信息修改
@@ -310,19 +311,18 @@ class MemberVipController extends BaseController
                 if ($achievement[$k] == ''){
                     $this->returnData['code'] = 1;
                     $this->returnData['msg'] = $v.'不能为空';
-                    return response()->json($this->returnData);
+                    return $this->return_result($this->returnData);
                 }
                 $member[$k] = $achievement[$k];
             }else{
                 if ($achievement['status'] == ''){
                     $this->returnData['code'] = 1;
                     $this->returnData['msg'] = '会员状态不能为空';
-                    return response()->json($this->returnData);
+                    return $this->return_result($this->returnData);
                 }else{
                     $member['is_vip'] = $achievement['status'];
                 }
             }
-
         }
         //个人详情
         $member_extend = [];
@@ -331,14 +331,14 @@ class MemberVipController extends BaseController
                 if ($achievement[$k] == ''){
                     $this->returnData['code'] = 1;
                     $this->returnData['msg'] = $v.'不能为空';
-                    return response()->json($this->returnData);
+                    return $this->return_result($this->returnData);
                 }
                 $member_extend[$k] = $achievement[$k];
             }else{
                 if ($achievement['name'] == ''){
                     $this->returnData['code'] = 1;
                     $this->returnData['msg'] = '用户名不能为空';
-                    return response()->json($this->returnData);
+                    return $this->return_result($this->returnData);
                 }else{
                     $member_extend['realname'] = $achievement['name'];
                 }
@@ -356,7 +356,7 @@ class MemberVipController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //会员删除
@@ -370,7 +370,7 @@ class MemberVipController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //地区列表
@@ -378,7 +378,7 @@ class MemberVipController extends BaseController
         $chinaModel = new China();
         $res = $chinaModel->getRegionList();
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //导出模板
@@ -402,7 +402,7 @@ class MemberVipController extends BaseController
         }
         $this->returnData = ErrorCode::$admin_enum['not_exist'];
         $this->returnData['msg'] = '文件不存在';
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //批量导入
@@ -416,7 +416,7 @@ class MemberVipController extends BaseController
             if (!$base64_excel){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $files = json_decode($base64_excel,true);
             $temp_file = tempnam(sys_get_temp_dir(),"php");  //临时文件
@@ -428,7 +428,7 @@ class MemberVipController extends BaseController
             if (!$url){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '上传Excel失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             //下载
             $path = urldecode($url['ObjectURL']);
@@ -563,7 +563,7 @@ class MemberVipController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = $txt;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //会员认证列表
@@ -585,7 +585,7 @@ class MemberVipController extends BaseController
         $memberVipModel = new MemberVip();
         $res = $memberVipModel->notMemberVip($data);
         $this->returnData['data'] = $res;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //会员详情
@@ -618,7 +618,7 @@ class MemberVipController extends BaseController
             $res['industry_type_id'] = (int)$res['industry_type_id'];
             $this->returnData['data'] = $res;
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //认证审核
@@ -632,7 +632,7 @@ class MemberVipController extends BaseController
         if ($data['industry_type_id'] == ''){
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '请选择会员类型';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $memberVipModel = new MemberVip();
         $res = $memberVipModel->examineMemberVip($id,$data);
@@ -640,7 +640,7 @@ class MemberVipController extends BaseController
             $this->returnData['status'] = 1;
             $this->returnData['msg'] = '审核失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //删除认证信息
@@ -655,7 +655,7 @@ class MemberVipController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData = '删除失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
 

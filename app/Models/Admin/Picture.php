@@ -27,7 +27,6 @@ class Picture extends Model
                     'Body' => fopen($realPath, 'rb'),
                     'ServerSideEncryption' => 'AES256')
             );
-//            return $result['ObjectURL'];
             return $result;
         } catch (\Exception $e) {
             return false;

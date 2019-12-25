@@ -32,10 +32,16 @@ class StatisticController extends BaseController
         $tmp_id_arr = [];
         foreach ($res as $key=>$value){
             if(strpos($value['work_time'],$now_time)===false){
+                if (isset($value['wechat_pic'])){
+                    $value['wechat_pic'] = $this->processingPictures($value['wechat_pic']);
+                }
                 $data['out_of_work'][] = $value;
                 continue;
             }
             $tmp_id_arr[] = $value['id'];
+            if (isset($value['wechat_pic'])){
+                $value['wechat_pic'] = $this->processingPictures($value['wechat_pic']);
+            }
             $data['on_work'][] = $value;
         }
         $tmp_arr = $data['on_work'];
@@ -60,7 +66,7 @@ class StatisticController extends BaseController
             $data['on_work'] = $tmp_arr;
         }
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 业绩排行榜 */
@@ -85,7 +91,7 @@ class StatisticController extends BaseController
             $data['yesterday_total'] = 0.00;
             $this->returnData['data'] = $data;
 //            $this->returnData = ErrorCode::$admin_enum['not_exist'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $tmp_list = [];
         foreach ($data as $item){
@@ -113,6 +119,11 @@ class StatisticController extends BaseController
         }
         $tool = new Tools();
         $list = $tool->array_sort($data,'total_money','SORT_DESC');
+        foreach ($list as &$v){
+            if (isset($v['wechat_pic'])){
+                $v['wechat_pic'] = $this->processingPictures($v['wechat_pic']);
+            }
+        }
         $data = array(
             'list' => array_values($list),
             'total_money' => 0,
@@ -127,7 +138,7 @@ class StatisticController extends BaseController
         $data['today_total'] = $achievementModel->getTotalMoneyBydate(['user_list' => $tmp_list,'date' => date('Y-m-d')]);
         $data['yesterday_total'] = $achievementModel->getTotalMoneyBydate(['user_list' => $tmp_list,'date' => Carbon::now()->yesterday()->toDateString()]);
         $this->returnData['data'] = $data;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //团队，部门业绩排行
@@ -156,7 +167,7 @@ class StatisticController extends BaseController
         $data['msg'] = '请求成功';
         $data['data']['company'] = $res1;
         $data['data']['branchs'] = $res2;
-        return response()->json($data);
+        return $this->return_result($data);
     }
 
     public function arraySort($array, $keys, $sort = SORT_DESC) {
@@ -264,7 +275,7 @@ class StatisticController extends BaseController
         }
         if(empty($id)){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $arr = [];
         $date = date('Y-m-d');
@@ -314,6 +325,6 @@ class StatisticController extends BaseController
             $arr['all_no_conversion'] = 100;
         }
         $this->returnData['data'] = $arr;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 }

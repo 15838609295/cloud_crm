@@ -16,7 +16,7 @@ class WorkOrderController extends BaseController{
     //街道二级列表
     public function getStreetList(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $streetModel = new Street();
         $res = $streetModel->getStreetListNoPage();
@@ -25,14 +25,15 @@ class WorkOrderController extends BaseController{
             $this->result['msg'] = '信息不存在';
         }else{
             $this->result['data'] = array_values($res);
+            unset($res);
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //标签列表
     public function feedbackLabel(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
 //        $pageNo = request()->post('pageNo',1);
 //        $data['pageSize'] = request()->post('pageSize',20);
@@ -44,14 +45,15 @@ class WorkOrderController extends BaseController{
             $this->result['msg'] = '问题类别未设置，无法提交反馈，请先联系工作人员';
         }else{
             $this->result['data'] = $res;
+            unset($res);
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //提交工单
     public function workOrderSubmit(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $order_log['street_id'] = request()->post('father_id','');
         $order_log['c_street_id'] = request()->post('son_id','');
@@ -65,13 +67,13 @@ class WorkOrderController extends BaseController{
             $this->result['status'] = 1;
             $this->result['msg'] = '添加失败';
         }
-       return response()->json($this->result);
+       return $this->return_result($this->result);
     }
 
     //我的反馈
     public function myFeedbackList(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $data['id'] = $this->user['id'];
         $pageNo = request()->post('pageNo',1);
@@ -83,14 +85,15 @@ class WorkOrderController extends BaseController{
             $this->result['data'] = [];
         }else{
             $this->result['data'] = $res;
+            unset($res);
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //反馈详情
     public function feedbackInfo(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $id = request()->post('id','');
         $workOrderModel = new WorkOrder();
@@ -114,14 +117,15 @@ class WorkOrderController extends BaseController{
                 }
             }
             $this->result['data'] = $res;
+            unset($res);
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //补充反馈
     public function supplementWorkOrder(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $data['type'] = 1;
         $data['u_id'] = $this->user['id'];
@@ -134,13 +138,13 @@ class WorkOrderController extends BaseController{
             $this->result['status'] = 1;
             $this->result['msg'] = '添加失败';
         }
-        return response()->json($this->result);
+        return $this->return_result($this->result);
     }
 
     //确认结单
     public function endWorkOrder(){
         if ($this->result['status'] > 0){
-            return response()->json($this->result);
+            return $this->return_result($this->result);
         }
         $id = request()->post('id','');
         $workOrderModel = new WorkOrder();
@@ -148,6 +152,13 @@ class WorkOrderController extends BaseController{
         if (!$res){
             $this->result = ErrorCode::$admin_enum['modifyfail'];
         }
+        //工单完成 发送通知
+//        $admin_type = 6;
+//        $workOrderModel->sendSns($admin_type,$id);
+        //街道负责人发送通知
+//        $type = 7;
+//        $workOrderModel->sendSns($type,$id);
+//        $workOrderModel->sendWechatPush($admin_type,$id);
         return response()->json($this->result);
     }
 }

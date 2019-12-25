@@ -79,7 +79,7 @@ class FilesController extends BaseController
         $CONFIG2 = $this->getUEditorConfig();
         switch ($action) {
             case 'config':
-                return response()->json($CONFIG2);
+                return $this->return_result($CONFIG2);
                 break;
             /* 上传图片 */
             case 'uploadimage':
@@ -94,17 +94,17 @@ class FilesController extends BaseController
                 if(!isset($upload_res['state']) || $upload_res['state']!='SUCCESS'){
                     $this->returnData = ErrorCode::$admin_enum['fail'];
                     $this->returnData['msg'] = '上传失败';
-                    return response()->json($this->returnData);
+                    return $this->return_result($this->returnData);
                 }
                 $upload_res['id'] = $upload_res['url'];
                 $upload_res['url'] = $request->server("REQUEST_SCHEME") . "://" . $request->server("HTTP_HOST") . $upload_res['url'];
                 $this->returnData['data'] = $upload_res;
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
                 break;
             default:
                 $this->returnData = ErrorCode::$admin_enum['fail'];
                 $this->returnData['msg'] = '不支持';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
                 break;
         }
     }
@@ -124,16 +124,16 @@ class FilesController extends BaseController
         if(!isset($upload_res['state']) || $upload_res['state']!='SUCCESS'){
             $this->returnData = ErrorCode::$admin_enum['fail'];
             $this->returnData['msg'] = '上传失败';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $this->returnData['data'] = ['url' => $upload_res['url']];
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 头像上传 */
     public function UploadAvatar(Request $request){
         if ($this->returnData['code'] > 0){
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $con = Configs::first();
         if ($con->env == 'CLOUD'){
@@ -141,28 +141,28 @@ class FilesController extends BaseController
             if (!$base64_img){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $type = ['image/jpg', 'image/png', 'image/jpeg', 'image/bmp',''];
             $files = json_decode($base64_img,true);
             if (!in_array($files['type'],$type)){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '文件类型错误';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $temp_file = tempnam(sys_get_temp_dir(),"php");  //临时文件
             $content = $files['content'];
             file_put_contents($temp_file,base64_decode($content));        //文件流写入文件
             //创建文件夹
             $time = date('Ymd',time());
-            $cloud_file = '/avatar/'.$time;
+            $cloud_file = '/uploads/avatar/'.$time;
             $img_name = $cloud_file.'/'.time().$files['name'];
             $pictureModel = new Picture();
             $url = $pictureModel->uploadImg($img_name,$temp_file);
             if (!$url){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '上传图片失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $res['url'] = $url['ObjectURL'];
         }else{
@@ -170,14 +170,14 @@ class FilesController extends BaseController
             if (!$file){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $res = (new UploadFile([
                 'upload_dir' => './uploads/avatar/',
                 'type'       => ['image/jpg', 'image/png', 'image/jpeg', 'image/bmp']
             ]))->upload($file);
             if($res['code'] > 0) {
-                return response()->json($res);
+                return $this->return_result($res);
             }
         }
         $adminuserModel = new AdminUser();
@@ -187,7 +187,7 @@ class FilesController extends BaseController
             $this->returnData['code'] = 1;
             $this->returnData['msg'] = '修改失败';
         }
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 图片上传 */
@@ -197,17 +197,17 @@ class FilesController extends BaseController
         if (!$file){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = '缺少文件';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $res = (new UploadFile([
             'upload_dir' => './uploads/picture/',
             'type'       => ['image/jpg', 'image/png', 'image/jpeg', 'image/bmp']
         ]))->upload($file);
         if($res['code'] > 0) {
-            return response()->json($res);
+            return $this->return_result($res);
         }
         $this->returnData['data'] = ['url' => $res['url']];
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 文件上传 */
@@ -217,12 +217,12 @@ class FilesController extends BaseController
         if (!$file){
             $this->returnData = ErrorCode::$admin_enum['params_error'];
             $this->returnData['msg'] = '缺少文件';
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
 		}
         $inputFileName = $request->file('file')->store('article_file');
         $filePath = 'storage/app/'.iconv('UTF-8', 'GBK',$inputFileName);
         $this->returnData['data'] = ['url' => $filePath];;
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     /* 附件上传 */
@@ -235,7 +235,7 @@ class FilesController extends BaseController
             if (!$base64_img){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $files = json_decode($base64_img,true);
             $temp_file = tempnam(sys_get_temp_dir(),"php");  //临时文件
@@ -243,14 +243,14 @@ class FilesController extends BaseController
             file_put_contents($temp_file,base64_decode($content));        //文件流写入文件
             //创建文件夹
             $time = date('Ymd',time());
-            $cloud_file = '/annex/'.$time;
+            $cloud_file = '/uploads/annex/'.$time;
             $img_name = $cloud_file.'/'.time().$files['name'];
             $pictureModel = new Picture();
             $url = $pictureModel->uploadImg($img_name,$temp_file);
             if (!$url){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '上传文件失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $result['code'] = 0;
             $result['msg'] = '请求成功';
@@ -261,7 +261,7 @@ class FilesController extends BaseController
             if (!$file){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $dir_name = date('Ymd',time());
             $inputFileName = $request->file('file');
@@ -286,7 +286,7 @@ class FilesController extends BaseController
                 $result['msg'] = '上传失败';
             }
         }
-        return response()->json($result);
+        return $this->return_result($result);
     }
 
     /* 视频上传 */
@@ -298,7 +298,7 @@ class FilesController extends BaseController
             if (!$base64_img){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $files = json_decode($base64_img,true);
             $temp_file = tempnam(sys_get_temp_dir(),"php");  //临时文件
@@ -306,14 +306,14 @@ class FilesController extends BaseController
             file_put_contents($temp_file,base64_decode($content));        //文件流写入文件
             //创建文件夹
             $time = date('Ymd',time());
-            $cloud_file = '/video/'.$time;
+            $cloud_file = '/uploads/video/'.$time;
             $img_name = $cloud_file.'/'.time().$files['name'];
             $pictureModel = new Picture();
             $url = $pictureModel->uploadImg($img_name,$temp_file);
             if (!$url){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '上传文件失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $result['code'] = 0;
             $result['msg'] = '请求成功';
@@ -324,7 +324,7 @@ class FilesController extends BaseController
             if (!$file){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $dir_name = date('Ymd',time());
             $inputFileName = $request->file('file');
@@ -349,7 +349,7 @@ class FilesController extends BaseController
                 $result['msg'] = '上传失败';
             }
         }
-        return response()->json($result);
+        return $this->return_result($result);
     }
 
     /* 合同上传 */
@@ -362,7 +362,7 @@ class FilesController extends BaseController
             if (!$base64_img){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $files = json_decode($base64_img,true);
             $temp_file = tempnam(sys_get_temp_dir(),"php");  //临时文件
@@ -370,14 +370,14 @@ class FilesController extends BaseController
             file_put_contents($temp_file,base64_decode($content));        //文件流写入文件
             //创建文件夹
             $time = date('Ymd',time());
-            $cloud_file = '/contract/'.$time;
+            $cloud_file = '/uploads/contract/'.$time;
             $img_name = $cloud_file.'/'.time().$files['name'];
             $pictureModel = new Picture();
             $url = $pictureModel->uploadImg($img_name,$temp_file);
             if (!$url){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '上传文件失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $result['code'] = 0;
             $result['msg'] = '请求成功';
@@ -388,7 +388,7 @@ class FilesController extends BaseController
             if (!$file){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $dir_name = date('Ymd',time());
             $inputFileName = $request->file('file');
@@ -413,56 +413,60 @@ class FilesController extends BaseController
                 $result['msg'] = '上传失败';
             }
         }
-        return response()->json($result);
+        return $this->return_result($result);
     }
 
     //上传图片增加记录
     public function imageUpload(Request $request){
         if ($this->returnData['code'] > 0){
-            return response()->json($this->returnData);
+            return $this->return_result($this->returnData);
         }
         $con = Configs::first();
         $env = $con->env;
         if ($env == 'CLOUD'){  //配置云开发版
+            global $scf_data;
+            $host = 'https://'.$scf_data['system']['bucketConfig']['bucket'].'.cos.'.$scf_data['system']['bucketConfig']['region'].'.myqcloud.com';
             $base64_img = trim($request->post('file',''));
             if (!$base64_img){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '缺少文件';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
-            $type = ['image/jpg', 'image/png', 'image/jpeg', 'image/bmp',''];
+            $type = ['image/jpg', 'image/png', 'image/jpeg', 'image/bmp'];
             $files = json_decode($base64_img,true);
             if (!in_array($files['type'],$type)){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '文件类型错误';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
             $temp_file = tempnam(sys_get_temp_dir(),"php");  //临时文件
             $content = $files['content'];
             file_put_contents($temp_file,base64_decode($content));        //文件流写入文件
             //创建文件夹
             $time = date('Ymd',time());
-            $cloud_file = '/contract/'.$time;
-            $img_name = $cloud_file.'/'.time().$files['name'];
+            $tmpName = time() . rand(10000, 99999);
+            $newFile = $tmpName . '.' . strtolower(str_replace("image/", "", $files['type']));
+            $cloud_file = '/uploads/picture/'.$time;
+            $img_name = $cloud_file.'/'.$newFile;
             $pictureModel = new Picture();
             $url = $pictureModel->uploadImg($img_name,$temp_file);
             if (!$url){
                 $this->returnData = ErrorCode::$admin_enum['params_error'];
                 $this->returnData['msg'] = '上传图片失败';
-                return response()->json($this->returnData);
+                return $this->return_result($this->returnData);
             }
+            $url['ObjectURL'] = str_ireplace($host,'',$url['ObjectURL']);
             $picture_info['name'] = $img_name;
             $picture_info['uid'] = $this->AU['id'];
-            $picture_info['url'] = $url['ObjectURL'];
             $picture_info['type'] = $files['type'];
             $picture_info['status'] = 1;
             $picture_info['src'] = $url['ObjectURL'];
             $picture_info['time'] = Carbon::now();
-            $id = DB::table('picture')->insertGetId($picture_info);
+            DB::table('picture')->insertGetId($picture_info);
             $result['code'] = 0;
             $result['msg'] = '请求成功';
             $result['data']['title'] = $img_name;
-            $result['data']['url'] = $url['ObjectURL'];
+            $result['data']['url'] = $this->processingPictures($url['ObjectURL']);
             $result['data']['type'] = $files['type'];
             $result['data']['id'] = $url['ObjectURL'];
         } else{
@@ -472,24 +476,23 @@ class FilesController extends BaseController
                 'type'       => ['image/jpg', 'image/png', 'image/jpeg', 'image/bmp']
             ]))->upload($base64_img);
             if($res['code'] > 0) {
-                return response()->json($res);
+                return $this->return_result($res);
             }
             $picture_info['name'] = $res['name'];
             $picture_info['uid'] = $this->AU['id'];
-            $picture_info['url'] = 'https://'.$_SERVER['SERVER_NAME'].$res['url'];
             $picture_info['type'] = $res['type'];
             $picture_info['status'] = 1;
             $picture_info['src'] = $res['url'];
             $picture_info['time'] = Carbon::now();
-            $id = DB::table('picture')->insertGetId($picture_info);
+            DB::table('picture')->insertGetId($picture_info);
             $result['code'] = 0;
             $result['msg'] = '请求成功';
             $result['data']['title'] = $res['name'];
-            $result['data']['url'] = $picture_info['url'];
+            $result['data']['url'] = $this->processingPictures($res['url']);
             $result['data']['type'] = $res['type'];
             $result['data']['id'] = $res['url'];
         }
-        return response()->json($result);
+        return $this->return_result($result);
     }
 
     //获取用户上传历史图片
@@ -505,10 +508,11 @@ class FilesController extends BaseController
         $data['data']['list'] = $rows->skip($start)->take($pageSize)->orderBy('id','desc')->get();
         $data['data']['list'] = json_decode(json_encode($data['data']['list']),true);
         foreach ($data['data']['list'] as &$v){
-            $v['id'] = $v['src'];
+            $v['id'] = $this->processingPictures($v['src']);
+            $v['url'] = $this->processingPictures($v['src']);
             $v['src'] = $this->processingPictures($v['src']);
         }
-        return response()->json($data);
+        return $this->return_result($data);
     }
 
     //软删除用户历史图片
@@ -516,13 +520,13 @@ class FilesController extends BaseController
         $id = $request->input('ids');
         $data['status'] = 0;
         $res = DB::table('picture')->where('src',$id)->update($data);
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     public function dalete(Request $request){
         $id = $request->input('ids');
         $res = DB::table('picture')->where('src',$id)->delete();
-        return response()->json($this->returnData);
+        return $this->return_result($this->returnData);
     }
 
     //云点播上传视频 签名
@@ -534,7 +538,7 @@ class FilesController extends BaseController
             if (!$scf_data['cloud']['secretId'] || !$scf_data['cloud']['secretKey']){
                 $result['code'] = 1;
                 $result['msg'] = '访问秘钥未配置';
-                return response()->json($result);
+                return $this->return_result($result);
             }else{
                 $secret_id = $scf_data['cloud']['secretId'];
                 $secret_key = $scf_data['cloud']['secretKey'];
@@ -561,6 +565,6 @@ class FilesController extends BaseController
         $result['code'] = 0;
         $result['msg'] = '请求成功';
         $result['data'] = ['sign' => $signature];
-        return response()->json($result);
+        return $this->return_result($result);
     }
 }
