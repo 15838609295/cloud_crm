@@ -16,12 +16,14 @@
  */
 namespace TencentCloud\Partners\V20180321\Models;
 use TencentCloud\Common\AbstractModel;
+
 /**
  * @method string getClientUin() 获取客户账号ID
  * @method void setClientUin(string $ClientUin) 设置客户账号ID
  * @method integer getAmount() 获取转账金额，单位分
  * @method void setAmount(integer $Amount) 设置转账金额，单位分
  */
+
 /**
  *AgentTransferMoney请求参数结构体
  */
@@ -31,6 +33,7 @@ class AgentTransferMoneyRequest extends AbstractModel
      * @var string 客户账号ID
      */
     public $ClientUin;
+
     /**
      * @var integer 转账金额，单位分
      */
@@ -41,6 +44,7 @@ class AgentTransferMoneyRequest extends AbstractModel
      */
     function __construct()
     {
+
     }
     /**
      * 内部实现，用户禁止调用
@@ -53,6 +57,7 @@ class AgentTransferMoneyRequest extends AbstractModel
         if (array_key_exists("ClientUin",$param) and $param["ClientUin"] !== null) {
             $this->ClientUin = $param["ClientUin"];
         }
+
         if (array_key_exists("Amount",$param) and $param["Amount"] !== null) {
             $this->Amount = $param["Amount"];
         }

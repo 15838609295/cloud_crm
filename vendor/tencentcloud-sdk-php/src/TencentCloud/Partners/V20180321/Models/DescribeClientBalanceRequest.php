@@ -16,10 +16,12 @@
  */
 namespace TencentCloud\Partners\V20180321\Models;
 use TencentCloud\Common\AbstractModel;
+
 /**
- * @method string getClientUin() 获取客户代客 账号ID
+ * @method string getClientUin() 获取客户(代客)账号ID
  * @method void setClientUin(string $ClientUin) 设置客户(代客)账号ID
  */
+
 /**
  *DescribeClientBalance请求参数结构体
  */
@@ -34,6 +36,7 @@ class DescribeClientBalanceRequest extends AbstractModel
      */
     function __construct()
     {
+
     }
     /**
      * 内部实现，用户禁止调用

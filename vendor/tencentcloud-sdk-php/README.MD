@@ -16,13 +16,13 @@
     unix环境在命令行中执行以下命令安装。
     > curl -sS https://getcomposer.org/installer | php
 2. 在 composer.json 的 require 结构体中加入依赖。**注意这里的版本号只是举例,您可以在composer仓库上看到最新的版本号。**：
-    > "tencentcloud/tencentcloud-sdk-php": "3.0.2"
+    > "tencentcloud/tencentcloud-sdk-php": "3.0.94"
 3. 运行 composer install 下载安装 PHP SDK。
 4. 添加以下引用代码，引用方法可参考示例。
     > require 'vendor/autoload.php';
 
 ## 通过源码包安装
-1. 前往 [Github 代码托管地址](https://github.com/tencentcloud/tencentcloud-sdk-php) 下载源码压缩包。
+1. 前往 [Github 代码托管地址](https://github.com/tencentcloud/tencentcloud-sdk-php) 克隆源码。注意：必须使用`git clone`的方式，直接下载源码包将不会包含必要的依赖文件。
 2. 解压源码包到您项目合适的位置。
 3. 添加以下引用代码，引用方法可参考示例。
     > require_once '../TCloudAutoLoader.php';
@@ -56,6 +56,28 @@ catch(TencentCloudSDKException $e) {
     echo $e;
 }
 ```
+
+## 更多示例
+
 您可以在[github](https://github.com/tencentcloud/tencentcloud-sdk-php)中examples目录下找到更详细的示例。
+
+# 相关配置
+
+## 代理
+
+如果是有代理的环境下，需要设置系统环境变量 `https_proxy` ，否则可能无法正常调用，抛出连接超时的异常。
+
+## 证书问题
+
+如果你的 PHP 环境证书有问题，可能会遇到报错，类似于 `cURL error 60: See http://curl.haxx.se/libcurl/c/libcurl-errors.html`，请尝试按如下步骤解决：
+
+1. 到 [https://curl.haxx.se/ca/cacert.pem](https://curl.haxx.se/ca/cacert.pem) 下载证书文件 `cacert.pem`，将其保存到 PHP 安装路径下。
+2. 编辑 `php.ini` 文件，删除 `curl.cainfo` 配置项前的分号注释符（;），值设置为保存的证书文件 `cacert.pem` 的绝对路径。
+3. 重启依赖 PHP 的服务。
+
+## php_curl 扩展
+
+此 SDK 依赖的 GuzzleHttp 需要开启 php_curl 扩展，查看环境上的 php.ini 环境确认是否已启用，例如在 Linux 环境下，PHP 7.1 版本，托管在 apache 下的服务，可以打开 /etc/php/7.1/apache2/php.ini 中查看 extension=php_curl.dll 配置项是否已被注释，请删除此项配置前的注释符并重启 apache。
+
 # 旧版SDK
 新版SDK兼容旧版SDK。旧版本的SDK存放于QcloudApi目录，但不再维护更新，推荐使用新版SDK。

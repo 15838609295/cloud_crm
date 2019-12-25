@@ -13,17 +13,18 @@ use TencentCloud\Common\Profile\HttpProfile;
 
 try {
     // 实例化一个证书对象，入参需要传入腾讯云账户secretId，secretKey
-    $cred = new Credential("secretId", "secretKey");
+    //$cred = new Credential("secretId", "secretKey");
+    $cred = new Credential(getenv("TENCENTCLOUD_SECRET_ID"), getenv("TENCENTCLOUD_SECRET_KEY"));
 
     // 实例化一个http选项，可选的，没有特殊需求可以跳过
     $httpProfile = new HttpProfile();
-    $httpProfile->setReqMethod("POST");  // post请求(默认为post请求)
+    $httpProfile->setReqMethod("GET");  // post请求(默认为post请求)
     $httpProfile->setReqTimeout(30);    // 请求超时时间，单位为秒(默认60秒)
     $httpProfile->setEndpoint("cvm.ap-shanghai.tencentcloudapi.com");  // 指定接入地域域名(默认就近接入)
 
     // 实例化一个client选项，可选的，没有特殊需求可以跳过
     $clientProfile = new ClientProfile();
-    $clientProfile->setSignMethod("HmacSHA256");  // 指定签名算法(默认为HmacSHA256)
+    $clientProfile->setSignMethod("TC3-HMAC-SHA256");  // 指定签名算法(默认为HmacSHA256)
     $clientProfile->setHttpProfile($httpProfile);
 
     // 实例化要请求产品(以cvm为例)的client对象,clientProfile是可选的
@@ -43,14 +44,12 @@ try {
     $params = [
         "Filters" => [
             [
-                "Filter" => [
-                    "name" => "zone",
-                    "value" => ["ap-shanghai-1", "ap-shanghai-2"]
-                ]
+                "Name" => "zone",
+                "Values" => ["ap-shanghai-1", "ap-shanghai-2"]
             ]
         ]
     ];
-    $req->fromJsonString(json_encode(params));
+    $req->fromJsonString(json_encode($params));
 
     // 通过client对象调用DescribeInstances方法发起请求。注意请求方法名与请求对象是对应的
     // 返回的resp是一个DescribeInstancesResponse类的实例，与请求对象对应

@@ -22,7 +22,6 @@ Route::any('signin', 'LoginController@login');                                  
 Route::any('qyWexin', 'LoginController@qyWexin');                                                                    //  企业微信登录
 Route::any('signout', 'LoginController@logout');                                                                     //  登出
 
-Route::any('test','CommonController@test');                                                                          //测试
 
 Route::any('Nolandfall','LoginController@Nolandfall');                                                             //平台免登陆接口
 
@@ -33,14 +32,14 @@ Route::any('install/mkDatabase','InstallController@mkDatabase');                
 Route::any('install/formatDataBase','InstallController@formatDataBase');                                            //安装第五步
 
 Route::any('check','UpdateController@chack_version');                                                               //  检查更新
-Route::any('settingOutdated','UpdateController@settingOutdated');                                                  //  关闭站点
-Route::any('readyDownload','UpdateController@ready_download');                                                     //  下载压缩包
+Route::any('settingOutdated','UpdateController@settingOutdated');                                                   //  关闭站点
+Route::any('readyDownload','UpdateController@ready_download');                                                      //  下载压缩包
 Route::any('readyUnzip','UpdateController@ready_unzip');                                                            //  解压压缩包
 Route::any('getDirName','UpdateController@get_dir_name');                                                           //  获取压缩包文件列表
-Route::any('moveDir','UpdateController@move_dir');                                                                   //  移动覆盖旧代码
-Route::any('getDbTableNames','UpdateController@getDbTableNames');                                                  //  获取备份数据库表名
-Route::any('backupsTableName','UpdateController@backupsTableName');                                                //  备份表结构和表信息
-Route::any('updateDatabase','UpdateController@updateDatabase');                                                    //  更新数据库
+Route::any('moveDir','UpdateController@move_dir');                                                                  //  移动覆盖旧代码
+Route::any('getDbTableNames','UpdateController@getDbTableNames');                                                   //  获取备份数据库表名
+Route::any('backupsTableName','UpdateController@backupsTableName');                                                 //  备份表结构和表信息
+Route::any('updateDatabase','UpdateController@updateDatabase');                                                     //  更新数据库
 Route::any('updateFail','UpdateController@update_fail');                                                            //  更新失败删除下载的压缩包与文件夹
 
 
@@ -60,17 +59,13 @@ Route::any('recordOperateData', 'CommonController@recordOperateData');         /
 Route::any('CompanyOperateData', 'CommonController@CompanyOperateData');       //记录部门运营数据
 Route::any('personalOperateData', 'CommonController@personalOperateData');     //记录个人运营数据
 
-Route::any('create', 'CommonController@create');                              
-
-Route::any('supplement', 'CommonController@supplement');    //测试补充个人业绩
-Route::any('supplementCompany', 'CommonController@supplementCompany');    //测试补充部门业绩
-Route::any('supplementplatform', 'CommonController@supplementplatform');    //测试补充平台业绩
+Route::any('create', 'CommonController@create');
 
 Route::get('ajax/downloadFiles', 'FilesController@downloadFiles'); //下载文件
 //跳转到member用户
 Route::get('member/adminweblogin/{id}', 'MembersController@adminweblogin');
 //企业微信跳转
-Route::get('crm.netbcloud.com', 'QyWechatController@qywechat_login');
+Route::get('qy/login', 'QyWechatController@qywechat_login');
 //个人微信跳转
 //Route::get('crm.netbcloud.com', 'QyWechatController@wechat_login');
 
@@ -431,6 +426,7 @@ Route::any('cus/delFunction/{id}',['f_auth' => 'admin.index.index', 'uses' => 'C
 Route::any('cus/addFunction',['f_auth' => 'admin.index.index', 'uses' => 'ConfigsController@addFunction']);                                          //添加权限功能
 Route::any('cus/switchFunction',['f_auth' => 'admin.index.index', 'uses' => 'ConfigsController@switchFunction']);                                    //开关权限功能
 Route::any('cus/updateSever',['f_auth' => 'admin.index.index', 'uses' => 'ConfigsController@updateSever']);                                          //系统版本切换
+Route::any('cus/updateMode',['f_auth' => 'admin.index.index', 'uses' => 'ConfigsController@updateMode']);                                            //修改导航栏状态
 
 //问卷调查
 Route::any('ask/getFindingsInfo/{id}',['f_auth' => 'admin.index.index', 'uses' => 'QuestionnaireController@get_findings_info']);                     //调查详情

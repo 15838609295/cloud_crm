@@ -1,21 +1,18 @@
 <?php
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2017-2018 THL A29 Limited, a Tencent company. All Rights Reserved.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 namespace TencentCloud\Partners\V20180321\Models;
 use TencentCloud\Common\AbstractModel;
@@ -31,7 +28,7 @@ use TencentCloud\Common\AbstractModel;
  * @method void setMonthSales(integer $MonthSales) 设置月度业绩，单位分
  * @method integer getQuarterSales() 获取季度业绩，单位分
  * @method void setQuarterSales(integer $QuarterSales) 设置季度业绩，单位分
- * @method string getExceptionFlag() 获取NORMAL 正常 /HAS_OVERDUE_BILL(欠费)/NO_CONTRACT(缺合同)
+ * @method string getExceptionFlag() 获取NORMAL(正常)/HAS_OVERDUE_BILL(欠费)/NO_CONTRACT(缺合同)
  * @method void setExceptionFlag(string $ExceptionFlag) 设置NORMAL(正常)/HAS_OVERDUE_BILL(欠费)/NO_CONTRACT(缺合同)
  */
 

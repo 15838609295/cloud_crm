@@ -1,12 +1,10 @@
 <?php
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2017-2018 THL A29 Limited, a Tencent company. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -37,7 +35,7 @@ abstract class AbstractClient
     /**
      * @var string SDK版本
      */
-    public static $SDK_VERSION = "SDK_PHP_3.0.6";
+    public static $SDK_VERSION = "SDK_PHP_3.0.102";
 
     /**
      * @var integer http响应码200
@@ -163,20 +161,26 @@ abstract class AbstractClient
      */
     public function __call($action, $request)
     {
+        return $this->doRequestWithOptions($action, $request[0], array());
+    }
+
+    protected function doRequestWithOptions($action, $request, $options)
+    {
         try {
             $responseData = null;
-            $serializeRequest = $request[0]->serialize();
-            $method = $this->getPrivateMethod($request[0], "arrayMerge");
-            $serializeRequest = $method->invoke($request[0], $serializeRequest);
-            switch ($this->profile->getHttpProfile()->getReqMethod()) {
-                case HttpProfile::$REQ_GET:
-                    $responseData = $this->getRequest($action, $serializeRequest);
+            $serializeRequest = $request->serialize();
+            $method = $this->getPrivateMethod($request, "arrayMerge");
+            $serializeRequest = $method->invoke($request, $serializeRequest);
+            switch ($this->profile->getSignMethod()) {
+                case ClientProfile::$SIGN_HMAC_SHA1:
+                case ClientProfile::$SIGN_HMAC_SHA256:
+                    $responseData = $this->doRequest($action, $serializeRequest);
                     break;
-                case HttpProfile::$REQ_POST:
-                    $responseData = $this->postRequest($action, $serializeRequest);
+                case ClientProfile::$SIGN_TC3_SHA256:
+                    $responseData = $this->doRequestWithTC3($action, $request, $options);
                     break;
                 default:
-                    throw  new TencentCloudSDKException("", "Method only support (GET, POST)");
+                    throw new TencentCloudSDKException("ClientError", "Invalid sign method");
                     break;
             }
             if ($responseData->getStatusCode() !== AbstractClient::$HTTP_RSP_OK) {
@@ -195,6 +199,131 @@ abstract class AbstractClient
                 throw $e;
             }
         }
+    }
+
+    private function doRequest($action, $request)
+    {
+        switch ($this->profile->getHttpProfile()->getReqMethod()) {
+            case HttpProfile::$REQ_GET:
+                return $this->getRequest($action, $request);
+                break;
+            case HttpProfile::$REQ_POST:
+                return $this->postRequest($action, $request);
+                break;
+            default:
+                throw new TencentCloudSDKException("", "Method only support (GET, POST)");
+                break;
+        }
+    }
+
+    private function doRequestWithTC3($action, $request, $options)
+    {
+        $headers = array();
+
+        $endpoint = $this->profile->getHttpProfile()->getEndpoint();
+        $headers["Host"] = $endpoint;
+
+        $headers["X-TC-Action"] = ucfirst($action);
+        $headers["X-TC-RequestClient"] = $this->sdkVersion;
+        $headers["X-TC-Timestamp"] = time();
+        $headers["X-TC-Version"] = $this->apiVersion;
+
+        if ($this->region) {
+            $headers["X-TC-Region"] = $this->region;
+        }
+
+        if ($this->credential->getToken()) {
+            $headers["X-TC-Token"] = $this->credential->getToken();
+        }
+
+        $canonicalUri = $this->path;
+
+        $reqmethod = $this->profile->getHttpProfile()->getReqMethod();
+        if (HttpProfile::$REQ_GET == $reqmethod) {
+            $headers["Content-Type"] = "application/x-www-form-urlencoded";
+            $rs = $request->serialize();
+            $am = $this->getPrivateMethod($request, "arrayMerge");
+            $rsam = $am->invoke($request, $rs);
+            $canonicalQueryString = http_build_query($rsam);
+            $payload = "";
+        } else if (isset($options["IsMultipart"]) && $options["IsMultipart"] === true) {
+            $boundary = uniqid();
+            $headers["Content-Type"] = "multipart/form-data; boundary=".$boundary;
+            $canonicalQueryString = "";
+            $payload = $this->getMultipartPayload($request, $boundary, $options);
+        } else {
+            $headers["Content-Type"] = "application/json";
+            $canonicalQueryString = "";
+            $payload = $request->toJsonString();
+        }
+
+        if ($this->profile->getUnsignedPayload() == true) {
+            $headers["X-TC-Content-SHA256"] = "UNSIGNED-PAYLOAD";
+            $payloadHash = hash("SHA256", "UNSIGNED-PAYLOAD");
+        } else {
+            $payloadHash = hash("SHA256", $payload);
+        }
+
+
+        $canonicalHeaders = "content-type:".$headers["Content-Type"]."\n".
+                            "host:".$headers["Host"]."\n";
+        $signedHeaders = "content-type;host";
+        $canonicalRequest = $reqmethod."\n".
+                            $canonicalUri."\n".
+                            $canonicalQueryString."\n".
+                            $canonicalHeaders."\n".
+                            $signedHeaders."\n".
+                            $payloadHash;
+        $algo = "TC3-HMAC-SHA256";
+        // date_default_timezone_set('UTC');
+        // $date = date("Y-m-d", $headers["X-TC-Timestamp"]);
+        $date = gmdate("Y-m-d", $headers["X-TC-Timestamp"]);
+        $service = explode(".", $endpoint)[0];
+        $credentialScope = $date."/".$service."/tc3_request";
+        $hashedCanonicalRequest = hash("SHA256", $canonicalRequest);
+        $str2sign = $algo."\n".
+                    $headers["X-TC-Timestamp"]."\n".
+                    $credentialScope."\n".
+                    $hashedCanonicalRequest;
+        $skey = $this->credential->getSecretKey();
+        $signature = Sign::signTC3($skey, $date, $service, $str2sign);
+
+        $sid = $this->credential->getSecretId();
+        $auth = $algo.
+                " Credential=".$sid."/".$credentialScope.
+                ", SignedHeaders=content-type;host, Signature=".$signature;
+        $headers["Authorization"] = $auth;
+
+        if (HttpProfile::$REQ_GET == $reqmethod) {
+            $connect = $this->createConnect();
+            return $connect->getRequest($this->path, $canonicalQueryString, $headers);
+        } else {
+            $connect = $this->createConnect();
+            return $connect->postRequestRaw($this->path, $headers, $payload);
+        }
+    }
+
+    private function getMultipartPayload($request, $boundary, $options)
+    {
+        $body = "";
+        $params = $request->serialize();
+        foreach ($params as $key => $value) {
+            $body .= "--".$boundary."\r\n";
+            $body .= "Content-Disposition: form-data; name=\"".$key;
+            if (in_array($key, $options["BinaryParams"])) {
+                $body .= "\"; filename=\"".$key;
+            }
+            $body .= "\"\r\n";
+            if (is_array($value)) {
+                $value = json_encode($value);
+                $body .= "Content-Type: application/json\r\n";
+            }
+            $body .= "\r\n".$value."\r\n";
+        }
+        if ($body != "") {
+            $body .= "--".$boundary."--\r\n";
+        }
+        return $body;
     }
 
     /**
@@ -262,7 +391,7 @@ abstract class AbstractClient
         $tmpParam = [];
         ksort($param);
         foreach ($param as $key => $value) {
-            array_push($tmpParam, str_replace("_",".",$key) . "=" . $value);
+            array_push($tmpParam, $key . "=" . $value);
         }
         $strParam = join ("&", $tmpParam);
         $signStr = strtoupper($requestMethod) . $host . $uri ."?".$strParam;

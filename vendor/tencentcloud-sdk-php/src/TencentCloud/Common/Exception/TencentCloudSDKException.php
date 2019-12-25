@@ -1,12 +1,10 @@
 <?php
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2017-2018 THL A29 Limited, a Tencent company. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -31,6 +29,8 @@ class TencentCloudSDKException extends \Exception
      */
     private $requestId;
 
+    private $errorCode;
+
 
     /**
      * TencentCloudSDKException constructor.
@@ -40,7 +40,8 @@ class TencentCloudSDKException extends \Exception
      */
     public function __construct($code = "", $message = "",  $requestId = "")
     {
-        parent::__construct($code."-".$message, 0);
+        parent::__construct($message, 0);
+        $this->errorCode = $code;
         $this->requestId = $requestId;
     }
 
@@ -54,13 +55,23 @@ class TencentCloudSDKException extends \Exception
     }
 
     /**
+     * 返回错误码
+     * @return string
+     */
+    public function getErrorCode()
+    {
+        return $this->errorCode;
+    }
+
+    /**
      * 格式化输出异常码，异常信息，请求id
      * @return string
      */
     public function __toString()
     {
-        return "[".__CLASS__."]"."message:".
-            $this->getMessage()."  requestId:".$this->requestId."\n";
+        return "[".__CLASS__."]"." code:".$this->errorCode.
+            " message:".$this->getMessage().
+            " requestId:".$this->requestId;
     }
 }
 

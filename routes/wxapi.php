@@ -25,7 +25,6 @@ Route::any('home/companyInfo', 'Wxapi\CommonController@companyInfo');           
 /*新闻*/
 Route::any('news/getTypeList', 'Wxapi\NewsController@getTypeList');                                                 // 新闻类型
 Route::any('news/getTypeNewsList', 'Wxapi\NewsController@getTypeNewsList');                                         // 类型下的新闻列表
-Route::any('news/TypeNewsList', 'Wxapi\NewsController@TypeNewsList');                                               // 类型下的新闻列表
 Route::any('news/newsInfo', 'Wxapi\NewsController@newsInfo');                                                       // 新闻详情
 Route::any('news/videoCenter', 'Wxapi\NewsController@videoCenter');                                                 // 视频列表
 
@@ -112,6 +111,7 @@ Route::any('activity/getInfo', 'Wxapi\ActivityController@getInfo');             
 Route::any('activity/singUp', 'Wxapi\ActivityController@signUp');                                                 // 活动报名
 Route::any('activity/memberComment', 'Wxapi\ActivityController@member_comment');                                  // 活动评价
 Route::any('activity/commentList', 'Wxapi\ActivityController@comment_list');                                      // 评价列表
+Route::any('activity/signUpPageList', 'Wxapi\ActivityController@signUpPageList');                                 // 用户报名列表
 Route::any('activity/cancelSign', 'Wxapi\ActivityController@cancel_sign');                                        // 取消报名
 Route::any('activity/spotFabulous', 'Wxapi\ActivityController@spotFabulous');                                     // 用户点赞
 Route::any('activity/cancelFabulous', 'Wxapi\ActivityController@cancelFabulous');                                 // 用户取消点赞

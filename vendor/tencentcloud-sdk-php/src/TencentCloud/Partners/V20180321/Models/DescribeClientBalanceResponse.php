@@ -16,12 +16,14 @@
  */
 namespace TencentCloud\Partners\V20180321\Models;
 use TencentCloud\Common\AbstractModel;
+
 /**
  * @method integer getBalance() 获取账户余额，单位分
  * @method void setBalance(integer $Balance) 设置账户余额，单位分
  * @method string getRequestId() 获取唯一请求 ID，每次请求都会返回。定位问题时需要提供该次请求的 RequestId。
  * @method void setRequestId(string $RequestId) 设置唯一请求 ID，每次请求都会返回。定位问题时需要提供该次请求的 RequestId。
  */
+
 /**
  *DescribeClientBalance返回参数结构体
  */
@@ -31,6 +33,7 @@ class DescribeClientBalanceResponse extends AbstractModel
      * @var integer 账户余额，单位分
      */
     public $Balance;
+
     /**
      * @var string 唯一请求 ID，每次请求都会返回。定位问题时需要提供该次请求的 RequestId。
      */
@@ -41,6 +44,7 @@ class DescribeClientBalanceResponse extends AbstractModel
      */
     function __construct()
     {
+
     }
     /**
      * 内部实现，用户禁止调用
@@ -53,6 +57,7 @@ class DescribeClientBalanceResponse extends AbstractModel
         if (array_key_exists("Balance",$param) and $param["Balance"] !== null) {
             $this->Balance = $param["Balance"];
         }
+
         if (array_key_exists("RequestId",$param) and $param["RequestId"] !== null) {
             $this->RequestId = $param["RequestId"];
         }

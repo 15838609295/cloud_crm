@@ -1,21 +1,18 @@
 <?php
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2017-2018 THL A29 Limited, a Tencent company. All Rights Reserved.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 namespace TencentCloud\Partners\V20180321\Models;
 use TencentCloud\Common\AbstractModel;
@@ -41,6 +38,18 @@ use TencentCloud\Common\AbstractModel;
  * @method void setAmt(integer $Amt) 设置支付金额，单位分
  * @method string getPayerMode() 获取agentpay：代付；selfpay：自付
  * @method void setPayerMode(string $PayerMode) 设置agentpay：代付；selfpay：自付
+ * @method string getClientType() 获取客户类型：可以为new(新拓)/assign(指定)/old(存量)/空
+注意：此字段可能返回 null，表示取不到有效值。
+ * @method void setClientType(string $ClientType) 设置客户类型：可以为new(新拓)/assign(指定)/old(存量)/空
+注意：此字段可能返回 null，表示取不到有效值。
+ * @method string getProjectType() 获取项目类型：可以为self(自拓项目)/platform(合作项目)/repeat(复算项目  )/空
+注意：此字段可能返回 null，表示取不到有效值。
+ * @method void setProjectType(string $ProjectType) 设置项目类型：可以为self(自拓项目)/platform(合作项目)/repeat(复算项目  )/空
+注意：此字段可能返回 null，表示取不到有效值。
+ * @method string getActivityId() 获取活动ID
+注意：此字段可能返回 null，表示取不到有效值。
+ * @method void setActivityId(string $ActivityId) 设置活动ID
+注意：此字段可能返回 null，表示取不到有效值。
  */
 
 /**
@@ -97,6 +106,24 @@ class AgentBillElem extends AbstractModel
      * @var string agentpay：代付；selfpay：自付
      */
     public $PayerMode;
+
+    /**
+     * @var string 客户类型：可以为new(新拓)/assign(指定)/old(存量)/空
+注意：此字段可能返回 null，表示取不到有效值。
+     */
+    public $ClientType;
+
+    /**
+     * @var string 项目类型：可以为self(自拓项目)/platform(合作项目)/repeat(复算项目  )/空
+注意：此字段可能返回 null，表示取不到有效值。
+     */
+    public $ProjectType;
+
+    /**
+     * @var string 活动ID
+注意：此字段可能返回 null，表示取不到有效值。
+     */
+    public $ActivityId;
     /**
      * @param string $Uin 代理商账号ID
      * @param string $OrderId 订单号，仅对预付费账单有意义
@@ -108,6 +135,12 @@ class AgentBillElem extends AbstractModel
      * @param string $SettleMonth 支付月份
      * @param integer $Amt 支付金额，单位分
      * @param string $PayerMode agentpay：代付；selfpay：自付
+     * @param string $ClientType 客户类型：可以为new(新拓)/assign(指定)/old(存量)/空
+注意：此字段可能返回 null，表示取不到有效值。
+     * @param string $ProjectType 项目类型：可以为self(自拓项目)/platform(合作项目)/repeat(复算项目  )/空
+注意：此字段可能返回 null，表示取不到有效值。
+     * @param string $ActivityId 活动ID
+注意：此字段可能返回 null，表示取不到有效值。
      */
     function __construct()
     {
@@ -159,6 +192,18 @@ class AgentBillElem extends AbstractModel
 
         if (array_key_exists("PayerMode",$param) and $param["PayerMode"] !== null) {
             $this->PayerMode = $param["PayerMode"];
+        }
+
+        if (array_key_exists("ClientType",$param) and $param["ClientType"] !== null) {
+            $this->ClientType = $param["ClientType"];
+        }
+
+        if (array_key_exists("ProjectType",$param) and $param["ProjectType"] !== null) {
+            $this->ProjectType = $param["ProjectType"];
+        }
+
+        if (array_key_exists("ActivityId",$param) and $param["ActivityId"] !== null) {
+            $this->ActivityId = $param["ActivityId"];
         }
     }
 }

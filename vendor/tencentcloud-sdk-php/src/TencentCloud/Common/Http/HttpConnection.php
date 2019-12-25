@@ -1,12 +1,10 @@
 <?php
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2017-2018 THL A29 Limited, a Tencent company. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -66,6 +64,19 @@ class HttpConnection
 
         if ($body) {
             $options["form_params"] = $body;
+        }
+        return $this->client->post($uri, $options);
+    }
+
+    public function postRequestRaw($uri = '', $headers = [], $body = '')
+    {
+        $options  = $this->getOptions();
+        if ($headers) {
+            $options["headers"] = $headers;
+        }
+
+        if ($body) {
+            $options["body"] = $body;
         }
         return $this->client->post($uri, $options);
     }

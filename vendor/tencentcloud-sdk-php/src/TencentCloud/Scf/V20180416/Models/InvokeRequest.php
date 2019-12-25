@@ -1,36 +1,35 @@
 <?php
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2017-2018 THL A29 Limited, a Tencent company. All Rights Reserved.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 namespace TencentCloud\Scf\V20180416\Models;
 use TencentCloud\Common\AbstractModel;
 
 /**
- * @method string getFunctionName() 获取函数名称。
- * @method void setFunctionName(string $FunctionName) 设置函数名称。
- * @method string getInvocationType() 获取RequestResponse(同步) 和 Event(异步)，默认为同步。
- * @method void setInvocationType(string $InvocationType) 设置RequestResponse(同步) 和 Event(异步)，默认为同步。
- * @method string getQualifier() 获取触发函数的版本号。
- * @method void setQualifier(string $Qualifier) 设置触发函数的版本号。
- * @method string getClientContext() 获取运行函数时的参数，以json格式传入，最大支持的参数长度是 1M。
- * @method void setClientContext(string $ClientContext) 设置运行函数时的参数，以json格式传入，最大支持的参数长度是 1M。
- * @method string getLogType() 获取同步调用时指定该字段，返回值会包含4K的日志，可选值为None和Tail，默认值为None。当该值为Tail时，返回参数中的logMsg字段会包含对应的函数执行日志。
- * @method void setLogType(string $LogType) 设置同步调用时指定该字段，返回值会包含4K的日志，可选值为None和Tail，默认值为None。当该值为Tail时，返回参数中的logMsg字段会包含对应的函数执行日志。
+ * @method string getFunctionName() 获取函数名称
+ * @method void setFunctionName(string $FunctionName) 设置函数名称
+ * @method string getInvocationType() 获取RequestResponse(同步) 和 Event(异步)，默认为同步
+ * @method void setInvocationType(string $InvocationType) 设置RequestResponse(同步) 和 Event(异步)，默认为同步
+ * @method string getQualifier() 获取触发函数的版本号
+ * @method void setQualifier(string $Qualifier) 设置触发函数的版本号
+ * @method string getClientContext() 获取运行函数时的参数，以json格式传入，最大支持的参数长度是 1M
+ * @method void setClientContext(string $ClientContext) 设置运行函数时的参数，以json格式传入，最大支持的参数长度是 1M
+ * @method string getLogType() 获取同步调用时指定该字段，返回值会包含4K的日志，可选值为None和Tail，默认值为None。当该值为Tail时，返回参数中的logMsg字段会包含对应的函数执行日志
+ * @method void setLogType(string $LogType) 设置同步调用时指定该字段，返回值会包含4K的日志，可选值为None和Tail，默认值为None。当该值为Tail时，返回参数中的logMsg字段会包含对应的函数执行日志
+ * @method string getNamespace() 获取命名空间
+ * @method void setNamespace(string $Namespace) 设置命名空间
  */
 
 /**
@@ -39,35 +38,41 @@ use TencentCloud\Common\AbstractModel;
 class InvokeRequest extends AbstractModel
 {
     /**
-     * @var string 函数名称。
+     * @var string 函数名称
      */
     public $FunctionName;
 
     /**
-     * @var string RequestResponse(同步) 和 Event(异步)，默认为同步。
+     * @var string RequestResponse(同步) 和 Event(异步)，默认为同步
      */
     public $InvocationType;
 
     /**
-     * @var string 触发函数的版本号。
+     * @var string 触发函数的版本号
      */
     public $Qualifier;
 
     /**
-     * @var string 运行函数时的参数，以json格式传入，最大支持的参数长度是 1M。
+     * @var string 运行函数时的参数，以json格式传入，最大支持的参数长度是 1M
      */
     public $ClientContext;
 
     /**
-     * @var string 同步调用时指定该字段，返回值会包含4K的日志，可选值为None和Tail，默认值为None。当该值为Tail时，返回参数中的logMsg字段会包含对应的函数执行日志。
+     * @var string 同步调用时指定该字段，返回值会包含4K的日志，可选值为None和Tail，默认值为None。当该值为Tail时，返回参数中的logMsg字段会包含对应的函数执行日志
      */
     public $LogType;
+
     /**
-     * @param string $FunctionName 函数名称。
-     * @param string $InvocationType RequestResponse(同步) 和 Event(异步)，默认为同步。
-     * @param string $Qualifier 触发函数的版本号。
-     * @param string $ClientContext 运行函数时的参数，以json格式传入，最大支持的参数长度是 1M。
-     * @param string $LogType 同步调用时指定该字段，返回值会包含4K的日志，可选值为None和Tail，默认值为None。当该值为Tail时，返回参数中的logMsg字段会包含对应的函数执行日志。
+     * @var string 命名空间
+     */
+    public $Namespace;
+    /**
+     * @param string $FunctionName 函数名称
+     * @param string $InvocationType RequestResponse(同步) 和 Event(异步)，默认为同步
+     * @param string $Qualifier 触发函数的版本号
+     * @param string $ClientContext 运行函数时的参数，以json格式传入，最大支持的参数长度是 1M
+     * @param string $LogType 同步调用时指定该字段，返回值会包含4K的日志，可选值为None和Tail，默认值为None。当该值为Tail时，返回参数中的logMsg字段会包含对应的函数执行日志
+     * @param string $Namespace 命名空间
      */
     function __construct()
     {
@@ -99,6 +104,10 @@ class InvokeRequest extends AbstractModel
 
         if (array_key_exists("LogType",$param) and $param["LogType"] !== null) {
             $this->LogType = $param["LogType"];
+        }
+
+        if (array_key_exists("Namespace",$param) and $param["Namespace"] !== null) {
+            $this->Namespace = $param["Namespace"];
         }
     }
 }

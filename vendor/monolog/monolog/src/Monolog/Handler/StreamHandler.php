@@ -90,7 +90,6 @@ class StreamHandler extends AbstractProcessingHandler
      */
     protected function write(array $record)
     {
-        global $scf_data;
         if (!is_resource($this->stream)) {
             if (null === $this->url || '' === $this->url) {
                 throw new \LogicException('Missing stream url, the stream can not be opened. This may be caused by a premature call to close().');
@@ -109,9 +108,7 @@ class StreamHandler extends AbstractProcessingHandler
             }
         }
 
-        if ($scf_data['IS_SCF'] === true){
-            echo (string) $record['formatted'];
-        }
+        echo (string) $record['formatted'];
         if ($this->useLocking) {
             // ignoring errors here, there's not much we can do about them
             flock($this->stream, LOCK_EX);

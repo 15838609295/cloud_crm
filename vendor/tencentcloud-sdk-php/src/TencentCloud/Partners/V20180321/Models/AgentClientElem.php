@@ -1,21 +1,18 @@
 <?php
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2017-2018 THL A29 Limited, a Tencent company. All Rights Reserved.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 namespace TencentCloud\Partners\V20180321\Models;
 use TencentCloud\Common\AbstractModel;
@@ -27,18 +24,20 @@ use TencentCloud\Common\AbstractModel;
  * @method void setClientUin(string $ClientUin) 设置代客账号ID
  * @method integer getApplyTime() 获取代客申请时间戳
  * @method void setApplyTime(integer $ApplyTime) 设置代客申请时间戳
- * @method string getClientFlag() 获取代客类型，可能值为a/b
- * @method void setClientFlag(string $ClientFlag) 设置代客类型，可能值为a/b
+ * @method string getClientFlag() 获取代客类型，可能值为a/b/c
+ * @method void setClientFlag(string $ClientFlag) 设置代客类型，可能值为a/b/c
  * @method string getMail() 获取代客邮箱，打码显示
  * @method void setMail(string $Mail) 设置代客邮箱，打码显示
  * @method string getPhone() 获取代客手机，打码显示
  * @method void setPhone(string $Phone) 设置代客手机，打码显示
  * @method integer getHasOverdueBill() 获取0表示不欠费，1表示欠费
  * @method void setHasOverdueBill(integer $HasOverdueBill) 设置0表示不欠费，1表示欠费
+ * @method integer getStatus() 获取1:待代理商审核;2:待腾讯云审核
+ * @method void setStatus(integer $Status) 设置1:待代理商审核;2:待腾讯云审核
  */
 
 /**
- *描述代客信息
+ *描述待审核代客信息
  */
 class AgentClientElem extends AbstractModel
 {
@@ -58,7 +57,7 @@ class AgentClientElem extends AbstractModel
     public $ApplyTime;
 
     /**
-     * @var string 代客类型，可能值为a/b
+     * @var string 代客类型，可能值为a/b/c
      */
     public $ClientFlag;
 
@@ -76,14 +75,20 @@ class AgentClientElem extends AbstractModel
      * @var integer 0表示不欠费，1表示欠费
      */
     public $HasOverdueBill;
+
+    /**
+     * @var integer 1:待代理商审核;2:待腾讯云审核
+     */
+    public $Status;
     /**
      * @param string $Uin 代理商账号ID
      * @param string $ClientUin 代客账号ID
      * @param integer $ApplyTime 代客申请时间戳
-     * @param string $ClientFlag 代客类型，可能值为a/b
+     * @param string $ClientFlag 代客类型，可能值为a/b/c
      * @param string $Mail 代客邮箱，打码显示
      * @param string $Phone 代客手机，打码显示
      * @param integer $HasOverdueBill 0表示不欠费，1表示欠费
+     * @param integer $Status 1:待代理商审核;2:待腾讯云审核
      */
     function __construct()
     {
@@ -123,6 +128,10 @@ class AgentClientElem extends AbstractModel
 
         if (array_key_exists("HasOverdueBill",$param) and $param["HasOverdueBill"] !== null) {
             $this->HasOverdueBill = $param["HasOverdueBill"];
+        }
+
+        if (array_key_exists("Status",$param) and $param["Status"] !== null) {
+            $this->Status = $param["Status"];
         }
     }
 }

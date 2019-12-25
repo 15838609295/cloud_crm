@@ -1,12 +1,10 @@
 <?php
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (c) 2017-2018 THL A29 Limited, a Tencent company. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -39,5 +37,13 @@ class Sign
         }
         $signature = base64_encode(hash_hmac($signMethodMap[$signMethod], $signStr, $secretKey, true));
         return $signature;
+    }
+
+    public static function signTC3($skey, $date, $service, $str2sign)
+    {
+        $dateKey = hash_hmac("SHA256", $date, "TC3".$skey, true);
+        $serviceKey = hash_hmac("SHA256", $service, $dateKey, true);
+        $reqKey = hash_hmac("SHA256", "tc3_request", $serviceKey, true);
+        return hash_hmac("SHA256", $str2sign, $reqKey);
     }
 }
