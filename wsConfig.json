@@ -18,8 +18,8 @@
             "expire": 0
         },
         "bucketConfig": {
-            "secretId": "AKIDaGjxvdyHGzSeZFKoZ5LMmxyjDUVGQvw7",
-            "secretKey": "A4dGkBtN0PeeP3TxJPVQ6XjiR1LUR9tY",
+            "secretId": "",
+            "secretKey": "",
             "bucket": "",
             "region": ""
         }
@@ -48,8 +48,8 @@
                 "dirName": "\/"
             }
         ],
-        "secretId": "AKIDaGjxvdyHGzSeZFKoZ5LMmxyjDUVGQvw7",
-        "secretKey": "A4dGkBtN0PeeP3TxJPVQ6XjiR1LUR9tY",
+        "secretId": "",
+        "secretKey": "",
         "alias": "",
         "env": ""
     }
