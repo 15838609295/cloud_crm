@@ -3,11 +3,11 @@
     "system": {
         "database": {
             "type": "mysql",
-            "hostname": "gz-cdb-dk9albfx.sql.tencentcdb.com",
-            "database": "crm_test",
-            "username": "root",
-            "password": "diaoni123",
-            "hostPort": "61232",
+            "hostname": "",
+            "database": "",
+            "username": "",
+            "password": "",
+            "hostPort": "",
             "charset": "utf8",
             "debug": true
         },
